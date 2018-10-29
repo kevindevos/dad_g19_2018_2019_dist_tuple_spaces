@@ -4,15 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServerNamespace{
-    public class Server : IServer {
-
-        public Server(){
-
-
-        }
-        
-
+namespace ClientNamespace {
+    class Client {
     }
-
 }
