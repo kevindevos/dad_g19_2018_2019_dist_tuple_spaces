@@ -6,11 +6,20 @@ using System.Threading.Tasks;
 
 namespace CommonTypes{
     public class Tuple{
-        public List<object> data;
+        public readonly List<object> fields;
 
-        public Tuple() {
-            data = new List<object>();
+        public Tuple(List<object> fields) {
+            this.fields = fields;
         }
 
+        public int GetSize()
+        {
+            return fields.Count;
+        }
+
+        public override string ToString()
+        {
+            return "(" + String.Join(", ", fields.ToArray()) + ")";
+        }
     }
 }
