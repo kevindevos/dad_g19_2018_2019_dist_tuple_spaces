@@ -45,18 +45,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="domain\Animal.cs" />
-    <Compile Include="domain\Cat.cs" />
-    <Compile Include="domain\Dog.cs" />
+    <Compile Include="message\Response.cs" />
+    <Compile Include="tuple\tupleobjects\Animal.cs" />
+    <Compile Include="tuple\tupleobjects\Cat.cs" />
+    <Compile Include="tuple\tupleobjects\Dog.cs" />
+    <Compile Include="tuple\tupleobjects\ITupleObject.cs" />
     <Compile Include="message\Message.cs" />
     <Compile Include="message\Order.cs" />
     <Compile Include="message\Request.cs" />
-    <Compile Include="IServer.cs" />
+    <Compile Include="IRemoting.cs" />
     <Compile Include="tuple\Tuple.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="tuple\TupleSchema.cs" />
     <Compile Include="tuple\TupleSpace.cs" />
-    <Compile Include="tuple\TupleOperations.cs" />
+    <Compile Include="tuple\ITupleOperations.cs" />
     <Compile Include="tuple\TupleSpaceTest.cs" />
   </ItemGroup>
   <ItemGroup>

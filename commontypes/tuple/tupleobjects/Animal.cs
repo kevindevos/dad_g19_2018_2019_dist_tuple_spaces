@@ -10,8 +10,6 @@ namespace CommonTypes {
         public string name { get { return name; } set { name = value; } } 
         public int age { get { return age; } set { age = value;  } }
 
-
-
         public Animal(string name, int age) {
             this.name = name;
             this.age = age;
