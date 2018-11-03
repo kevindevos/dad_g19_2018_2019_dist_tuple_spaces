@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ClientNamespace {
-    class Program {
-        static void Main(string[] args) {
+namespace CommonTypes {
+    class Cat : Animal {
+        public Cat(string name, int age) : base(name, age) {
 
         }
     }

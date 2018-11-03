@@ -4,8 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServerNamespace {
-    public interface IServer {
-        // read/take/write operation definitions
+namespace CommonTypes {
+    class Dog : Animal {
+
+        public Dog(string name, int age) : base(name, age) {
+
+        }
     }
 }

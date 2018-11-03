@@ -17,6 +17,10 @@ namespace CommonTypes{
             return fields.Count;
         }
 
+        public bool Contains(object member) {
+            return fields.Contains(member);
+        }
+
         public override string ToString()
         {
             return "(" + String.Join(", ", fields.ToArray()) + ")";
