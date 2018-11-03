@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 
 namespace ServerNamespace {
     class MasterServerBehaviour : ServerBehaviour {
+        private Server server;
 
         public MasterServerBehaviour(Server server) : base(server) {
-
+            this.server = server;
         }
 
-        protected override List<object> Read(List<object> objects) {
+        public override List<object> Read(List<object> objects) {
             // do master stuff
 
 
@@ -20,10 +21,20 @@ namespace ServerNamespace {
             return base.Read(objects);
         }
 
-        protected override void OnReceiveRequest() {
-            // do master stuff like deciding the request to execute by all servers for example
+        public override void OnReceiveMessage(Message message) {
+            if (message.GetType().Equals(typeof(Request))) {
+                server.mostRecentClientRequestSeqNumbers.Add(message.clientId, message.seqNum);
+                server.requestQueue.Enqueue((Request)message);
 
-            base.OnReceiveRequest();
+                broadcastRequestAsOrder((Request)message);
+            }
+
+            base.OnReceiveMessage(message);
+        }
+
+        private void broadcastRequestAsOrder(Request message) {
+            // TODO
+            throw new NotImplementedException();
         }
     }
 }

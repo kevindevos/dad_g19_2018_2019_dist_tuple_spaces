@@ -1,4 +1,5 @@
 ﻿using CommonTypes;
+using CommonTypes.message;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace ServerNamespace {
             this.server = server;
         }
 
-        protected virtual List<object> Read(List<object> members) {
+        public virtual List<object> Read(List<object> members) {
             // find all tuples that contain all objects in members 
             // return 
 
@@ -21,9 +22,16 @@ namespace ServerNamespace {
             return null;
         }
 
-        // TODO , this should be called when message is received, to diverge actions depending on type of request, and if from master or not (entry point)
-        protected virtual void OnReceiveRequest() { 
+        // TODO other tuple operations
 
+        public virtual void OnReceiveMessage(Message message) {
+            if (message.GetType().Equals(typeof(Order))){
+                // execute the order (tuple space operation)
+            }
+            else if ( message.GetType().Equals(typeof(Request))) { 
+                server.mostRecentClientRequestSeqNumbers.Add(message.clientId, message.seqNum);
+                server.requestQueue.Enqueue((Request)message);
+            }
         }
 
     }

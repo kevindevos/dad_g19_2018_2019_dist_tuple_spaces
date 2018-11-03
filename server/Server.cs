@@ -14,7 +14,7 @@ namespace ServerNamespace{
         public ServerBehaviour behaviour;
 
         // A dictionary containing the most recent sequence numbers of the most recent request of each client.
-        public Dictionary<string, int> mostRecentClientRequestSeqNumbers;
+        public Dictionary<int, int> mostRecentClientRequestSeqNumbers;
 
         // A queue (FIFO) of requests the server receives, mostly relevant for the master server, that decides which request to be executed first 
         public Queue<Request> requestQueue;
@@ -44,7 +44,9 @@ namespace ServerNamespace{
             this.behaviour = new ServerBehaviour(this);
         }
 
-        
+        public void OnReceiveMessage(Message message) {
+            behaviour.OnReceiveMessage(message);
+        }
 
 
         
