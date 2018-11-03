@@ -13,7 +13,8 @@ namespace ServerNamespace {
             this.server = server;
         }
 
-       
+        
+
         public override void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Request))) {
                 server.mostRecentClientRequestSeqNumbers.Add(message.clientId, message.seqNum);

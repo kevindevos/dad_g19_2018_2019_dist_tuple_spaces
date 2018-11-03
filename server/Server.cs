@@ -3,13 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Remoting;
+using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Channels.Tcp;
 using System.Text;
 using System.Threading.Tasks;
 using CommonTypes;
+using CommonTypes.server;
 using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace{
-    public class Server {
+    public class Server : MarshalByRefObject, IServer {
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
         public ServerBehaviour behaviour;
 
@@ -22,9 +26,14 @@ namespace ServerNamespace{
         // Tuple space
         public TupleSpace tupleSpace { get { return tupleSpace; } set { tupleSpace = value; } }
 
+        public int serverPort { get { return serverPort; } set { serverPort = value; } }
+        private TcpChannel tcpChannel;
+
 
         static void Main(string[] args) {
             Server server = new Server();
+            server.registerTcpChannel();
+            server.registerService();
 
             Console.WriteLine("Server Started, press <enter> to leave.");
             Console.ReadLine();
@@ -33,8 +42,24 @@ namespace ServerNamespace{
         public Server(){
             this.tupleSpace = new TupleSpace();
             this.behaviour = new ServerBehaviour(this);
+            this.serverPort = 8086; // Default server port
         }
-        
+
+        public Server(int serverPort) {
+            this.tupleSpace = new TupleSpace();
+            this.behaviour = new ServerBehaviour(this);
+            this.serverPort = serverPort; 
+        }
+
+        private void registerTcpChannel() {
+            tcpChannel = new TcpChannel(serverPort);
+            ChannelServices.RegisterChannel(tcpChannel, true);
+        }
+
+        private void registerService() {
+            RemotingServices.Marshal(this, "Server", typeof(Server));
+        }
+
 
         public void upgradeToMaster() {
             this.behaviour = new MasterServerBehaviour(this);
@@ -47,9 +72,6 @@ namespace ServerNamespace{
         public void OnReceiveMessage(Message message) {
             behaviour.OnReceiveMessage(message);
         }
-
-
-        
 
     }
 

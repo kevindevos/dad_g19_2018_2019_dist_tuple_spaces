@@ -24,6 +24,7 @@ namespace ServerNamespace {
 
         // TODO other tuple operations ( not virtual, they should be the same )
 
+
         public virtual void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Order))){
                 // execute the order (tuple space operation)

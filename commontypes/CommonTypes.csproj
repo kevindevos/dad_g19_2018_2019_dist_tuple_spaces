@@ -49,7 +49,9 @@
     <Compile Include="domain\Cat.cs" />
     <Compile Include="domain\Dog.cs" />
     <Compile Include="message\Message.cs" />
+    <Compile Include="message\Order.cs" />
     <Compile Include="message\Request.cs" />
+    <Compile Include="IServer.cs" />
     <Compile Include="tuple\Tuple.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="tuple\TupleSchema.cs" />
