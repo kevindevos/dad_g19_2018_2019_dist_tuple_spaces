@@ -8,9 +8,13 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text;
 using System.Threading.Tasks;
+using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
     class Client : MarshalByRefObject, IRemoting, ITupleOperations {
+        public delegate Tuple RemoteBlockingAsyncDelegate(Request request);
+        public delegate void RemoteNonBlockingAsyncDelegate(Request request);
+
         private const string defaultServerHost = "localhost";
         private int serverPort;
 
@@ -91,16 +95,22 @@ namespace ClientNamespace {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
 
-        public void Write(CommonTypes.Tuple tuple) {
+
+        public void Write(Tuple tuple) {
             Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.WRITE, tuple);
-            remote.OnReceiveMessage(request);
+
+            RemoteNonBlockingAsyncDelegate remoteDel =
+                new RemoteNonBlockingAsyncDelegate(remote.OnReceiveMessage);
+
+            remoteDel.BeginInvoke(request, null, null);
+
         }
 
-        public CommonTypes.Tuple Read(TupleSchema tupleSchema) {
+        public Tuple Read(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
 
-        public CommonTypes.Tuple Take(TupleSchema tupleSchema) {
+        public Tuple Take(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
     }
