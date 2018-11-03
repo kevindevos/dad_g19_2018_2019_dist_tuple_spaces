@@ -20,8 +20,9 @@ namespace ServerNamespace{
         // A dictionary containing the most recent sequence numbers of the most recent request of each client.  <clientRemoteURL, lastSeqNum>
         public Dictionary<string, int> mostRecentClientRequestSeqNumbers;
 
-        // A queue (FIFO) of requests the server receives, mostly relevant for the master server, that decides which request to be executed first 
-        public Queue<Request> requestQueue;
+        // A list of requests the server receives, defines the order 
+        // for a FIFO order process requests from index 0 and do RemoveAt(0)
+        public List<Request> requestList;
 
         // Tuple space
         public TupleSpace tupleSpace { get { return tupleSpace; } set { tupleSpace = value; } }
@@ -51,6 +52,20 @@ namespace ServerNamespace{
             this.serverPort = serverPort; 
         }
 
+        public void removeRequestFromList(Request request) {
+            requestList.Remove(request);
+        }
+
+        public Request getRequestBySeqNumberAndClientUrl(int seq, string clientUrl) {
+            for(int i = 0; i < requestList.Capacity; i++) {
+                Request temp = requestList[i];
+                if(temp.seqNum == seq && temp.clientRemoteURL.Equals(clientUrl){
+                    return temp;
+                }
+            }
+            return null;
+        }
+
         public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);
             ChannelServices.RegisterChannel(tcpChannel, true);
@@ -69,8 +84,8 @@ namespace ServerNamespace{
         }
 
         // When Server receives a message through Net Remoting 
-        public void OnReceiveMessage(Message message) {
-            behaviour.OnReceiveMessage(message);
+        public Message OnReceiveMessage(Message message) {
+            return behaviour.OnReceiveMessage(message);
         }
 
         public string BuildRemoteUrl(string host, int port, string objIdentifier) {

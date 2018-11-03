@@ -101,6 +101,7 @@ namespace ClientNamespace {
             RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
 
             remoteDel.BeginInvoke(request, null, null);
+            clientRequestSeqNumber++;
         }
 
         public Tuple Read(Tuple tuple) {
@@ -110,6 +111,7 @@ namespace ClientNamespace {
 
             // async call
             IAsyncResult ar = remoteDel.BeginInvoke(request, null, null);
+            clientRequestSeqNumber++;
             // wait for a signal (blocking)
             ar.AsyncWaitHandle.WaitOne();
 
@@ -124,6 +126,7 @@ namespace ClientNamespace {
 
             // async call
             IAsyncResult ar = remoteDel.BeginInvoke(request, null, null);
+            clientRequestSeqNumber++;
             // wait for a signal (blocking)
             ar.AsyncWaitHandle.WaitOne();
 

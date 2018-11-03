@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace {
-    public class ServerBehaviour : ITupleOperations{
+    public class ServerBehaviour {
         private Server server; // keep instance of the server for accessing things like sequence numbers, request queue, tuple space
 
         public ServerBehaviour(Server server) {
@@ -17,13 +17,35 @@ namespace ServerNamespace {
 
         public virtual Message OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Order))){
-                // execute the order (tuple space operation)
+                // find the Request object for the order pair client seqnumber and id
+                Request request = server.getRequestBySeqNumberAndClientUrl(message.seqNum, message.clientRemoteURL);
+                // remove from the requestList
+                server.removeRequestFromList(request);
+
+                switch (request.requestType) {
+                    case RequestType.READ:
+                        TupleSchema tupleSchema = new TupleSchema(request.tuple);
+                        List<Tuple> resultTuples = Read(tupleSchema);
+                        return new Response(message.seqNum, message.clientRemoteURL, resultTuples);
+
+                    case RequestType.WRITE:
+                        Write(message.tuple);
+                        return null;
+
+                    case RequestType.TAKE:
+                        tupleSchema = new TupleSchema(request.tuple);
+                        resultTuples = Take(tupleSchema);
+                        return new Response(message.seqNum, message.clientRemoteURL, resultTuples); 
+                }
             }
             else if ( message.GetType().Equals(typeof(Request))) {
-
                 server.mostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
-                server.requestQueue.Enqueue((Request)message);
+                server.requestList.Add((Request)message);
+
+                // Problem, when client does read or take, it is blocking, it expects a return message, but the server needs to wait for the order of the master, ?!?!?
+
             }
+            return null;
         }
 
 
@@ -31,11 +53,11 @@ namespace ServerNamespace {
             throw new NotImplementedException();
         }
 
-        public Tuple Read(TupleSchema tupleSchema) {
+        public List<Tuple> Read(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
 
-        public Tuple Take(TupleSchema tupleSchema) {
+        public List<Tuple> Take(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
     }

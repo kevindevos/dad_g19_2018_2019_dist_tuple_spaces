@@ -31,7 +31,7 @@ namespace CommonTypes
         }
 
         // TODO what if there is no tuple? how do we wait? above?
-        public Tuple Read(TupleSchema tupleSchema)
+        public List<Tuple> Read(TupleSchema tupleSchema)
         {
             List<Tuple> matchingTuples;
 
@@ -41,10 +41,10 @@ namespace CommonTypes
                 matchingTuples = GetMatchingTuples(tupleSpace.GetOrAdd(tupleSchema.schema.GetSize(), new List<Tuple>()), tupleSchema);
             }
 
-            return matchingTuples.FirstOrDefault();
+            return matchingTuples;
         }
 
-        public Tuple Take(TupleSchema tupleSchema)
+        public List<Tuple> Take(TupleSchema tupleSchema)
         {
             throw new NotImplementedException();
         }
