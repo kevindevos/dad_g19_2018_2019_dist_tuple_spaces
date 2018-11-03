@@ -22,7 +22,11 @@ namespace CommonTypes
             if (tuple.GetSize() < schema.GetSize())
                 return false;
 
+            for (int i = 0; i < schema.GetSize(); i++) {
+                for (int j = 0; j < tuple.GetSize(); j++) {
 
+                }
+            }
 
             // does it need to be in order 1.2.3? or can it be matching 2,hello to hello,2
             for (int i = 0; i < schema.GetSize(); i++)
