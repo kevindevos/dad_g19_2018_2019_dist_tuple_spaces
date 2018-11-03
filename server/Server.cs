@@ -65,7 +65,7 @@ namespace ServerNamespace{
         public Request getRequestBySeqNumberAndClientUrl(int seq, string clientUrl) {
             for(int i = 0; i < requestList.Capacity; i++) {
                 Request temp = requestList[i];
-                if(temp.seqNum == seq && temp.clientRemoteURL.Equals(clientUrl){
+                if(temp.seqNum == seq && temp.clientRemoteURL.Equals(clientUrl)){
                     return temp;
                 }
             }
