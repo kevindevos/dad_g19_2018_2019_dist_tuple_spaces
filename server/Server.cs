@@ -10,7 +10,18 @@ using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace{
     public class Server {
-        private TupleSpace tupleSpace;
+        // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
+        protected ServerBehaviour behaviour;
+
+        // A dictionary containing the most recent sequence numbers of the most recent request of each client.
+        protected Dictionary<string, int> mostRecentClientRequestSeqNumbers;
+
+        // A queue (FIFO) of requests the server receives, mostly relevant for the master server, that decides which request to be executed first 
+        protected Queue<Request> requestQueue;
+
+        // Tuple space
+        protected TupleSpace tupleSpace { get { return tupleSpace; } set { tupleSpace = value; } }
+
 
         static void Main(string[] args) {
             Server server = new Server();
@@ -20,21 +31,18 @@ namespace ServerNamespace{
         }
 
         public Server(){
-            tupleSpace = new TupleSpace();
+            this.behaviour = new ServerBehaviour();
+        }
+        
+        public void upgradeToMaster() {
+            this.behaviour = new MasterServerBehaviour();
         }
 
-
-        public object Read(List<object> members) {
-            // find all tuples that contain all objects in members 
-            // return 
-
-
-            return null;
+        public void downgradeToNormal() {
+            this.behaviour = new ServerBehaviour();
         }
 
-        void OnReceiveRequest() { // TODO , this should be called when message is received, to diverge actions depending on type of request, and if from master or not (entry point)
-
-        }
+        
 
 
         
