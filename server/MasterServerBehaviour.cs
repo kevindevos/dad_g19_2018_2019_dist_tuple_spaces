@@ -17,7 +17,7 @@ namespace ServerNamespace {
 
         public override void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Request))) {
-                server.mostRecentClientRequestSeqNumbers.Add(message.clientId, message.seqNum);
+                server.mostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
                 server.requestQueue.Enqueue((Request)message);
 
                 broadcastRequestAsOrder((Request)message);

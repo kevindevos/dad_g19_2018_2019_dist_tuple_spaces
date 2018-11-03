@@ -8,13 +8,13 @@ namespace CommonTypes {
 
     public class Message {
         public int seqNum { get { return seqNum; } set { seqNum = value; } }
-        public int clientId { get { return clientId; } set { clientId = value; } }
-        public string data { get { return data; } set { data = value; } }
+        public string clientRemoteURL { get { return clientRemoteURL; } set { clientRemoteURL = value; } }
+        public Tuple tuple { get { return tuple; } set { tuple = value; } }
 
-        public Message(int seqNum, int clientId, string data) {
+        public Message(int seqNum, string clientRemoteURL, Tuple tuple) {
             this.seqNum = seqNum;
-            this.clientId = clientId;
-            this.data = data;
+            this.clientRemoteURL = clientRemoteURL;
+            this.tuple = tuple;
         }
 
     }

@@ -1,11 +1,12 @@
-﻿using System;
+﻿using CommonTypes.domain;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CommonTypes {
-    class Animal : IEquatable<object> {
+    class Animal : ITupleObject {
         public string name { get { return name; } set { name = value; } } 
         public int age { get { return age; } set { age = value;  } }
 

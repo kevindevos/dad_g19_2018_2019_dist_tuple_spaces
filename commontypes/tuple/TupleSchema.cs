@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommonTypes.domain;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
+    // a "pattern" to match against, consists of a list of fields that have to be all contained in a tuple for there to be a match
+    
     public class TupleSchema
     {
         public readonly Tuple schema;
@@ -24,26 +27,24 @@ namespace CommonTypes
 
             for (int i = 0; i < schema.GetSize(); i++) {
                 for (int j = 0; j < tuple.GetSize(); j++) {
+                    object schemaField = schema.fields[i];
+                    object tupleField = tuple.fields[j];
+
+                    // check type
+                    if (!schemaField.GetType().Equals(tupleField.GetType()))
+                        return false;
+
+                    // check string match
+                    if (Regex.IsMatch(tupleField.ToString(), WildCardToRegular(schemaField.ToString())))
+                        return true;
+
+                    // TODO ( only works for ITupleObject instances ? )
+                    // check for object match , and numbers match
+                    if (tupleField.Equals(schemaField)) {
+                        return true;
+                    }
 
                 }
-            }
-
-            // does it need to be in order 1.2.3? or can it be matching 2,hello to hello,2
-            for (int i = 0; i < schema.GetSize(); i++)
-            {
-                object schemaField = schema.fields[0];
-                object tupleField = tuple.fields[0];
-
-                // check type
-                if (!schemaField.GetType().Equals(tupleField.GetType()))
-                    return false;
-
-                // check string match
-                if (!Regex.IsMatch(tupleField.ToString(), WildCardToRegular(schemaField.ToString())))
-                    return false;
-
-                //TODO compare two objects like, MyClass(1, "a") with MyClass, or with null, etc
-
             }
 
             return true;

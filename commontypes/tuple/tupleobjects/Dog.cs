@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace CommonTypes {
-    class Cat : Animal {
-        public Cat(string name, int age) : base(name, age) {
+    // Example class 
+    class Dog : Animal {
+        public Dog(string name, int age) : base(name, age) {
 
         }
     }

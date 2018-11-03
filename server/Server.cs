@@ -13,12 +13,12 @@ using CommonTypes.server;
 using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace{
-    public class Server : MarshalByRefObject, IServer {
+    public class Server : MarshalByRefObject, IRemoting {
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
         public ServerBehaviour behaviour;
 
-        // A dictionary containing the most recent sequence numbers of the most recent request of each client.
-        public Dictionary<int, int> mostRecentClientRequestSeqNumbers;
+        // A dictionary containing the most recent sequence numbers of the most recent request of each client.  <clientRemoteURL, lastSeqNum>
+        public Dictionary<string, int> mostRecentClientRequestSeqNumbers;
 
         // A queue (FIFO) of requests the server receives, mostly relevant for the master server, that decides which request to be executed first 
         public Queue<Request> requestQueue;
@@ -32,8 +32,8 @@ namespace ServerNamespace{
 
         static void Main(string[] args) {
             Server server = new Server();
-            server.registerTcpChannel();
-            server.registerService();
+            server.RegisterTcpChannel();
+            server.RegisterService();
 
             Console.WriteLine("Server Started, press <enter> to leave.");
             Console.ReadLine();
@@ -51,28 +51,31 @@ namespace ServerNamespace{
             this.serverPort = serverPort; 
         }
 
-        private void registerTcpChannel() {
+        public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);
             ChannelServices.RegisterChannel(tcpChannel, true);
         }
 
-        private void registerService() {
+        public void RegisterService() {
             RemotingServices.Marshal(this, "Server", typeof(Server));
         }
 
-
-        public void upgradeToMaster() {
+        public void UpgradeToMaster() {
             this.behaviour = new MasterServerBehaviour(this);
         }
 
-        public void downgradeToNormal() {
+        public void DowngradeToNormal() {
             this.behaviour = new ServerBehaviour(this);
         }
 
+        // When Server receives a message through Net Remoting 
         public void OnReceiveMessage(Message message) {
             behaviour.OnReceiveMessage(message);
         }
 
+        public string BuildRemoteUrl(string host, int port, string objIdentifier) {
+            return "tcp://" + host + ":" + port + "/" + objIdentifier;
+        }
     }
 
 }
