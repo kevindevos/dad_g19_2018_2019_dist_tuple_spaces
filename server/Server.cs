@@ -31,9 +31,11 @@ namespace ServerNamespace{
         }
 
         public Server(){
+            this.tupleSpace = new TupleSpace();
             this.behaviour = new ServerBehaviour();
         }
         
+
         public void upgradeToMaster() {
             this.behaviour = new MasterServerBehaviour();
         }
