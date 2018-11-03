@@ -11,9 +11,8 @@ using System.Threading.Tasks;
 using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
-    class Client : MarshalByRefObject, IRemoting, ITupleOperations {
-        public delegate Tuple RemoteBlockingAsyncDelegate(Request request);
-        public delegate void RemoteNonBlockingAsyncDelegate(Request request);
+    class Client : MarshalByRefObject, IRemoting {
+        public delegate Message RemoteAsyncDelegate(Request request);
 
         private const string defaultServerHost = "localhost";
         private int serverPort;
@@ -97,21 +96,39 @@ namespace ClientNamespace {
 
 
         public void Write(Tuple tuple) {
+            // remote exceptions?
             Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.WRITE, tuple);
-
-            RemoteNonBlockingAsyncDelegate remoteDel =
-                new RemoteNonBlockingAsyncDelegate(remote.OnReceiveMessage);
+            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
 
             remoteDel.BeginInvoke(request, null, null);
-
         }
 
-        public Tuple Read(TupleSchema tupleSchema) {
-            throw new NotImplementedException();
+        public Tuple Read(Tuple tuple) {
+            // remote exceptions?
+            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.READ, tuple);
+            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
+
+            // async call
+            IAsyncResult ar = remoteDel.BeginInvoke(request, null, null);
+            // wait for a signal (blocking)
+            ar.AsyncWaitHandle.WaitOne();
+
+            // get response and return tuple
+            return remoteDel.EndInvoke(ar).tuple;
         }
 
-        public Tuple Take(TupleSchema tupleSchema) {
-            throw new NotImplementedException();
+        public Tuple Take(Tuple tuple) {
+            // remote exceptions?
+            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.TAKE, tuple);
+            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
+
+            // async call
+            IAsyncResult ar = remoteDel.BeginInvoke(request, null, null);
+            // wait for a signal (blocking)
+            ar.AsyncWaitHandle.WaitOne();
+
+            // get response and return tuple
+            return remoteDel.EndInvoke(ar).tuple;
         }
     }
 }

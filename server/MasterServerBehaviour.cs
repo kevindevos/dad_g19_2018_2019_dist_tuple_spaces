@@ -15,7 +15,7 @@ namespace ServerNamespace {
 
         
 
-        public override void OnReceiveMessage(Message message) {
+        public override Message OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Request))) {
                 server.mostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
                 server.requestQueue.Enqueue((Request)message);

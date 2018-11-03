@@ -12,7 +12,7 @@ namespace CommonTypes
     
     public class TupleSchema
     {
-        public readonly Tuple schema;
+        public Tuple schema { get { return schema; } set { schema = value; } }
 
         public TupleSchema(Tuple tuple)
         {

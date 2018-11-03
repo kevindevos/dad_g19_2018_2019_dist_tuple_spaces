@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace {
     public class ServerBehaviour : ITupleOperations{
@@ -14,7 +15,7 @@ namespace ServerNamespace {
             this.server = server;
         }
 
-        public virtual void OnReceiveMessage(Message message) {
+        public virtual Message OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Order))){
                 // execute the order (tuple space operation)
             }
@@ -25,15 +26,16 @@ namespace ServerNamespace {
             }
         }
 
-        public void Write(CommonTypes.Tuple tuple) {
+
+        public void Write(Tuple tuple) {
             throw new NotImplementedException();
         }
 
-        public CommonTypes.Tuple Read(TupleSchema tupleSchema) {
+        public Tuple Read(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
 
-        public CommonTypes.Tuple Take(TupleSchema tupleSchema) {
+        public Tuple Take(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
     }
