@@ -18,10 +18,13 @@ namespace CommonTypes
 
         public Boolean Match(Tuple tuple)
         {
-            if (tuple.GetSize() != schema.GetSize())
+            // if there are more required tuple members than they exist, return false
+            if (tuple.GetSize() < schema.GetSize())
                 return false;
 
 
+
+            // does it need to be in order 1.2.3? or can it be matching 2,hello to hello,2
             for (int i = 0; i < schema.GetSize(); i++)
             {
                 object schemaField = schema.fields[0];
