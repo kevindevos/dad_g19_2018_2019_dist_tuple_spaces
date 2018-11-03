@@ -17,7 +17,7 @@ namespace ServerNamespace{
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
         public ServerBehaviour behaviour;
 
-        // A dictionary containing the most recent sequence numbers of the most recent request of each client.  <clientRemoteURL, lastSeqNum>
+        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
         public Dictionary<string, int> mostRecentClientRequestSeqNumbers;
 
         // A list of requests the server receives, defines the order 
@@ -35,6 +35,12 @@ namespace ServerNamespace{
             Server server = new Server();
             server.RegisterTcpChannel();
             server.RegisterService();
+
+            // (main thread loop)
+            // TODO if master, loop through request list 
+            // verify if request is ready to be executed ( there is no previous request with lower sequence number from same client to be executed)  or other cases?
+            // broadcast the request to other servers as an order 
+            // perform the request as the master 
 
             Console.WriteLine("Server Started, press <enter> to leave.");
             Console.ReadLine();
