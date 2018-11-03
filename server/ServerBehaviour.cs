@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace ServerNamespace {
     public class ServerBehaviour {
+        private Server server; // keep instance of the server for accessing things like sequence numbers, request queue, tuple space
+
+        public ServerBehaviour(Server server) {
+            this.server = server;
+        }
 
         protected virtual List<object> Read(List<object> members) {
             // find all tuples that contain all objects in members 

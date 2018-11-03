@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 namespace ServerNamespace {
     class MasterServerBehaviour : ServerBehaviour {
 
+        public MasterServerBehaviour(Server server) : base(server) {
+
+        }
+
         protected override List<object> Read(List<object> objects) {
             // do master stuff
 
