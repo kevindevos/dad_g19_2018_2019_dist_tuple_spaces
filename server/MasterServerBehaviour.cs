@@ -13,20 +13,15 @@ namespace ServerNamespace {
             this.server = server;
         }
 
-        public override List<object> Read(List<object> objects) {
-            // do master stuff
-
-
-            
-            return base.Read(objects);
-        }
-
+       
         public override void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Request))) {
                 server.mostRecentClientRequestSeqNumbers.Add(message.clientId, message.seqNum);
                 server.requestQueue.Enqueue((Request)message);
 
                 broadcastRequestAsOrder((Request)message);
+
+                // TODO , perform the tuple space action here , after broadcasting the order
             }
 
             base.OnReceiveMessage(message);

@@ -14,7 +14,7 @@ namespace ServerNamespace {
             this.server = server;
         }
 
-        public virtual List<object> Read(List<object> members) {
+        public List<object> Read(List<object> members) {
             // find all tuples that contain all objects in members 
             // return 
 
@@ -22,7 +22,7 @@ namespace ServerNamespace {
             return null;
         }
 
-        // TODO other tuple operations
+        // TODO other tuple operations ( not virtual, they should be the same )
 
         public virtual void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Order))){
