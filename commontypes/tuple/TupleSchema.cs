@@ -12,7 +12,8 @@ namespace CommonTypes
     
     public class TupleSchema
     {
-        public Tuple schema { get { return schema; } set { schema = value; } }
+        public Tuple schema;
+        public Tuple Schema { get { return schema; } set { schema = value; } }
 
         public TupleSchema(Tuple tuple)
         {

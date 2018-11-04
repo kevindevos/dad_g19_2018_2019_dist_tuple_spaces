@@ -21,7 +21,13 @@ namespace ClientNamespace {
         public const string defaultClientHost = "localhost";
 
         // TODO sequence number thread safe??
-        private int clientRequestSeqNumber { get { return clientRequestSeqNumber; } set { clientRequestSeqNumber = value; } }
+        private int clientRequestSeqNumber;
+
+        public int ClientRequestSeqNumber
+        {
+            get => clientRequestSeqNumber;
+            set => clientRequestSeqNumber = value;
+        }
 
         // works as a client identifier for the servers and allows them to know where to send a message
         public string clientRemoteURL;
@@ -77,13 +83,13 @@ namespace ClientNamespace {
         }
 
         // parse a message from a server
-        public void OnReceiveMessage(Message message) {
+        public Message OnReceiveMessage(Message message) {
             throw new NotImplementedException();
         }
 
         public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);
-            ChannelServices.RegisterChannel(tcpChannel, true);
+            ChannelServices.RegisterChannel(tcpChannel, false);
         }
 
         public void RegisterService() {

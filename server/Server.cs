@@ -25,9 +25,22 @@ namespace ServerNamespace{
         public List<Request> requestList;
 
         // Tuple space
-        public TupleSpace tupleSpace { get { return tupleSpace; } set { tupleSpace = value; } }
+        public TupleSpace tupleSpace;
 
-        public int serverPort { get { return serverPort; } set { serverPort = value; } }
+        public TupleSpace TupleSpace
+        {
+            get => tupleSpace;
+            set => tupleSpace = value;
+        }
+
+        public int serverPort;
+
+        public int ServerPort
+        {
+            get => serverPort;
+            set => serverPort = value;
+        }
+
         private TcpChannel tcpChannel;
 
 
@@ -74,7 +87,7 @@ namespace ServerNamespace{
 
         public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);
-            ChannelServices.RegisterChannel(tcpChannel, true);
+            ChannelServices.RegisterChannel(tcpChannel, false);
         }
 
         public void RegisterService() {
