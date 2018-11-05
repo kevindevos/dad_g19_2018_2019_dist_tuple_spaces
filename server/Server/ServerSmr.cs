@@ -7,18 +7,18 @@ namespace ServerNamespace.Server
     {
         public ServerSMR() : base()
         {
-            Behaviour = new NormalServerSmrBehaviour(this);
+            Behaviour = new NormalServerSMRBehaviour(this);
         }
 
         
         public void UpgradeToMaster()
         {
-            Behaviour = new MasterServerSmrBehaviour(this);
+            Behaviour = new MasterServerSMRBehaviour(this);
         }
 
         public void DowngradeToNormal()
         {
-            Behaviour = new NormalServerSmrBehaviour(this);
+            Behaviour = new NormalServerSMRBehaviour(this);
         }
         
         

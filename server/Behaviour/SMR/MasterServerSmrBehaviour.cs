@@ -7,7 +7,7 @@ namespace ServerNamespace.Behaviour.SMR
 {
     public class MasterServerSMRBehaviour : ServerBehaviour {
         
-        public MasterServerSmrBehaviour(Server.Server server) : base(server)
+        public MasterServerSMRBehaviour(Server.Server server) : base(server)
         {
         }
 
@@ -27,7 +27,7 @@ namespace ServerNamespace.Behaviour.SMR
 
                     // is the request's sequence number the one after the last executed request of the same client? (client order)
                     if (ClientRequestSequenceNumberIsValid(request)) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber);
+                        Order order = new Order(request, Server.LastOrderSequenceNumber,Server.endpointURL);
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                     }

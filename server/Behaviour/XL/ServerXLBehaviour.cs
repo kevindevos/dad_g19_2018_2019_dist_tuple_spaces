@@ -3,9 +3,9 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.XL
 {
-    public class NormalServerXlBehaviour : ServerBehaviour
+    public class ServerXLBehaviour : ServerBehaviour
     {
-        public NormalServerXlBehaviour(Server.Server server) : base(server)
+        public ServerXLBehaviour(Server.Server server) : base(server)
         {
         }
 

@@ -70,6 +70,9 @@ namespace ClientNamespace {
         }
 
         public void OnReceiveMessage(Message message) {
+            // Does this message come from a server that is not in our known list?
+
+
             if (message.GetType().Equals(typeof(Response))){
                 Response response = (Response)message;
 
@@ -82,7 +85,10 @@ namespace ClientNamespace {
                 // if receives atleast one response for a blockingrequest then unlock ( can only send one and then block, so it will always unblock properly? )
                 if(response.Request.RequestType.Equals(RequestType.READ) || response.Request.RequestType.Equals(RequestType.TAKE)){
                     this.isBlockedFromSendingRequests = false;
+
                     // TODO parse the response data from the request and do something with it
+
+
                 }
 
                 receivedResponses.Add(response.Request.SeqNum, response);

@@ -15,5 +15,6 @@ namespace CommonTypes {
         void RegisterTcpChannel();
         void RegisterService();
         IRemoting GetRemote(string host, int destPort, string objIdentifier);
+        string GetRemoteEndpointURL();
     }
 }
