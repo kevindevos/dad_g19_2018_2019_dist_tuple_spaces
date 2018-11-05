@@ -6,10 +6,16 @@ using System.Threading.Tasks;
 
 namespace CommonTypes.message {
     public class Response : Message {
-        List<Tuple> tupleList;
+        private List<Tuple> tupleList;
+        // The request to which the response refers to
+        private Request request;
 
-        public Response(int seqNum, string clientRemoteUrl, List<Tuple> tupleList) : base(seqNum, clientRemoteUrl, null) {
-            this.tupleList = tupleList;
+        public List<Tuple> TupleList { get; private set; }
+        public Request Request { get; private set; }
+
+        public Response(Request request, List<Tuple> tupleList) {
+            this.Request = request;
+            this.TupleList = tupleList;
         }
     }
 }
