@@ -3,9 +3,9 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR
 {
-    public class NormalServerSmrBehaviour : ServerBehaviour
+    public class NormalServerSMRBehaviour : ServerBehaviour
     {
-        public NormalServerSmrBehaviour(Server.Server server) : base(server)
+        public NormalServerSMRBehaviour(Server.Server server) : base(server)
         {
         }
 

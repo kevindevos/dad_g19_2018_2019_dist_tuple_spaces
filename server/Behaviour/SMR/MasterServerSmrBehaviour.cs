@@ -5,7 +5,7 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR
 {
-    public class MasterServerSmrBehaviour : ServerBehaviour {
+    public class MasterServerSMRBehaviour : ServerBehaviour {
         
         public MasterServerSmrBehaviour(Server.Server server) : base(server)
         {
