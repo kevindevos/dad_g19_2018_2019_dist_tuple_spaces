@@ -1,4 +1,5 @@
 ﻿using CommonTypes;
+using CommonTypes.message;
 using CommonTypes.server;
 using System;
 using System.Collections.Generic;
@@ -11,133 +12,70 @@ using System.Threading.Tasks;
 using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
-    class Client : MarshalByRefObject, IRemoting {
+    class Client : RemotingEndpoint, IRemoting {
         public delegate void RemoteAsyncDelegate(Message message);
 
-        private const string defaultServerHost = "localhost";
-        private int serverPort;
-
-        public const int defaultClientPort = 8080;
-        public const string defaultClientHost = "localhost";
-
-        // TODO sequence number thread safe??
         private int clientRequestSeqNumber;
+        public int ClientRequestSeqNumber { get; set; }
 
-        public int ClientRequestSeqNumber
-        {
-            get => clientRequestSeqNumber;
-            set => clientRequestSeqNumber = value;
-        }
-
-        // works as a client identifier for the servers and allows them to know where to send a message
-        public string clientRemoteURL;
-
-        // remote object for sending messages to the server
-        private IRemoting remote;
-
-        // this could be later changed for letting client know of other servers, initialized to 3 values as default
-        private List<int> knownServerPorts = new List<int>(new int[] { 8086, 8087, 8088 });
-
-        private TcpChannel tcpChannel;
-
+        private bool isBlockedFromSendingRequests;
+        public bool IsBlockedFromSendingRequests { get; private set; }
+        
         static void Main(string[] args) {
             Client client = new Client();
             client.clientRequestSeqNumber = 0;
 
-            client.RegisterTcpChannel();
-            client.RegisterService();
-
-            // TODO call connect, with specific port, or default port?
         }
+        public Client() : base("Client") { }
 
-        public Client() {
-            clientRemoteURL = BuildRemoteUrl(defaultClientHost, defaultClientPort, "Client");
-        }
-
-        public Client(string host, int port) {
-            clientRemoteURL = BuildRemoteUrl(host, port, "Client");
-        }
-
-        public IRemoting Connect(string url, string objIdentifier) {
-            for(int i = 0; i < knownServerPorts.Capacity; i++) {
-                try {
-                    IRemoting remote = (IRemoting)Activator.GetObject(
-                        typeof(IRemoting),
-                        BuildRemoteUrl(url, knownServerPorts[i], objIdentifier));
-                    return remote;
-                }
-                catch {
-                    // TODO
-                }
-            }
-
-            return null;
-        }
-
-        public IRemoting Connect(string url, int destPort, string objIdentifier) {
-            IRemoting remote = (IRemoting)Activator.GetObject(
-                typeof(IRemoting),
-                BuildRemoteUrl(url, destPort, objIdentifier));
-
-            return remote;
-        }
-
-       
-        public void RegisterTcpChannel() {
-            tcpChannel = new TcpChannel(serverPort);
-            ChannelServices.RegisterChannel(tcpChannel, false);
-        }
-
-        public void RegisterService() {
-            RemotingServices.Marshal(this, "Client", typeof(Client));
-        }
-
-        public string BuildRemoteUrl(string host, int port, string objIdentifier) {
-            return "tcp://" + host + ":" + port + "/" + objIdentifier;
-        }
-
+        public Client(string host, int port) : base(host, port, "Client") { }
 
         public void Write(Tuple tuple) {
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.WRITE, tuple);
-            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
+            Request request = new WriteRequest(clientRequestSeqNumber, endpointURL, tuple);
 
-            remoteDel.BeginInvoke(request, null, null);
-            clientRequestSeqNumber++;
+            SendRequestToKnownServers(request);
         }
 
-        public Tuple Read(Tuple tuple) {
+        public void Read(Tuple tuple) {
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.READ, tuple);
-            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
+            Request request = new ReadRequest(clientRequestSeqNumber, endpointURL, tuple);
 
-            // async call
-            IAsyncResult ar = remoteDel.BeginInvoke(request, null, null);
-            clientRequestSeqNumber++;
-            // wait for a signal (blocking)
-            ar.AsyncWaitHandle.WaitOne();
+            SendRequestToKnownServers(request);
 
-            // get response and return tuple
-            return remoteDel.EndInvoke(ar).tuple;
+            this.isBlockedFromSendingRequests = true;
         }
 
-        public Tuple Take(Tuple tuple) {
+
+        public void Take(Tuple tuple) {
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.TAKE, tuple);
-            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
+            Request request = new ReadRequest(clientRequestSeqNumber, endpointURL, tuple);
 
-            // async call
-            IAsyncResult ar = remoteDel.BeginInvoke(request, null, null);
+            SendRequestToKnownServers(request);
+
+            this.isBlockedFromSendingRequests = true;
+        }
+
+        public void SendRequestToKnownServers(Request request) {
+            RemoteAsyncDelegate remoteDel;
+
+            for (int i = 0; i < knownServerRemotes.Capacity; i++) {
+                remoteDel = new RemoteAsyncDelegate(knownServerRemotes.ElementAt(i).OnReceiveMessage);
+                remoteDel.BeginInvoke(request, null, null);
+            }
             clientRequestSeqNumber++;
-            // wait for a signal (blocking)
-            ar.AsyncWaitHandle.WaitOne();
-
-            // get response and return tuple
-            return remoteDel.EndInvoke(ar).tuple;
         }
 
         public void OnReceiveMessage(Message message) {
-            throw new NotImplementedException();
+            if (message.GetType().Equals(typeof(Response))){
+                Response response = (Response)message;
+
+                // if receives atleast one response for a blockingrequest? then unlock
+                if(response.Request.RequestType.Equals(RequestType.READ) || response.Request.RequestType.Equals(RequestType.TAKE)){
+                    this.isBlockedFromSendingRequests = false;
+                    // TODO parse the response data from the request and do something with it
+                }
+            }
         }
 
         public void OnSendMessage(Message message) {

@@ -6,14 +6,20 @@ using System.Threading.Tasks;
 
 namespace CommonTypes.message {
     // An order is a message sent by a master to other normal servers, to perform a certain action/request
-    public class Order : Message{
+    public class Order : Message {
         private Request request;
+        private int orderSeqNumber;
+        private Request request1;
+
+        public int OrderSeqNumber { get; set; }
 
         public Request Request { get; private set; }
 
-        public Order(Request request) {
+        public Order(Request request, int orderSequenceNumber) {
             this.Request = request;
+            this.OrderSeqNumber = orderSequenceNumber;
         }
 
+     
     }
 }

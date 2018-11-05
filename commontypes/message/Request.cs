@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace CommonTypes {
     public enum RequestType { READ, WRITE, TAKE }  
 
-    public class Request : Message {
+    public abstract class Request : Message {
         private RequestType requestType;
         private int seqNum;
         private string clientRemoteURL;
@@ -24,5 +24,15 @@ namespace CommonTypes {
             this.RequestType = rt;
             this.Tuple = tuple;
         }
+    }
+
+    public class ReadRequest : Request {
+        public ReadRequest(int seqNum, string clientRemoteURL, Tuple tuple) : base(seqNum, clientRemoteURL, RequestType.READ, tuple) { }
+    }
+    public class WriteRequest : Request {
+        public WriteRequest(int seqNum, string clientRemoteURL, Tuple tuple) : base(seqNum, clientRemoteURL, RequestType.WRITE, tuple) { }
+    }
+    public class TakeRequest : Request {
+        public TakeRequest(int seqNum, string clientRemoteURL, Tuple tuple) : base(seqNum, clientRemoteURL, RequestType.TAKE, tuple) { }
     }
 }

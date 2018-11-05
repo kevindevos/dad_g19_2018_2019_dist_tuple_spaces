@@ -6,7 +6,7 @@ using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace {
     public class ServerBehaviour {
-        private Server server; 
+        protected Server server; 
 
         public ServerBehaviour(Server server) {
             this.server = server;
@@ -15,22 +15,22 @@ namespace ServerNamespace {
         public virtual Message OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Order))){
                 Order order = (Order)message;
-                server.requestList.Remove(order.Request);
-                return performRequest(order.Request);
+                server.DeleteRequest(order.Request);
+                server.LastOrderSequenceNumber = order.OrderSeqNumber;
+
+                return PerformRequest(order.Request);
             }
             else if ( message.GetType().Equals(typeof(Request))) {
                 Request request = (Request)message;
-                server.mostRecentClientRequestSeqNumbers.Add(request.ClientRemoteURL, request.SeqNum);
-                server.requestList.Add(request);
+                server.SaveRequest(request);
 
                 // TODO Problem, when client does read or take, it is blocking, it expects a return message, but the server needs to wait for the order of the master, ?!?!?
 
             }
             return null;
         }
-        
-        public Message performRequest(Request request) {
 
+       public Response PerformRequest(Request request) {
             switch (request.RequestType) {
                 case RequestType.READ:
                     TupleSchema tupleSchema = new TupleSchema(request.Tuple);
@@ -49,16 +49,15 @@ namespace ServerNamespace {
             return null;
         }
 
-
-        public void Write(Tuple tuple) {
+        private void Write(Tuple tuple) {
             throw new NotImplementedException();
         }
 
-        public List<Tuple> Read(TupleSchema tupleSchema) {
+        private List<Tuple> Read(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
 
-        public List<Tuple> Take(TupleSchema tupleSchema) {
+        private List<Tuple> Take(TupleSchema tupleSchema) {
             throw new NotImplementedException();
         }
     }
