@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace CommonTypes {
     public delegate void RemoteAsyncDelegate(Message message);
+    
     // Allow a class extending from IRemoting to receive messages with Net Remoting
     public interface IRemoting {
         void OnReceiveMessage(Message message);

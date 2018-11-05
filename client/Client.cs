@@ -13,7 +13,6 @@ using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
     class Client : RemotingEndpoint, IRemoting {
-        public delegate void RemoteAsyncDelegate(Message message);
 
         private int clientRequestSeqNumber;
         public int ClientRequestSeqNumber { get; set; }

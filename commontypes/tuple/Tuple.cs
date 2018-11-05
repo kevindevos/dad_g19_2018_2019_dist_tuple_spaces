@@ -6,24 +6,24 @@ using System.Threading.Tasks;
 
 namespace CommonTypes{
     public class Tuple{
-        public readonly List<object> fields;
+        public readonly List<object> Fields;
 
         public Tuple(List<object> fields) {
-            this.fields = fields;
+            Fields = fields;
         }
 
         public int GetSize()
         {
-            return fields.Count;
+            return Fields.Count;
         }
 
         public bool Contains(object member) {
-            return fields.Contains(member);
+            return Fields.Contains(member);
         }
 
         public override string ToString()
         {
-            return "(" + String.Join(", ", fields.ToArray()) + ")";
+            return "(" + string.Join(", ", Fields.ToArray()) + ")";
         }
     }
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿using CommonTypes;
 using CommonTypes.message;
 using System;
@@ -62,3 +63,6 @@ namespace ServerNamespace {
         }
     }
 }
+=======
+﻿
+>>>>>>> 8f6f601164ee3244ab3007ec0a0856b7274d638e

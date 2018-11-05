@@ -9,7 +9,6 @@ namespace CommonTypes.message {
     public class Order : Message {
         private Request request;
         private int orderSeqNumber;
-        private Request request1;
 
         public int OrderSeqNumber { get; set; }
 
@@ -20,6 +19,5 @@ namespace CommonTypes.message {
             this.OrderSeqNumber = orderSequenceNumber;
         }
 
-     
     }
 }

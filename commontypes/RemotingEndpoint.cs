@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using CommonTypes.server;
+using CommonTypes.message;
 
 namespace CommonTypes {
     public abstract class RemotingEndpoint : MarshalByRefObject, IRemoting  {
@@ -16,7 +16,7 @@ namespace CommonTypes {
         protected const string defaultClientHost = "localhost";
         protected const int defaultClientPort = 8070;
         protected string objIdentifier;
-        protected List<IRemoting> knownServerRemotes;
+        public List<IRemoting> knownServerRemotes;
         protected string endpointURL;
 
         protected TcpChannel tcpChannel;
@@ -84,5 +84,6 @@ namespace CommonTypes {
             tcpChannel = new TcpChannel(port);
             ChannelServices.RegisterChannel(tcpChannel, false);
         }
+        
     }
 }

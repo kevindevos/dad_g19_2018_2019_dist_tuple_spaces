@@ -9,6 +9,7 @@ namespace CommonTypes {
     class Animal : ITupleObject {
         public string name { get { return name; } set { name = value; } } 
         public int age { get { return age; } set { age = value;  } }
+        private int foo;
 
         public Animal(string name, int age) {
             this.name = name;
