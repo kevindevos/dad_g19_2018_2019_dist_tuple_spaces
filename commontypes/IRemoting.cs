@@ -1,4 +1,6 @@
-﻿namespace CommonTypes {
+﻿using CommonTypes.message;
+
+namespace CommonTypes {
     // Allow a class extending from IRemoting to receive messages with Net Remoting
     public interface IRemoting {
         void OnReceiveMessage(Message message);

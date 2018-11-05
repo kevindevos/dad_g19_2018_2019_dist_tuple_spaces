@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using CommonTypes;
+using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR
 {

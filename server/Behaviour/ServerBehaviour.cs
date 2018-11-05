@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using CommonTypes;
 using CommonTypes.message;
+using CommonTypes.tuple;
 using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace.Behaviour {

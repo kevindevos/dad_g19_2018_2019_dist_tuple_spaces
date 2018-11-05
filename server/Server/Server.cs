@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes;
+using CommonTypes.message;
+using CommonTypes.tuple;
 using ServerNamespace.Behaviour;
 using Tuple = CommonTypes.Tuple;
 

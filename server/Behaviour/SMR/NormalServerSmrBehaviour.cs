@@ -11,13 +11,15 @@ namespace ServerNamespace.Behaviour.SMR
 
         public override Message OnReceiveMessage(Message message) {
             if (message.GetType() == typeof(Order)){
-                // find the Request object for the order pair client seqNumber and id
-                var request = Server.GetRequestBySeqNumberAndClientUrl(message.seqNum, message.clientRemoteURL);
-                return PerformRequest(request);
+                var request = (Request)message;
+                Server.MostRecentClientRequestSeqNumbers.Add(request.ClientRemoteUrl, request.SeqNum);
+                Server.RequestList.Add(request);
+                Server.Decide(); // concurrency, 
             }
             else if ( message.GetType() == typeof(Request)) {
-                Server.MostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
-                Server.RequestList.Add((Request)message);
+                Request request = (Request)message;
+                Server.MostRecentClientRequestSeqNumbers.Add(request.ClientRemoteUrl, request.SeqNum);
+                Server.RequestList.Add(request);
 
                 // TODO Problem, when client does read or take, it is blocking, it expects a return message, but the server needs to wait for the order of the master, ?!?!?
 
