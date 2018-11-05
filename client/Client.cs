@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
-    class Client : RemotingEndpoint, IRemoting {
+    public class Client : RemotingEndpoint, IRemoting {
 
         private int clientRequestSeqNumber;
         public int ClientRequestSeqNumber { get; set; }
