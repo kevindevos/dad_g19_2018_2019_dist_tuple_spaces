@@ -72,6 +72,7 @@ namespace ServerNamespace.Server{
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
+            // TODO 2 phase lock?
             return _tupleSpace.Take(tupleSchema);
         }
 

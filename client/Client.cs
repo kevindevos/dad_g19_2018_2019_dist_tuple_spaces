@@ -18,15 +18,20 @@ namespace ClientNamespace {
 
         private bool isBlockedFromSendingRequests;
         public bool IsBlockedFromSendingRequests { get; private set; }
+
+        private Dictionary<int, Response> receivedResponses;
+        public Dictionary<int, Response> ReceivedResponses { get; private set; }
         
         static void Main(string[] args) {
             Client client = new Client();
             client.clientRequestSeqNumber = 0;
 
         }
-        public Client() : base("Client") { }
+        public Client() : this(defaultClientHost, defaultClientPort) { }
 
-        public Client(string host, int port) : base(host, port, "Client") { }
+        public Client(string host, int port) : base(host, port, "Client") {
+            this.receivedResponses = new Dictionary<int, Response>();
+        }
 
         public void Write(Tuple tuple) {
             // remote exceptions?
@@ -47,7 +52,7 @@ namespace ClientNamespace {
 
         public void Take(Tuple tuple) {
             // remote exceptions?
-            Request request = new ReadRequest(clientRequestSeqNumber, endpointURL, tuple);
+            Request request = new TakeRequest(clientRequestSeqNumber, endpointURL, tuple);
 
             SendRequestToKnownServers(request);
 
@@ -68,16 +73,24 @@ namespace ClientNamespace {
             if (message.GetType().Equals(typeof(Response))){
                 Response response = (Response)message;
 
-                // if receives atleast one response for a blockingrequest? then unlock
+                // NOTE: this assumes a server sends back the perfectly correct response that we wanted
+                // if the request we sent out has already gotten the respective response ( same seqNumber in request and response of the client ) then ignore
+                if (receivedResponses.Keys.Contains(response.Request.SeqNum)) {
+                    return;
+                }
+
+                // if receives atleast one response for a blockingrequest then unlock ( can only send one and then block, so it will always unblock properly? )
                 if(response.Request.RequestType.Equals(RequestType.READ) || response.Request.RequestType.Equals(RequestType.TAKE)){
                     this.isBlockedFromSendingRequests = false;
                     // TODO parse the response data from the request and do something with it
                 }
+
+                receivedResponses.Add(response.Request.SeqNum, response);
             }
         }
 
         public void OnSendMessage(Message message) {
-            throw new NotImplementedException();
+            // TODO not needed yet
         }
     }
 }
