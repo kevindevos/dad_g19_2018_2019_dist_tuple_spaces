@@ -15,8 +15,10 @@ using Tuple = CommonTypes.Tuple;
 namespace ServerNamespace{
     public class Server : MarshalByRefObject, IRemoting {
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
-        public ServerBehaviour behaviour;
         private int serverPort;
+        private TupleSpace tupleSpace;
+        private TcpChannel tcpChannel;
+
 
         public void decide() {
             lock (requestList) {
@@ -32,20 +34,8 @@ namespace ServerNamespace{
         // for a FIFO order process requests from index 0 and do RemoveAt(0)
         public List<Request> requestList;
 
-        // Tuple space
-        private TupleSpace tupleSpace;
-        public TupleSpace TupleSpace
-        {
-            get => tupleSpace;
-            set => tupleSpace = value;
-        }
-        public int ServerPort
-        {
-            get => serverPort;
-            set => serverPort = value;
-        }
-
-        private TcpChannel tcpChannel;
+        public ServerBehaviour behaviour;
+        public TupleSpace TupleSpace { get; private set; }
 
 
         static void Main(string[] args) {
@@ -69,20 +59,6 @@ namespace ServerNamespace{
             this.serverPort = serverPort; 
         }
 
-        public void removeRequestFromList(Request request) {
-            requestList.Remove(request);
-        }
-
-        public Request getRequestBySeqNumberAndClientUrl(int seq, string clientUrl) {
-            for(int i = 0; i < requestList.Capacity; i++) {
-                Request temp = requestList[i];
-                if(temp.seqNum == seq && temp.clientRemoteURL.Equals(clientUrl)){
-                    return temp;
-                }
-            }
-            return null;
-        }
-
 
         public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);
@@ -101,9 +77,14 @@ namespace ServerNamespace{
             this.behaviour = new ServerBehaviour(this);
         }
 
-        // When Server receives a message through Net Remoting 
-        public Message OnReceiveMessage(Message message) {
-            return behaviour.OnReceiveMessage(message);
+       
+
+        public void OnReceiveMessage(Message message) {
+            behaviour.OnReceiveMessage(message);
+        }
+
+        public void OnSendMessage(Message message) {
+            throw new NotImplementedException();
         }
 
         public string BuildRemoteUrl(string host, int port, string objIdentifier) {

@@ -6,7 +6,7 @@ using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace {
     public class ServerBehaviour {
-        private Server server; // keep instance of the server for accessing things like sequence numbers, request queue, tuple space
+        private Server server; 
 
         public ServerBehaviour(Server server) {
             this.server = server;
@@ -14,13 +14,14 @@ namespace ServerNamespace {
 
         public virtual Message OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Order))){
-                // find the Request object for the order pair client seqnumber and id
-                Request request = server.getRequestBySeqNumberAndClientUrl(message.seqNum, message.clientRemoteURL);
-                return performRequest(request);
+                Order order = (Order)message;
+                server.requestList.Remove(order.Request);
+                return performRequest(order.Request);
             }
             else if ( message.GetType().Equals(typeof(Request))) {
-                server.mostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
-                server.requestList.Add((Request)message);
+                Request request = (Request)message;
+                server.mostRecentClientRequestSeqNumbers.Add(request.ClientRemoteURL, request.SeqNum);
+                server.requestList.Add(request);
 
                 // TODO Problem, when client does read or take, it is blocking, it expects a return message, but the server needs to wait for the order of the master, ?!?!?
 
@@ -29,23 +30,21 @@ namespace ServerNamespace {
         }
         
         public Message performRequest(Request request) {
-            // remove from the requestList
-            server.removeRequestFromList(request);
 
-            switch (request.requestType) {
+            switch (request.RequestType) {
                 case RequestType.READ:
-                    TupleSchema tupleSchema = new TupleSchema(request.tuple);
+                    TupleSchema tupleSchema = new TupleSchema(request.Tuple);
                     List<Tuple> resultTuples = Read(tupleSchema);
-                    return new Response(request.seqNum, request.clientRemoteURL, resultTuples);
+                    return new Response(request, resultTuples);
 
                 case RequestType.WRITE:
-                    Write(request.tuple);
+                    Write(request.Tuple);
                     return null;
 
                 case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.tuple);
+                    tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Take(tupleSchema);
-                    return new Response(request.seqNum, request.clientRemoteURL, resultTuples);
+                    return new Response(request, resultTuples);
             }
             return null;
         }

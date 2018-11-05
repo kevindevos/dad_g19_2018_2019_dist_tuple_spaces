@@ -12,7 +12,7 @@ using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
     class Client : MarshalByRefObject, IRemoting {
-        public delegate Message RemoteAsyncDelegate(Request request);
+        public delegate void RemoteAsyncDelegate(Message message);
 
         private const string defaultServerHost = "localhost";
         private int serverPort;
@@ -82,11 +82,7 @@ namespace ClientNamespace {
             return remote;
         }
 
-        // parse a message from a server
-        public Message OnReceiveMessage(Message message) {
-            throw new NotImplementedException();
-        }
-
+       
         public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);
             ChannelServices.RegisterChannel(tcpChannel, false);
@@ -138,6 +134,14 @@ namespace ClientNamespace {
 
             // get response and return tuple
             return remoteDel.EndInvoke(ar).tuple;
+        }
+
+        public void OnReceiveMessage(Message message) {
+            throw new NotImplementedException();
+        }
+
+        public void OnSendMessage(Message message) {
+            throw new NotImplementedException();
         }
     }
 }

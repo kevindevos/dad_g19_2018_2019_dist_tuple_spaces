@@ -17,8 +17,9 @@ namespace ServerNamespace {
 
         public override Message OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Request))) {
-                server.mostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
-                server.requestList.Add((Request)message);
+                Request request = (Request)message;
+                server.mostRecentClientRequestSeqNumbers.Add(request.ClientRemoteURL, request.SeqNum);
+                server.requestList.Add(request);
                 server.decide(); // concurrency, 
 
                 // TODO Problem, when client does read or take, it is blocking, it expects a return message, but request is delayed for the master decision
