@@ -1,4 +1,11 @@
-﻿namespace CommonTypes.message {
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using CommonTypes.message;
+
+namespace CommonTypes {
     public enum RequestType { Read, Write, Take }  
 
     public class Request : Message {
