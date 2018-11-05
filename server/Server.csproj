@@ -44,7 +44,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Behaviour\IServerBehaviour.cs" />
     <Compile Include="Behaviour\ServerBehaviour.cs" />
     <Compile Include="Behaviour\SMR\MasterServerSmrBehaviour.cs" />
     <Compile Include="Behaviour\SMR\NormalServerSmrBehaviour.cs" />

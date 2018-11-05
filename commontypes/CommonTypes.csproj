@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,6 +46,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RemotingEndpoint.cs" />
     <Compile Include="message\Response.cs" />
     <Compile Include="tuple\tupleobjects\Animal.cs" />
     <Compile Include="tuple\tupleobjects\Cat.cs" />
