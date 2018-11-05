@@ -3,9 +3,9 @@ using ServerNamespace.Behaviour.SMR;
 
 namespace ServerNamespace.Server
 {
-    public class ServerSmr : Server
+    public class ServerSMR : Server
     {
-        public ServerSmr() : base()
+        public ServerSMR() : base()
         {
             Behaviour = new NormalServerSmrBehaviour(this);
         }
