@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using CommonTypes;
 using CommonTypes.message;
+using CommonTypes.tuple;
 using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace.Behaviour {
@@ -21,20 +22,20 @@ namespace ServerNamespace.Behaviour {
             // remove from the requestList
             Server.RemoveRequestFromList(request);
 
-            var tupleSchema = new TupleSchema(request.tuple);
-            switch (request.requestType) {
-                case RequestType.READ:
+            var tupleSchema = new TupleSchema(request.Tuple);
+            switch (request.RequestType) {
+                case RequestType.Read:
                     var resultTuples = Server.Read(tupleSchema);
-                    return new Response(request.seqNum, request.clientRemoteURL, resultTuples);
+                    return new Response(request, resultTuples);
 
-                case RequestType.WRITE:
-                    Server.Write(request.tuple);
+                case RequestType.Write:
+                    Server.Write(request.Tuple);
                     return null;
 
-                case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.tuple);
+                case RequestType.Take:
+                    tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Server.Take(tupleSchema);
-                    return new Response(request.seqNum, request.clientRemoteURL, resultTuples);
+                    return new Response(request, resultTuples);
                 default:
                     throw new ArgumentOutOfRangeException();
             }

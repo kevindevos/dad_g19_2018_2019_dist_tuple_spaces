@@ -1,29 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Linq;
+using System.Collections.Generic;
 
-namespace CommonTypes
+namespace CommonTypes.tuple
 {
     public class TupleSpace : ITupleOperations
     {
         // <size of tuple, list of tuples with that size>
-        private ConcurrentDictionary<int, List<Tuple>> tupleSpace;
-        private ConcurrentDictionary<int, object> tupleSpaceLocks;
+        private readonly ConcurrentDictionary<int, List<Tuple>> _tupleSpace;
+        private readonly ConcurrentDictionary<int, object> _tupleSpaceLocks;
 
         public TupleSpace()
         {
-            tupleSpace = new ConcurrentDictionary<int, List<Tuple>>();
-            tupleSpaceLocks = new ConcurrentDictionary<int, object>();
+            _tupleSpace = new ConcurrentDictionary<int, List<Tuple>>();
+            _tupleSpaceLocks = new ConcurrentDictionary<int, object>();
 
         }
 
         public void Write(Tuple tuple)
         {
             // TODO better alternative?
-            lock (tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new Object()))
+            lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new Object()))
             {
-                tupleSpace.AddOrUpdate(tuple.GetSize(),
+                _tupleSpace.AddOrUpdate(tuple.GetSize(),
                                    (valueToAdd) => new List<Tuple>() { tuple },
                                    (key, oldValue) => new List<Tuple>(oldValue) { tuple }
                                   );
@@ -36,9 +35,9 @@ namespace CommonTypes
             List<Tuple> matchingTuples;
 
             // TODO better alternative?
-            lock (tupleSpaceLocks.GetOrAdd(tupleSchema.schema.GetSize(), new object()))
+            lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object()))
             {
-                matchingTuples = GetMatchingTuples(tupleSpace.GetOrAdd(tupleSchema.schema.GetSize(), new List<Tuple>()), tupleSchema);
+                matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
             }
 
             return matchingTuples;

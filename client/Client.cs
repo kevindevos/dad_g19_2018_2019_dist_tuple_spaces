@@ -1,4 +1,4 @@
-﻿using CommonTypes;
+using CommonTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +7,12 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text;
 using System.Threading.Tasks;
+using CommonTypes.message;
 using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
     class Client : MarshalByRefObject, IRemoting {
-        public delegate Message RemoteAsyncDelegate(Request request);
+        public delegate void RemoteAsyncDelegate(Request request);
 
         private const string defaultServerHost = "localhost";
         private int serverPort;
@@ -82,11 +83,11 @@ namespace ClientNamespace {
         }
 
         // parse a message from a server
-        public Message OnReceiveMessage(Message message) {
+        public void OnReceiveMessage(Message message) {
             throw new NotImplementedException();
         }
 
-        public Message OnSendMessage(Message message)
+        public void OnSendMessage(Message message)
         {
             throw new NotImplementedException();
         }
@@ -107,7 +108,7 @@ namespace ClientNamespace {
 
         public void Write(Tuple tuple) {
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.WRITE, tuple);
+            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.Write, tuple);
             RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
 
             remoteDel.BeginInvoke(request, null, null);
@@ -116,7 +117,7 @@ namespace ClientNamespace {
 
         public Tuple Read(Tuple tuple) {
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.READ, tuple);
+            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.Read, tuple);
             RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
 
             // async call
@@ -126,12 +127,13 @@ namespace ClientNamespace {
             ar.AsyncWaitHandle.WaitOne();
 
             // get response and return tuple
-            return remoteDel.EndInvoke(ar).tuple;
+            //return remoteDel.EndInvoke(ar).tuple;
+            return null;
         }
 
         public Tuple Take(Tuple tuple) {
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.TAKE, tuple);
+            Request request = new Request(clientRequestSeqNumber, clientRemoteURL, RequestType.Take, tuple);
             RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remote.OnReceiveMessage);
 
             // async call
@@ -141,7 +143,8 @@ namespace ClientNamespace {
             ar.AsyncWaitHandle.WaitOne();
 
             // get response and return tuple
-            return remoteDel.EndInvoke(ar).tuple;
+            //return remoteDel.EndInvoke(ar).tuple;
+            return null;
         }
     }
 }

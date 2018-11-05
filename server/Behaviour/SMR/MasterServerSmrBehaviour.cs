@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using CommonTypes;
+using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR
 {
@@ -13,7 +14,8 @@ namespace ServerNamespace.Behaviour.SMR
         {
             if (message.GetType() != typeof(Request)) return null;
             
-            Server.MostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
+            var request = (Request) message;
+            Server.MostRecentClientRequestSeqNumbers.Add(request.ClientRemoteUrl, request.SeqNum);
             Server.RequestList.Add((Request)message);
 
             // TODO Problem, when client does read or take, it is blocking, it expects a return message, but request is delayed for the master decision

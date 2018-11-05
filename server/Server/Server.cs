@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes;
+using CommonTypes.message;
+using CommonTypes.tuple;
 using ServerNamespace.Behaviour;
 using Tuple = CommonTypes.Tuple;
 
@@ -40,13 +42,13 @@ namespace ServerNamespace.Server{
 
        
         // IRemoting Methods 
-        public Message OnReceiveMessage(Message message) {
-            return Behaviour.OnReceiveMessage(message);
+        public void OnReceiveMessage(Message message) {
+            Behaviour.OnReceiveMessage(message);
         }
         
-        public Message OnSendMessage(Message message)
+        public void OnSendMessage(Message message)
         {
-            return Behaviour.OnSendMessage(message);
+            Behaviour.OnSendMessage(message);
         }
 
         public void RegisterTcpChannel() {
@@ -83,18 +85,26 @@ namespace ServerNamespace.Server{
         public Request GetRequestBySeqNumberAndClientUrl(int seq, string clientUrl) {
             for(var i = 0; i < RequestList.Capacity; i++) {
                 var temp = RequestList[i];
-                if(temp.seqNum == seq && temp.clientRemoteURL.Equals(clientUrl)){
+                if(temp.SeqNum == seq && temp.ClientRemoteUrl.Equals(clientUrl)){
                     return temp;
                 }
             }
             return null;
         }
         
+        public void Decide()
+        {
+            lock (RequestList) {
+                // TODO
+                // decide from the list of requests if server can do something or not
+            }        
+        }
         
         // Auxiliary Methods        
         public string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
+
 
 
     }
