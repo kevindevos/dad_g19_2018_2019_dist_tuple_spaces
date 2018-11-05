@@ -16,6 +16,14 @@ namespace ServerNamespace{
     public class Server : MarshalByRefObject, IRemoting {
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
         public ServerBehaviour behaviour;
+        private int serverPort;
+
+        public void decide() {
+            lock (requestList) {
+                // TODO
+                // decide from the list of requests if server can do something or not
+            }
+        }
 
         // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
         public Dictionary<string, int> mostRecentClientRequestSeqNumbers;
@@ -25,16 +33,12 @@ namespace ServerNamespace{
         public List<Request> requestList;
 
         // Tuple space
-        public TupleSpace tupleSpace;
-
+        private TupleSpace tupleSpace;
         public TupleSpace TupleSpace
         {
             get => tupleSpace;
             set => tupleSpace = value;
         }
-
-        public int serverPort;
-
         public int ServerPort
         {
             get => serverPort;
@@ -48,12 +52,6 @@ namespace ServerNamespace{
             Server server = new Server();
             server.RegisterTcpChannel();
             server.RegisterService();
-
-            // (main thread loop)
-            // TODO if master, loop through request list 
-            // verify if request is ready to be executed ( there is no previous request with lower sequence number from same client to be executed)  or other cases?
-            // broadcast the request to other servers as an order 
-            // perform the request as the master 
 
             Console.WriteLine("Server Started, press <enter> to leave.");
             Console.ReadLine();
@@ -84,6 +82,7 @@ namespace ServerNamespace{
             }
             return null;
         }
+
 
         public void RegisterTcpChannel() {
             tcpChannel = new TcpChannel(serverPort);

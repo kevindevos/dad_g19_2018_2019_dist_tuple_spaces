@@ -9,6 +9,8 @@ namespace ServerNamespace {
     class MasterServerBehaviour : ServerBehaviour {
         private Server server;
 
+        //TODO master seq number to normal servers in Orders
+
         public MasterServerBehaviour(Server server) : base(server) {
             this.server = server;
         }
@@ -17,6 +19,7 @@ namespace ServerNamespace {
             if (message.GetType().Equals(typeof(Request))) {
                 server.mostRecentClientRequestSeqNumbers.Add(message.clientRemoteURL, message.seqNum);
                 server.requestList.Add((Request)message);
+                server.decide(); // concurrency, 
 
                 // TODO Problem, when client does read or take, it is blocking, it expects a return message, but request is delayed for the master decision
                 // return ???
