@@ -11,33 +11,30 @@ namespace CommonTypes {
 
     public abstract class Request : Message {
         private int _seqNum;
-        private string srcRemoteUrl;
         private RequestType _requestType;
         private Tuple _tuple;
 
-        public Request(int seqNum, string clientRemoteUrl, RequestType requestType, Tuple tuple)
+        public Request(int seqNum, string srcRemoteURL, RequestType requestType, Tuple tuple) : base(srcRemoteURL)
         {
             _requestType = requestType;
             _seqNum = seqNum;
-            srcRemoteUrl = clientRemoteUrl;
             _tuple = tuple;
         }
 
         public RequestType RequestType { get; private set; }
         public int SeqNum { get; private set; }
-        public string SrcRemoteURL { get; private set; }
         public Tuple Tuple { get; private set; }
 
         
     }
 
     public class ReadRequest : Request {
-        public ReadRequest(int seqNum, string clientRemoteURL, Tuple tuple) : base(seqNum, clientRemoteURL, RequestType.READ, tuple) { }
+        public ReadRequest(int seqNum, string srcRemoteURL, Tuple tuple) : base(seqNum, srcRemoteURL, RequestType.READ, tuple) { }
     }
     public class WriteRequest : Request {
-        public WriteRequest(int seqNum, string clientRemoteURL, Tuple tuple) : base(seqNum, clientRemoteURL, RequestType.WRITE, tuple) { }
+        public WriteRequest(int seqNum, string srcRemoteURL, Tuple tuple) : base(seqNum, srcRemoteURL, RequestType.WRITE, tuple) { }
     }
     public class TakeRequest : Request {
-        public TakeRequest(int seqNum, string clientRemoteURL, Tuple tuple) : base(seqNum, clientRemoteURL, RequestType.TAKE, tuple) { }
+        public TakeRequest(int seqNum, string srcRemoteURL, Tuple tuple) : base(seqNum, srcRemoteURL, RequestType.TAKE, tuple) { }
     }
 }

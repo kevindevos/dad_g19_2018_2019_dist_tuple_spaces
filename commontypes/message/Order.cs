@@ -14,7 +14,7 @@ namespace CommonTypes.message {
 
         public Request Request { get; private set; }
 
-        public Order(Request request, int orderSequenceNumber) {
+        public Order(Request request, int orderSequenceNumber, string srcRemoteURL) : base(srcRemoteURL){
             this.Request = request;
             this.OrderSeqNumber = orderSequenceNumber;
         }

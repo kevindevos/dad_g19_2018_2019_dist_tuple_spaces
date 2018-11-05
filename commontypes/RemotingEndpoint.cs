@@ -17,7 +17,7 @@ namespace CommonTypes {
         protected const int defaultClientPort = 8070;
         protected string objIdentifier;
         public List<IRemoting> knownServerRemotes;
-        protected string endpointURL;
+        public string endpointURL;
 
         protected TcpChannel tcpChannel;
 
@@ -71,9 +71,9 @@ namespace CommonTypes {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
 
-        public void OnReceiveMessage(Message message) { }
+        public abstract void OnReceiveMessage(Message message);
 
-        public void OnSendMessage(Message message) { }
+        public abstract void OnSendMessage(Message message);
 
 
         public void RegisterService() {
@@ -84,6 +84,9 @@ namespace CommonTypes {
             tcpChannel = new TcpChannel(port);
             ChannelServices.RegisterChannel(tcpChannel, false);
         }
-        
+
+        public string GetRemoteEndpointURL() {
+            return endpointURL;
+        }
     }
 }

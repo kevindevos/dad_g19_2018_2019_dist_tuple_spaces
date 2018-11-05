@@ -72,6 +72,7 @@ namespace ServerNamespace.Server{
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
+            // TODO 2 phase lock - first list what there is and lock those, only then on comfirm the client takes them?
             return _tupleSpace.Take(tupleSchema);
         }
 

@@ -21,7 +21,7 @@ namespace ServerNamespace.Behaviour {
             switch (request.RequestType) {
                 case RequestType.READ:
                     var resultTuples = Server.Read(tupleSchema);
-                    return new Response(request, resultTuples);
+                    return new Response(request, resultTuples, Server.endpointURL);
 
                 case RequestType.WRITE:
                     Server.Write(request.Tuple);
@@ -30,7 +30,7 @@ namespace ServerNamespace.Behaviour {
                 case RequestType.TAKE:
                     tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Server.Take(tupleSchema);
-                    return new Response(request, resultTuples);
+                    return new Response(request, resultTuples, Server.endpointURL);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
