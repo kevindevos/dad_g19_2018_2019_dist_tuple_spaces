@@ -1,5 +1,4 @@
 ﻿using CommonTypes;
-using CommonTypes.server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,6 +83,11 @@ namespace ClientNamespace {
 
         // parse a message from a server
         public Message OnReceiveMessage(Message message) {
+            throw new NotImplementedException();
+        }
+
+        public Message OnSendMessage(Message message)
+        {
             throw new NotImplementedException();
         }
 
