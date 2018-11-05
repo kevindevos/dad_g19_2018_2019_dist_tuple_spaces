@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "client\Client.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTypes", "commontypes\CommonTypes.csproj", "{6ADE780D-1807-438D-8E75-154CADDE2BF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptClient", "ScriptClient\ScriptClient.csproj", "{8EBFCDF6-EA7A-4841-9340-6C952A8DE467}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{6ADE780D-1807-438D-8E75-154CADDE2BF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6ADE780D-1807-438D-8E75-154CADDE2BF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6ADE780D-1807-438D-8E75-154CADDE2BF1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8EBFCDF6-EA7A-4841-9340-6C952A8DE467}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8EBFCDF6-EA7A-4841-9340-6C952A8DE467}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8EBFCDF6-EA7A-4841-9340-6C952A8DE467}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8EBFCDF6-EA7A-4841-9340-6C952A8DE467}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
