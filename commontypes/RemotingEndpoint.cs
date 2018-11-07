@@ -9,14 +9,16 @@ using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes.message;
 
 namespace CommonTypes {
-    public abstract class RemotingEndpoint : MarshalByRefObject, IRemoting  {
+    public delegate void RemoteAsyncDelegate(Message message);
+
+    public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string defaultServerHost = "localhost";
         protected const int defaultServerPort = 8080;
 
         protected const string defaultClientHost = "localhost";
         protected const int defaultClientPort = 8070;
         protected string objIdentifier;
-        public List<IRemoting> knownServerRemotes;
+        public List<RemotingEndpoint> knownServerRemotes;
         public string endpointURL;
 
         protected TcpChannel tcpChannel;
@@ -39,8 +41,8 @@ namespace CommonTypes {
             this.objIdentifier = objIdentifier;
         }
 
-        private List<IRemoting> GetKnownServerRemotes() {
-            List<IRemoting> knownRemotes = new List<IRemoting>();
+        private List<RemotingEndpoint> GetKnownServerRemotes() {
+            List<RemotingEndpoint> knownRemotes = new List<RemotingEndpoint>();
 
             for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
                 if (i == this.port) continue;
@@ -51,17 +53,17 @@ namespace CommonTypes {
             return knownRemotes;
         }
 
-        public IRemoting GetRemote(string host, int destPort, string objIdentifier) {
-            IRemoting remote = (IRemoting)Activator.GetObject(
-                typeof(IRemoting),
+        public RemotingEndpoint GetRemote(string host, int destPort, string objIdentifier) {
+            RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
+                typeof(RemotingEndpoint),
                 BuildRemoteUrl(host, destPort, objIdentifier));
 
             return remote;
         }
 
-        public IRemoting GetRemote(string url) {
-            IRemoting remote = (IRemoting)Activator.GetObject(
-                typeof(IRemoting),
+        public RemotingEndpoint GetRemote(string url) {
+            RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
+                typeof(RemotingEndpoint),
                 url);
 
             return remote;

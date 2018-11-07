@@ -10,7 +10,7 @@ using CommonTypes.tuple;
 using ServerNamespace.Behaviour;
 using Tuple = CommonTypes.Tuple;
 
-namespace ServerNamespace.Server{
+namespace ServerNamespace {
     public abstract class Server : RemotingEndpoint, ITupleOperations {
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
         public ServerBehaviour Behaviour;
@@ -25,8 +25,8 @@ namespace ServerNamespace.Server{
         private int lastOrderSequenceNumber;
         public int LastOrderSequenceNumber { get; set; }
 
-        private List<IRemoting> otherServers;
-        public List<IRemoting> OtherServers { get; private set; }
+        private List<RemotingEndpoint> otherServers;
+        public List<RemotingEndpoint> OtherServers { get; private set; }
 
         // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
         public ConcurrentDictionary<string, Request> LastExecutedClientRequests;
@@ -47,17 +47,7 @@ namespace ServerNamespace.Server{
 
         private Server(int serverPort) : this(defaultServerHost, serverPort) { }
 
-       
-        // IRemoting Methods 
-        public void OnReceiveMessage(Message message) {
-            Behaviour.ProcessMessage(message);
-        }
-        
-        public void OnSendMessage(Message message)
-        {
-            // TODO not needed yet
-        }
-
+     
             
         // ITupleOperations Methods
         public void Write(Tuple tuple)

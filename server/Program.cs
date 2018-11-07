@@ -1,12 +1,12 @@
 using System;
-using ServerNamespace.Server;
+using ServerNamespace;
 
 namespace ServerNamespace
 {
     public static class Program
     {
         public static void Main(string[] args) {
-            Server.Server server = new ServerSMR();
+            Server server = new ServerSMR();
             
             Console.WriteLine("Server Started, press <enter> to leave.");
             Console.ReadLine();

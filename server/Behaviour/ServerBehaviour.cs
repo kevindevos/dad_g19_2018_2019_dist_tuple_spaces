@@ -7,9 +7,9 @@ using Tuple = CommonTypes.Tuple;
 
 namespace ServerNamespace.Behaviour {
     public abstract class ServerBehaviour {
-        protected readonly Server.Server Server; // keep instance of the server for accessing things like sequence numbers, request queue, tuple space
+        protected readonly Server Server; // keep instance of the server for accessing things like sequence numbers, request queue, tuple space
 
-        public ServerBehaviour(Server.Server server) {
+        public ServerBehaviour(Server server) {
             Server = server;
         }
 

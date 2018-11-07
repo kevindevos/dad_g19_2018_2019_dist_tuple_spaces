@@ -5,7 +5,7 @@ namespace ServerNamespace.Behaviour.SMR
 {
     public class NormalServerSMRBehaviour : ServerBehaviour
     {
-        public NormalServerSMRBehaviour(Server.Server server) : base(server)
+        public NormalServerSMRBehaviour(Server server) : base(server)
         {
         }
 

@@ -1,12 +1,9 @@
-using CommonTypes;
+﻿using CommonTypes;
 using CommonTypes.message;
 
-namespace ServerNamespace.Behaviour.XL
-{
-    public class ServerXLBehaviour : ServerBehaviour
-    {
-        public ServerXLBehaviour(Server.Server server) : base(server)
-        {
+namespace ServerNamespace.Behaviour.XL {
+    public class ServerXLBehaviour : ServerBehaviour {
+        public ServerXLBehaviour(Server server) : base(server) {
         }
 
         public override Message ProcessMessage(Message message) {
