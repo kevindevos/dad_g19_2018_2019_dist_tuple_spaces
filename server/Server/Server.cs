@@ -54,10 +54,6 @@ namespace ServerNamespace {
 
         private Server(int serverPort) : this(defaultServerHost, serverPort) { }
 
-     
- 
-
-            
         // ITupleOperations Methods
         public void Write(Tuple tuple)
         {

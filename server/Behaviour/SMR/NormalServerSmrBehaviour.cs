@@ -16,10 +16,8 @@ namespace ServerNamespace.Behaviour.SMR
             return PerformRequest(order.Request);
         }
 
-        public override Message ProcessRequest(Request request) {
+        public override void ProcessRequest(Request request) {
             Server.SaveRequest(request);
-
-            return null;
         }
     }
 }

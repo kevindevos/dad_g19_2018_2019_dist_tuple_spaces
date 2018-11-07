@@ -11,14 +11,28 @@ namespace ServerNamespace.Behaviour.SMR
         {
         }
 
-         // Check if there are requests with ANY client sequence number that is valid for execution 
-         public void Decide() {
+
+        public override void ProcessRequest(Request request) {
+            Server.SaveRequest(request);
+            Decide(request.SrcEndpointURL);
+        }
+
+        public override Message ProcessOrder(Order order) {
+            // for when a master sends order, crashes and the order arrives after the election of a new master, act as a normal server executing an order
+            Server.DeleteRequest(order.Request);
+            Server.LastOrderSequenceNumber = order.SeqNum;
+
+            return PerformRequest(order.Request);
+        }
+
+        // Check if there are requests with ANY client sequence number that is valid for execution 
+        public void Decide() {
             lock (Server.RequestList) {
                 for (int i = 0; i < Server.RequestList.Capacity; i++) {
                     Request request = Server.RequestList.ElementAt(i);
 
                     if (SequenceNumberIsNext(request)) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber,Server.endpointURL);
+                        Order order = new Order(request, Server.LastOrderSequenceNumber+1,Server.endpointURL);
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                         Decide(); // check again if there are more
@@ -37,7 +51,7 @@ namespace ServerNamespace.Behaviour.SMR
                     Request request = Server.RequestList.ElementAt(i);
 
                     if (request.SrcEndpointURL.Equals(endpointURL) && (SequenceNumberIsNext(request))) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber, Server.endpointURL);
+                        Order order = new Order(request, Server.LastOrderSequenceNumber+1, Server.endpointURL);
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                         Decide(endpointURL); // check again if there are more
@@ -58,17 +72,5 @@ namespace ServerNamespace.Behaviour.SMR
             ++Server.LastOrderSequenceNumber;
         }
 
-        public override Message ProcessRequest(Request request) {
-            Server.SaveRequest(request);
-            Decide(request.SrcEndpointURL);
-
-            return null;
-        }
-
-        
-
-        public override Message ProcessOrder(Order order) {
-            return null; 
-        }
     }
 }

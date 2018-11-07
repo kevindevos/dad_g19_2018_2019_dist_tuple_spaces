@@ -13,7 +13,7 @@ namespace ServerNamespace.Behaviour {
             Server = server;
         }
 
-        public abstract Message ProcessRequest(Request request);
+        public abstract void ProcessRequest(Request request);
         public abstract Message ProcessOrder(Order order);
 
         public Response PerformRequest(Request request) {
