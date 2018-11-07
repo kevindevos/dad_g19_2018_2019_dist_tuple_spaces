@@ -13,6 +13,7 @@ namespace ServerNamespace.Behaviour.SMR {
 
         public abstract void ProcessRequest(Request request);
         public abstract Message ProcessOrder(Order order);
+        public abstract void ProcessAskOrder(AskOrder askOrder);
 
         public override Message ProcessMessage(Message message) {
             if (message.GetType().Equals(typeof(Request))) {

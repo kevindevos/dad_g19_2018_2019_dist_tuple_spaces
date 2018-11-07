@@ -12,7 +12,6 @@ using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
     class Client : RemotingEndpoint {
-
         private int clientRequestSeqNumber;
         public int ClientRequestSeqNumber { get; set; }
 
@@ -26,20 +25,24 @@ namespace ClientNamespace {
 
         public Client(string host, int port) : base(host, port, "Client") {
             this.receivedResponses = new Dictionary<int, Response>();
+            this.clientRequestSeqNumber = 0;
         }
 
         public void Write(Tuple tuple) {
             // remote exceptions?
             Request request = new WriteRequest(clientRequestSeqNumber, endpointURL, tuple);
 
-            SendRequestToKnownServers(request);
+            SendMessageToKnownServers(request);
+            clientRequestSeqNumber++;
         }
 
         public void Read(Tuple tuple) {
             // remote exceptions?
             Request request = new ReadRequest(clientRequestSeqNumber, endpointURL, tuple);
 
-            SendRequestToKnownServers(request);
+            SendMessageToKnownServers(request);
+            clientRequestSeqNumber++;
+
 
             this.isBlockedFromSendingRequests = true;
         }
@@ -49,20 +52,13 @@ namespace ClientNamespace {
             // remote exceptions?
             Request request = new TakeRequest(clientRequestSeqNumber, endpointURL, tuple);
 
-            SendRequestToKnownServers(request);
+            SendMessageToKnownServers(request);
+            clientRequestSeqNumber++;
 
             this.isBlockedFromSendingRequests = true;
         }
 
-        public void SendRequestToKnownServers(Request request) {
-            RemoteAsyncDelegate remoteDel;
-
-            for (int j = 0; j < knownServerRemotes.Count; j++) {
-                remoteDel = new RemoteAsyncDelegate(knownServerRemotes.ElementAt(j).OnReceiveMessage);
-                remoteDel.BeginInvoke(request, null, null);
-            }
-            clientRequestSeqNumber++;
-        }
+        
 
         public override void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Response))){

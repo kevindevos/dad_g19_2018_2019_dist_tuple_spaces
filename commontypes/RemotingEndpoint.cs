@@ -50,13 +50,13 @@ namespace CommonTypes {
             for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
                 if (i == this.port) continue;
                 string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"));
-                knownRemotes.Add(GetRemote(serverUrl));
+                knownRemotes.Add(GetRemoteEndpoint(serverUrl));
             }
 
             return knownRemotes;
         }
 
-        public RemotingEndpoint GetRemote(string host, int destPort, string objIdentifier) {
+        public RemotingEndpoint GetRemoteEndpoint(string host, int destPort, string objIdentifier) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
                 BuildRemoteUrl(host, destPort, objIdentifier));
@@ -64,12 +64,28 @@ namespace CommonTypes {
             return remote;
         }
 
-        public RemotingEndpoint GetRemote(string url) {
+        public RemotingEndpoint GetRemoteEndpoint(string url) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
                 url);
 
             return remote;
+        }
+
+        public void SendMessateToRemote(RemotingEndpoint remotingEndpoint, Message message) {
+            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
+            remoteDel.BeginInvoke(message, null, null);
+        }
+
+        public void SendMessateToRemoteURL(string remoteURL, Message message) {
+            RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remoteURL);
+            SendMessateToRemote(remotingEndpoint, message);
+        }
+
+        public void SendMessageToKnownServers(Message message) {
+            for (int i = 0; i < knownServerRemotes.Count; i++) {
+                SendMessateToRemote(knownServerRemotes.ElementAt(i), message);
+            }
         }
 
         public string BuildRemoteUrl(string host, int port, string objIdentifier) {

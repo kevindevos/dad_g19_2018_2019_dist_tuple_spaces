@@ -35,6 +35,8 @@ namespace ServerNamespace {
         // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
         public ConcurrentDictionary<string, Order> LastExecutedOrders;
 
+        public List<Order> SavedOrders;
+
         // Tuple space
         private readonly TupleSpace _tupleSpace;
 
@@ -44,6 +46,7 @@ namespace ServerNamespace {
             RequestList = new List<Request>();
             LastExecutedRequests = new ConcurrentDictionary<string, Request>();
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
+            SavedOrders = new List<Order>();
         }
 
         public Server() : this(defaultServerHost, defaultServerPort) { }
