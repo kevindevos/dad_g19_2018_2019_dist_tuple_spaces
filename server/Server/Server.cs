@@ -72,7 +72,6 @@ namespace ServerNamespace {
             return _tupleSpace.Take(tupleSchema);
         }
 
-
         public void SaveRequest(Request request) {
             lock (RequestList) {
                 RequestList.Add(request);
@@ -86,7 +85,7 @@ namespace ServerNamespace {
         }
 
         public void Log(string text) {
-            Console.WriteLine(text);
+            Console.WriteLine("[SERVER:"+endpointURL +"] : " + text);
         }
       
     }

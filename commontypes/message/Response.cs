@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes.message {
+    [System.Serializable]
     public class Response : Message {
         private List<Tuple> _tupleList;
         // The request to which the response refers to

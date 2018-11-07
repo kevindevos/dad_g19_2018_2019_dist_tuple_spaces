@@ -15,9 +15,9 @@ namespace ServerNamespace
             Behaviour = new NormalServerSMRBehaviour(this);
         }
 
-        public ServerSMR() : base(defaultServerHost, defaultServerPort) { }
+        public ServerSMR() : this(defaultServerHost, defaultServerPort) { }
 
-        private ServerSMR(int serverPort) : base(defaultServerHost, serverPort) { }
+        public ServerSMR(int serverPort) : this(defaultServerHost, serverPort) { }
 
         public void UpgradeToMaster()
         {
@@ -29,8 +29,10 @@ namespace ServerNamespace
         {
             Behaviour = new NormalServerSMRBehaviour(this);
         }
-        
+
         public override void OnReceiveMessage(Message message) {
+            Log("OnReceiveMessage called, message: " + message);
+
             if (message.GetType().Equals(typeof(Request))) {
                 Behaviour.ProcessRequest((Request)message);
             }
@@ -43,5 +45,6 @@ namespace ServerNamespace
         public override void OnSendMessage(Message message) {
             throw new System.NotImplementedException();
         }
+        
     }
 }

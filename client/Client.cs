@@ -30,7 +30,7 @@ namespace ClientNamespace {
 
         public void Write(Tuple tuple) {
             // remote exceptions?
-            Request request = new WriteRequest(clientRequestSeqNumber, endpointURL, tuple);
+            Request request = new Request(clientRequestSeqNumber, endpointURL, RequestType.WRITE, tuple);
 
             SendMessageToKnownServers(request);
             clientRequestSeqNumber++;
@@ -38,7 +38,7 @@ namespace ClientNamespace {
 
         public void Read(Tuple tuple) {
             // remote exceptions?
-            Request request = new ReadRequest(clientRequestSeqNumber, endpointURL, tuple);
+            Request request = new Request(clientRequestSeqNumber, endpointURL,RequestType.READ, tuple);
 
             SendMessageToKnownServers(request);
             clientRequestSeqNumber++;
@@ -50,7 +50,7 @@ namespace ClientNamespace {
 
         public void Take(Tuple tuple) {
             // remote exceptions?
-            Request request = new TakeRequest(clientRequestSeqNumber, endpointURL, tuple);
+            Request request = new Request(clientRequestSeqNumber, endpointURL, RequestType.TAKE, tuple);
 
             SendMessageToKnownServers(request);
             clientRequestSeqNumber++;

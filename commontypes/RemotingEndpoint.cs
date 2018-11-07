@@ -7,6 +7,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes.message;
+using System.Collections;
 
 namespace CommonTypes {
     public delegate void RemoteAsyncDelegate(Message message);
@@ -30,12 +31,15 @@ namespace CommonTypes {
             this.host = host;
             this.port = port;
             this.objIdentifier = objIdentifier;
-            this.endpointURL = BuildRemoteUrl(host, port, objIdentifier);
+            this.endpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
 
             // register tcp channel and service
-            tcpChannel = new TcpChannel(port);
+            IDictionary dictionary = new System.Collections.Hashtable();
+            dictionary["name"] = "tcp" + port;
+            dictionary["port"] = port;
+            tcpChannel = new TcpChannel(dictionary, null,null);
             ChannelServices.RegisterChannel(tcpChannel, false);
-            RemotingServices.Marshal(this, objIdentifier, typeof(RemotingEndpoint));
+            RemotingServices.Marshal(this, objIdentifier+port, typeof(RemotingEndpoint));
 
             this.knownServerRemotes = GetKnownServerRemotes();
         }
@@ -49,7 +53,7 @@ namespace CommonTypes {
 
             for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
                 if (i == this.port) continue;
-                string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"));
+                string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"+i));
                 knownRemotes.Add(GetRemoteEndpoint(serverUrl));
             }
 
@@ -59,7 +63,7 @@ namespace CommonTypes {
         public RemotingEndpoint GetRemoteEndpoint(string host, int destPort, string objIdentifier) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
-                BuildRemoteUrl(host, destPort, objIdentifier));
+                BuildRemoteUrl(host, destPort, objIdentifier+destPort));
 
             return remote;
         }
@@ -72,19 +76,26 @@ namespace CommonTypes {
             return remote;
         }
 
-        public void SendMessateToRemote(RemotingEndpoint remotingEndpoint, Message message) {
-            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
-            remoteDel.BeginInvoke(message, null, null);
+        public void SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
+            try {
+                RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
+                IAsyncResult ar = remoteDel.BeginInvoke(message, null, null);
+                remoteDel.EndInvoke(ar);
+            }
+            catch(Exception) {
+                Console.WriteLine("Server at " + remotingEndpoint.endpointURL + " is unreachable.");
+            }
+            
         }
 
         public void SendMessateToRemoteURL(string remoteURL, Message message) {
             RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remoteURL);
-            SendMessateToRemote(remotingEndpoint, message);
+            SendMessageToRemote(remotingEndpoint, message);
         }
 
         public void SendMessageToKnownServers(Message message) {
             for (int i = 0; i < knownServerRemotes.Count; i++) {
-                SendMessateToRemote(knownServerRemotes.ElementAt(i), message);
+                SendMessageToRemote(knownServerRemotes.ElementAt(i), message);
             }
         }
 

@@ -13,9 +13,9 @@ namespace ServerNamespace
             Behaviour = new ServerXLBehaviour(this);
         }
 
-        public ServerXL() : base(defaultServerHost, defaultServerPort) { }
+        public ServerXL() : this(defaultServerHost, defaultServerPort) { }
 
-        private ServerXL(int serverPort) : base(defaultServerHost, serverPort) { }
+        private ServerXL(int serverPort) : this(defaultServerHost, serverPort) { }
 
         public override void OnReceiveMessage(Message message) {
             throw new System.NotImplementedException();

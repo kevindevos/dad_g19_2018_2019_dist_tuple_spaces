@@ -7,10 +7,11 @@ using CommonTypes.message;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes {
-    public enum RequestType { READ, WRITE, TAKE }  
 
+    public enum RequestType { READ, WRITE, TAKE }
 
-    public abstract class Request : Message {
+    [System.Serializable]
+    public class Request : Message {
         private int _seqNum;
         private RequestType _requestType;
         private Tuple _tuple;
@@ -30,15 +31,5 @@ namespace CommonTypes {
         public string SrcEndpointURL { get; private set; }
 
         
-    }
-
-    public class ReadRequest : Request {
-        public ReadRequest(int seqNum, string srcRemoteURL, Tuple tuple) : base(seqNum, srcRemoteURL, RequestType.READ, tuple) { }
-    }
-    public class WriteRequest : Request {
-        public WriteRequest(int seqNum, string srcRemoteURL, Tuple tuple) : base(seqNum, srcRemoteURL, RequestType.WRITE, tuple) { }
-    }
-    public class TakeRequest : Request {
-        public TakeRequest(int seqNum, string srcRemoteURL, Tuple tuple) : base(seqNum, srcRemoteURL, RequestType.TAKE, tuple) { }
     }
 }

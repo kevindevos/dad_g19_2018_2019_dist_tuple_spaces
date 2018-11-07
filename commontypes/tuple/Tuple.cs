@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace CommonTypes.tuple{
+    [System.Serializable]
     public class Tuple{
         public readonly List<object> Fields;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ClientNamespace;
 using Tuple = CommonTypes.tuple.Tuple;
 using System;
+using System.Linq;
 
 namespace ClientNamespace
 {
@@ -11,7 +12,6 @@ namespace ClientNamespace
         public static void Main(string[] args) {
             Client client = new Client();
             client.ClientRequestSeqNumber = 0;
-
             Tuple tuple = new Tuple(new List<object>(new object[] { "hello", "world", 2 }));
             client.Write(tuple);
 

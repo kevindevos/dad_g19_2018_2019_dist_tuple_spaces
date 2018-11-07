@@ -3,7 +3,7 @@
 namespace CommonTypes.tuple
 {
     // a "pattern" to match against, consists of a list of fields that have to be all contained in a tuple for there to be a match
-    
+    [System.Serializable]
     public class TupleSchema
     {
         public readonly Tuple Schema;
