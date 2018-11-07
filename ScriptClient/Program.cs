@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ClientNamespace;
@@ -17,8 +19,8 @@ namespace ScriptClient
             var client = new Client();
 
 
-            var inputFile =
-                "sampleClientScript.txt"; // TODO this path doesn't work. It works if it's provided on args[]
+            string inputFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"sampleClientScript.txt");
+            
             if (args.Length > 1)
                 inputFile = args[0];
 
