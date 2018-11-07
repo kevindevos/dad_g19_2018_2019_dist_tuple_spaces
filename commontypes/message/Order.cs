@@ -8,15 +8,14 @@ namespace CommonTypes.message {
     // An order is a message sent by a master to other normal servers, to perform a certain action/request
     public class Order : Message {
         private Request request;
-        private int orderSeqNumber;
+        private int _seqNum;
 
-        public int OrderSeqNumber { get; set; }
-
+        public int SeqNum { get; private set; }
         public Request Request { get; private set; }
 
         public Order(Request request, int orderSequenceNumber, string srcRemoteURL) : base(srcRemoteURL){
             this.Request = request;
-            this.OrderSeqNumber = orderSequenceNumber;
+            this.SeqNum = orderSequenceNumber;
         }
 
     }

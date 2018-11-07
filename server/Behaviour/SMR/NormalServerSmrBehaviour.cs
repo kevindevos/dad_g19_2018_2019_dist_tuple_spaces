@@ -9,21 +9,16 @@ namespace ServerNamespace.Behaviour.SMR
         {
         }
 
-        public override Message ProcessMessage(Message message) {
-            if (message.GetType().Equals(typeof(Order))) {
-                Order order = (Order)message;
-                Server.DeleteRequest(order.Request);
-                Server.LastOrderSequenceNumber = order.OrderSeqNumber;
+        public override Message ProcessOrder(Order order) {
+            Server.DeleteRequest(order.Request);
+            Server.LastOrderSequenceNumber = order.SeqNum;
 
-                return PerformRequest(order.Request);
-            }
-            else if (message.GetType().Equals(typeof(Request))) {
-                Request request = (Request)message;
-                Server.SaveRequest(request);
+            return PerformRequest(order.Request);
+        }
 
-                // TODO Problem, when client does read or take, it is blocking, it expects a return message, but the server needs to wait for the order of the master, ?!?!?
+        public override Message ProcessRequest(Request request) {
+            Server.SaveRequest(request);
 
-            }
             return null;
         }
     }

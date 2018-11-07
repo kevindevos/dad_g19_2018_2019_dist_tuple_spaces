@@ -70,9 +70,6 @@ namespace ClientNamespace {
         }
 
         public void OnReceiveMessage(Message message) {
-            // Does this message come from a server that is not in our known list?
-
-
             if (message.GetType().Equals(typeof(Response))){
                 Response response = (Response)message;
 

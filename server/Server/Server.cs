@@ -9,6 +9,7 @@ using CommonTypes.message;
 using CommonTypes.tuple;
 using ServerNamespace.Behaviour;
 using Tuple = CommonTypes.Tuple;
+using System.Linq;
 
 namespace ServerNamespace {
     public abstract class Server : RemotingEndpoint, ITupleOperations {
@@ -29,7 +30,11 @@ namespace ServerNamespace {
         public List<RemotingEndpoint> OtherServers { get; private set; }
 
         // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public ConcurrentDictionary<string, Request> LastExecutedClientRequests;
+        public ConcurrentDictionary<string, Request> LastExecutedRequests;
+
+        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
+        public ConcurrentDictionary<string, Order> LastExecutedOrders;
+
 
         // Tuple space
         private readonly TupleSpace _tupleSpace;
@@ -41,13 +46,17 @@ namespace ServerNamespace {
             this.port = port;
             _tupleSpace = new TupleSpace();
             RequestList = new List<Request>();
-            LastExecutedClientRequests = new ConcurrentDictionary<string, Request>();
+            LastExecutedRequests = new ConcurrentDictionary<string, Request>();
+            LastExecutedOrders = new ConcurrentDictionary<string, Order>();
         }
+
         public Server() : this(defaultServerHost, 8086) { }
 
         private Server(int serverPort) : this(defaultServerHost, serverPort) { }
 
      
+ 
+
             
         // ITupleOperations Methods
         public void Write(Tuple tuple)
