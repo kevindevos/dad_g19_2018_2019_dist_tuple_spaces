@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Tuple = CommonTypes.Tuple;
 
 namespace ClientNamespace {
-    class Client : RemotingEndpoint, IRemoting {
+    class Client : RemotingEndpoint {
 
         private int clientRequestSeqNumber;
         public int ClientRequestSeqNumber { get; set; }
@@ -69,7 +69,7 @@ namespace ClientNamespace {
             clientRequestSeqNumber++;
         }
 
-        public void OnReceiveMessage(Message message) {
+        public override void OnReceiveMessage(Message message) {
             if (message.GetType().Equals(typeof(Response))){
                 Response response = (Response)message;
 
@@ -92,8 +92,8 @@ namespace ClientNamespace {
             }
         }
 
-        public void OnSendMessage(Message message) {
-            // TODO not needed yet
+        public override void OnSendMessage(Message message) {
+            throw new NotImplementedException();
         }
     }
 }

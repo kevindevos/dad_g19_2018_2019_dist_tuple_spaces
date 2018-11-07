@@ -38,7 +38,6 @@ namespace ServerNamespace {
 
         // Tuple space
         private readonly TupleSpace _tupleSpace;
-        private readonly int port;
 
         private TcpChannel _tcpChannel;
 

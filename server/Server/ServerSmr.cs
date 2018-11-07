@@ -7,10 +7,12 @@ namespace ServerNamespace
 {
     public class ServerSMR : Server
     {
+        // new hides the Behaviour of the base class Server, basically replacing the base type of Behaviour to ServerSMRBehaviour here
+        new ServerSMRBehaviour Behaviour;
+
         public ServerSMR(string host, int port) : base(host, port) 
         {
             Behaviour = new NormalServerSMRBehaviour(this);
-            
         }
 
         public ServerSMR() : base(defaultServerHost, 8086) { }
@@ -36,8 +38,6 @@ namespace ServerNamespace
             if (message.GetType().Equals(typeof(Order))) {
                 Behaviour.ProcessOrder((Order)message);
             }
-
-
         }
 
         public override void OnSendMessage(Message message) {

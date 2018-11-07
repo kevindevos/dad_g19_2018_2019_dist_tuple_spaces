@@ -5,13 +5,13 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR
 {
-    public class MasterServerSMRBehaviour : ServerBehaviour {
+    public class MasterServerSMRBehaviour : ServerSMRBehaviour {
         
         public MasterServerSMRBehaviour(Server server) : base(server)
         {
         }
 
-
+     
         public override void ProcessRequest(Request request) {
             Server.SaveRequest(request);
             Decide(request.SrcEndpointURL);
@@ -72,5 +72,6 @@ namespace ServerNamespace.Behaviour.SMR
             ++Server.LastOrderSequenceNumber;
         }
 
+       
     }
 }

@@ -1,10 +1,10 @@
 ﻿namespace CommonTypes.message {
     public abstract class Message {
-        private string srcRemoteUrl;
-        public string SrcRemoteURL { get; private set; }
+        private string _srcRemoteURL;
+        public string SrcRemoteURL { get => _srcRemoteURL; set => _srcRemoteURL = value; }
 
         public Message(string srcRemoteURL) {
-            this.SrcRemoteURL = srcRemoteUrl;
+            this.SrcRemoteURL = srcRemoteURL;
         }
     }
 }

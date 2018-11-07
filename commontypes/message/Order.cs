@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace CommonTypes.message {
     // An order is a message sent by a master to other normal servers, to perform a certain action/request
     public class Order : Message {
-        private Request request;
+        private Request _request;
         private int _seqNum;
 
         public int SeqNum { get; private set; }

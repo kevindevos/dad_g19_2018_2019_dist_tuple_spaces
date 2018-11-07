@@ -45,8 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Behaviour\ServerBehaviour.cs" />
-    <Compile Include="Behaviour\SMR\MasterServerSmrBehaviour.cs" />
-    <Compile Include="Behaviour\SMR\NormalServerSmrBehaviour.cs" />
+    <Compile Include="Behaviour\SMR\MasterServerSMRBehaviour.cs" />
+    <Compile Include="Behaviour\SMR\NormalServerSMRBehaviour.cs" />
+    <Compile Include="Behaviour\SMR\ServerSMRBehaviour.cs" />
     <Compile Include="Behaviour\XL\ServerXLBehaviour.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -3,7 +3,7 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR
 {
-    public class NormalServerSMRBehaviour : ServerBehaviour
+    public class NormalServerSMRBehaviour : ServerSMRBehaviour
     {
         public NormalServerSMRBehaviour(Server server) : base(server)
         {
