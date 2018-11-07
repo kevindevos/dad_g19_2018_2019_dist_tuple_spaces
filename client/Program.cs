@@ -1,11 +1,10 @@
 using CommonTypes.tuple;
 using System.Collections.Generic;
 using ClientNamespace;
-using ServerNamespace;
 using Tuple = CommonTypes.tuple.Tuple;
 using System;
 
-namespace ServerNamespace
+namespace ClientNamespace
 {
     public static class Program
     {
