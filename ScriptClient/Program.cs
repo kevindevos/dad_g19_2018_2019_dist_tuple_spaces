@@ -25,7 +25,7 @@ namespace ScriptClient
                 inputFile = args[0];
 
 
-            var instructions = System.IO.File.ReadAllLines(inputFile);
+            var instructions = File.ReadAllLines(inputFile);
 
             ProcessLines(instructions, 1);
 

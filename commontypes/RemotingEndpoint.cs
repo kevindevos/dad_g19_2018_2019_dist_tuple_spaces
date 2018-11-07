@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
@@ -30,14 +28,14 @@ namespace CommonTypes {
             this.host = host;
             this.port = port;
             this.objIdentifier = objIdentifier;
-            this.endpointURL = BuildRemoteUrl(host, port, objIdentifier);
+            endpointURL = BuildRemoteUrl(host, port, objIdentifier);
 
             // register tcp channel and service
             tcpChannel = new TcpChannel(port);
             ChannelServices.RegisterChannel(tcpChannel, false);
             RemotingServices.Marshal(this, objIdentifier, typeof(RemotingEndpoint));
 
-            this.knownServerRemotes = GetKnownServerRemotes();
+            knownServerRemotes = GetKnownServerRemotes();
         }
 
         protected RemotingEndpoint(string objIdentifier) {
@@ -48,7 +46,7 @@ namespace CommonTypes {
             List<RemotingEndpoint> knownRemotes = new List<RemotingEndpoint>();
 
             for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
-                if (i == this.port) continue;
+                if (i == port) continue;
                 string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"));
                 knownRemotes.Add(GetRemoteEndpoint(serverUrl));
             }
@@ -73,7 +71,7 @@ namespace CommonTypes {
         }
 
         public void SendMessateToRemote(RemotingEndpoint remotingEndpoint, Message message) {
-            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
+            RemoteAsyncDelegate remoteDel = remotingEndpoint.OnReceiveMessage;
             remoteDel.BeginInvoke(message, null, null);
         }
 

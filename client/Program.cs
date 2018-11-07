@@ -1,8 +1,6 @@
-using CommonTypes.tuple;
-using System.Collections.Generic;
-using ClientNamespace;
-using Tuple = CommonTypes.tuple.Tuple;
 using System;
+using System.Collections.Generic;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace
 {

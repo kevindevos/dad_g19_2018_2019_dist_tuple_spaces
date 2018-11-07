@@ -1,9 +1,4 @@
 ﻿using CommonTypes.domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CommonTypes {
     class Animal : ITupleObject {
@@ -15,16 +10,16 @@ namespace CommonTypes {
             this.age = age;
         }
 
-        public new bool Equals(object other) {
+        public new bool Equals(object other)
+        {
             // if other is subclass of Animal or is instance of Animal, then compare fields
             if ( other.GetType().IsSubclassOf(typeof(Animal)) || other.GetType().Equals(typeof(Animal))) {
                 Animal otherAnimal = (Animal)other;
 
-                return this.name.Equals(otherAnimal.name) && this.age == otherAnimal.age;
+                return name.Equals(otherAnimal.name) && age == otherAnimal.age;
             }
-            else {
-                return false;
-            }
+
+            return false;
         }
     }
 }

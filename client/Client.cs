@@ -1,13 +1,8 @@
-﻿using CommonTypes;
-using CommonTypes.message;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Tcp;
-using System.Text;
-using System.Threading.Tasks;
+using CommonTypes;
+using CommonTypes.message;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
@@ -24,8 +19,8 @@ namespace ClientNamespace {
         public Client() : this(defaultClientHost, defaultClientPort) { }
 
         public Client(string host, int port) : base(host, port, "Client") {
-            this.receivedResponses = new Dictionary<int, Response>();
-            this.clientRequestSeqNumber = 0;
+            receivedResponses = new Dictionary<int, Response>();
+            clientRequestSeqNumber = 0;
         }
 
         public void Write(Tuple tuple) {
@@ -44,7 +39,7 @@ namespace ClientNamespace {
             clientRequestSeqNumber++;
 
 
-            this.isBlockedFromSendingRequests = true;
+            isBlockedFromSendingRequests = true;
         }
 
 
@@ -55,7 +50,7 @@ namespace ClientNamespace {
             SendMessageToKnownServers(request);
             clientRequestSeqNumber++;
 
-            this.isBlockedFromSendingRequests = true;
+            isBlockedFromSendingRequests = true;
         }
 
         
@@ -72,7 +67,7 @@ namespace ClientNamespace {
 
                 // if receives atleast one response for a blockingrequest then unlock ( can only send one and then block, so it will always unblock properly? )
                 if(response.Request.RequestType.Equals(RequestType.READ) || response.Request.RequestType.Equals(RequestType.TAKE)){
-                    this.isBlockedFromSendingRequests = false;
+                    isBlockedFromSendingRequests = false;
 
                     // TODO parse the response data from the request and do something with it
 
