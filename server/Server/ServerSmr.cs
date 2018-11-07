@@ -1,7 +1,6 @@
 using CommonTypes;
 using CommonTypes.message;
 using ServerNamespace.Behaviour.SMR;
-using System.Collections.Concurrent;
 
 namespace ServerNamespace
 {

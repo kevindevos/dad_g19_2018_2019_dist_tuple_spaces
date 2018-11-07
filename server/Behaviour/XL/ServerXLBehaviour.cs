@@ -1,5 +1,4 @@
-﻿using CommonTypes;
-using CommonTypes.message;
+﻿using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.XL {
     public class ServerXLBehaviour : ServerBehaviour {

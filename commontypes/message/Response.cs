@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Tuple = CommonTypes.tuple.Tuple;
+﻿using System.Collections.Generic;
+using CommonTypes.tuple;
 
 namespace CommonTypes.message {
     [System.Serializable]
@@ -15,8 +11,8 @@ namespace CommonTypes.message {
         public Request Request { get; private set; }
 
         public Response(Request request, List<Tuple> tupleList, string srcRemoteURL) : base (srcRemoteURL){
-            this.Request = request;
-            this.TupleList = tupleList;
+            Request = request;
+            TupleList = tupleList;
         }
     }
 }

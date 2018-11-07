@@ -23,7 +23,7 @@ namespace CommonTypes.tuple
             lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new Object()))
             {
                 _tupleSpace.AddOrUpdate(tuple.GetSize(),
-                                   (valueToAdd) => new List<Tuple>() { tuple },
+                                   valueToAdd => new List<Tuple> { tuple },
                                    (key, oldValue) => new List<Tuple>(oldValue) { tuple }
                                   );
             }

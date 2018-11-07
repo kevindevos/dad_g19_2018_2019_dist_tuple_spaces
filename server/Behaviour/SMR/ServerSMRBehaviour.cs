@@ -1,10 +1,5 @@
 ﻿using CommonTypes;
 using CommonTypes.message;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ServerNamespace.Behaviour.SMR {
     public abstract class ServerSMRBehaviour : ServerBehaviour{

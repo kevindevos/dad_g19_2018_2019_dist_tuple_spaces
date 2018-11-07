@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
@@ -31,7 +29,8 @@ namespace CommonTypes {
             this.host = host;
             this.port = port;
             this.objIdentifier = objIdentifier;
-            this.endpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
+
+            endpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
 
             // register tcp channel and service
             IDictionary dictionary = new System.Collections.Hashtable();
@@ -41,7 +40,7 @@ namespace CommonTypes {
             ChannelServices.RegisterChannel(tcpChannel, false);
             RemotingServices.Marshal(this, objIdentifier+port, typeof(RemotingEndpoint));
 
-            this.knownServerRemotes = GetKnownServerRemotes();
+            knownServerRemotes = GetKnownServerRemotes();
         }
 
         protected RemotingEndpoint(string objIdentifier) {
@@ -52,8 +51,9 @@ namespace CommonTypes {
             List<RemotingEndpoint> knownRemotes = new List<RemotingEndpoint>();
 
             for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
-                if (i == this.port) continue;
+                if (i == port) continue;
                 string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"+i));
+
                 knownRemotes.Add(GetRemoteEndpoint(serverUrl));
             }
 
@@ -85,7 +85,6 @@ namespace CommonTypes {
             catch(Exception) {
                 Console.WriteLine("Server at " + remotingEndpoint.endpointURL + " is unreachable.");
             }
-            
         }
 
         public void SendMessateToRemoteURL(string remoteURL, Message message) {

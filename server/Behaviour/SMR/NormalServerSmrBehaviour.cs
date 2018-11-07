@@ -1,4 +1,3 @@
-using System;
 using CommonTypes;
 using CommonTypes.message;
 
@@ -18,12 +17,11 @@ namespace ServerNamespace.Behaviour.SMR
 
                 return PerformRequest(order.Request);
             }
-            else {
-                // TODO special case, what if a normal server crashes, and the last order sequence number is reset to 0, 
-                // and it receives order nr 1994 , does it ask for 1993 orders even without knowing how many were executed ( if there's no persistency, we need to execute all again), causing data inconsistency?
-                AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);
-                return null;
-            }
+
+            // TODO special case, what if a normal server crashes, and the last order sequence number is reset to 0, 
+            // and it receives order nr 1994 , does it ask for 1993 orders even without knowing how many were executed ( if there's no persistency, we need to execute all again), causing data inconsistency?
+            AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);
+            return null;
 
         }
 
@@ -45,7 +43,6 @@ namespace ServerNamespace.Behaviour.SMR
         }
 
         public override void ProcessAskOrder(AskOrder askOrder) {
-            return; // Normal server does nothing, only master takes care of it, reduces message flooding
         }
     }
 }
