@@ -8,7 +8,7 @@ using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
 using ServerNamespace.Behaviour;
-using Tuple = CommonTypes.Tuple;
+using Tuple = CommonTypes.tuple.Tuple;
 using System.Linq;
 
 namespace ServerNamespace {
@@ -35,11 +35,8 @@ namespace ServerNamespace {
         // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
         public ConcurrentDictionary<string, Order> LastExecutedOrders;
 
-
         // Tuple space
         private readonly TupleSpace _tupleSpace;
-
-        private TcpChannel _tcpChannel;
 
         public Server(string host, int port) : base(host, port, "Server") {
             this.port = port;
@@ -49,7 +46,7 @@ namespace ServerNamespace {
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
         }
 
-        public Server() : this(defaultServerHost, 8086) { }
+        public Server() : this(defaultServerHost, defaultServerPort) { }
 
         private Server(int serverPort) : this(defaultServerHost, serverPort) { }
 
@@ -81,6 +78,10 @@ namespace ServerNamespace {
             lock (RequestList) {
                 RequestList.Remove(request);
             }
+        }
+
+        public void Log(string text) {
+            Console.WriteLine(text);
         }
       
     }

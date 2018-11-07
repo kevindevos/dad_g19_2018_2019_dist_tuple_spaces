@@ -13,7 +13,7 @@ namespace ServerNamespace
             Behaviour = new ServerXLBehaviour(this);
         }
 
-        public ServerXL() : base(defaultServerHost, 8086) { }
+        public ServerXL() : base(defaultServerHost, defaultServerPort) { }
 
         private ServerXL(int serverPort) : base(defaultServerHost, serverPort) { }
 

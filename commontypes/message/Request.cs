@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommonTypes.message;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes {
     public enum RequestType { READ, WRITE, TAKE }  

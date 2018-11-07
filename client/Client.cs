@@ -8,7 +8,7 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text;
 using System.Threading.Tasks;
-using Tuple = CommonTypes.Tuple;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
     class Client : RemotingEndpoint {
@@ -22,11 +22,6 @@ namespace ClientNamespace {
         private Dictionary<int, Response> receivedResponses;
         public Dictionary<int, Response> ReceivedResponses { get; private set; }
         
-        static void Main(string[] args) {
-            Client client = new Client();
-            client.clientRequestSeqNumber = 0;
-
-        }
         public Client() : this(defaultClientHost, defaultClientPort) { }
 
         public Client(string host, int port) : base(host, port, "Client") {
@@ -62,8 +57,8 @@ namespace ClientNamespace {
         public void SendRequestToKnownServers(Request request) {
             RemoteAsyncDelegate remoteDel;
 
-            for (int i = 0; i < knownServerRemotes.Capacity; i++) {
-                remoteDel = new RemoteAsyncDelegate(knownServerRemotes.ElementAt(i).OnReceiveMessage);
+            for (int j = 0; j < knownServerRemotes.Count; j++) {
+                remoteDel = new RemoteAsyncDelegate(knownServerRemotes.ElementAt(j).OnReceiveMessage);
                 remoteDel.BeginInvoke(request, null, null);
             }
             clientRequestSeqNumber++;

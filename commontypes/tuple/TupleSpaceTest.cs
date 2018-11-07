@@ -3,8 +3,7 @@ using System;
 using System.Collections.Generic;
 using CommonTypes.tuple;
 
-namespace CommonTypes
-{
+namespace CommonTypes.tuple {
     [TestFixture()]
     public class TupleSpaceTest
     {

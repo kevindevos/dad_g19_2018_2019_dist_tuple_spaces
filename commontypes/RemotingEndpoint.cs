@@ -13,10 +13,10 @@ namespace CommonTypes {
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string defaultServerHost = "localhost";
-        protected const int defaultServerPort = 8086;
+        protected const int defaultServerPort = 8080;
 
         protected const string defaultClientHost = "localhost";
-        protected const int defaultClientPort = 8096;
+        protected const int defaultClientPort = 8070;
         protected string objIdentifier;
         public List<RemotingEndpoint> knownServerRemotes;
         public string endpointURL;

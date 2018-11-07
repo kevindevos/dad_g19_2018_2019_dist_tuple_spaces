@@ -15,7 +15,7 @@ namespace ServerNamespace
             Behaviour = new NormalServerSMRBehaviour(this);
         }
 
-        public ServerSMR() : base(defaultServerHost, 8086) { }
+        public ServerSMR() : base(defaultServerHost, defaultServerPort) { }
 
         private ServerSMR(int serverPort) : base(defaultServerHost, serverPort) { }
 

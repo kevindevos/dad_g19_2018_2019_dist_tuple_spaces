@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes.message {
     public class Response : Message {

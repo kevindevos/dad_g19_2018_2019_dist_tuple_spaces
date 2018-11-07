@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
-using Tuple = CommonTypes.Tuple;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace.Behaviour {
     public abstract class ServerBehaviour {

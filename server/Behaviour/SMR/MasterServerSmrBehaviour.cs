@@ -28,7 +28,7 @@ namespace ServerNamespace.Behaviour.SMR
         // Check if there are requests with ANY client sequence number that is valid for execution 
         public void Decide() {
             lock (Server.RequestList) {
-                for (int i = 0; i < Server.RequestList.Capacity; i++) {
+                for (int i = 0; i < Server.RequestList.Count; i++) {
                     Request request = Server.RequestList.ElementAt(i);
 
                     if (SequenceNumberIsNext(request)) {
@@ -47,7 +47,7 @@ namespace ServerNamespace.Behaviour.SMR
         public void Decide(string endpointURL) {
             lock (Server.RequestList) {
 
-                for (int i = 0; i < Server.RequestList.Capacity; i++) {
+                for (int i = 0; i < Server.RequestList.Count; i++) {
                     Request request = Server.RequestList.ElementAt(i);
 
                     if (request.SrcEndpointURL.Equals(endpointURL) && (SequenceNumberIsNext(request))) {
@@ -65,7 +65,7 @@ namespace ServerNamespace.Behaviour.SMR
         public void BroadcastOrder(Order order) {
             RemoteAsyncDelegate remoteDel;
 
-            for (int i = 0; i < Server.knownServerRemotes.Capacity; i++) {
+            for (int i = 0; i < Server.knownServerRemotes.Count; i++) {
                 remoteDel = new RemoteAsyncDelegate(Server.knownServerRemotes.ElementAt(i).OnReceiveMessage);
                 remoteDel.BeginInvoke(order, null, null);
             }

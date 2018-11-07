@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CommonTypes.tuple;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes
 {
