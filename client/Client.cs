@@ -24,6 +24,10 @@ namespace ClientNamespace {
         }
 
         public void Write(Tuple tuple) {
+            if(isBlockedFromSendingRequests) {
+                // TODO launch exception and return;
+                return;
+            }
             // remote exceptions?
             Request request = new Request(clientRequestSeqNumber, endpointURL, RequestType.WRITE, tuple);
 
@@ -32,18 +36,25 @@ namespace ClientNamespace {
         }
 
         public void Read(Tuple tuple) {
+            if (isBlockedFromSendingRequests) {
+                // TODO launch exception and return;
+                return;
+            }
             // remote exceptions?
             Request request = new Request(clientRequestSeqNumber, endpointURL,RequestType.READ, tuple);
 
             SendMessageToKnownServers(request);
             clientRequestSeqNumber++;
 
-
             isBlockedFromSendingRequests = true;
         }
 
 
         public void Take(Tuple tuple) {
+            if (isBlockedFromSendingRequests) {
+                // TODO launch exception and return;
+                return;
+            }
             // remote exceptions?
             Request request = new Request(clientRequestSeqNumber, endpointURL, RequestType.TAKE, tuple);
 
