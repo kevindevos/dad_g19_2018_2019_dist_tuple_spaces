@@ -46,6 +46,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="message\AskOrder.cs" />
     <Compile Include="RemotingEndpoint.cs" />
     <Compile Include="message\Response.cs" />
     <Compile Include="tuple\tupleobjects\Animal.cs" />

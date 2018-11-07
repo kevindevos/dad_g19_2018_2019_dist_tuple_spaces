@@ -47,6 +47,8 @@ namespace ServerNamespace {
             LastExecutedRequests = new ConcurrentDictionary<string, Request>();
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
             SavedOrders = new List<Order>();
+            LastOrderSequenceNumber = 0; // resets the counter if the server went down and had to be recreated!, we'd need to know which orders were executed here before if there's persistency,
+            //or we need to ask for ALL previous orders..
         }
 
         public Server() : this(defaultServerHost, defaultServerPort) { }

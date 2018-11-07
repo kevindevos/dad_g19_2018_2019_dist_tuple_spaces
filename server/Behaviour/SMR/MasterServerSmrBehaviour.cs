@@ -67,12 +67,7 @@ namespace ServerNamespace.Behaviour.SMR
 
         // Send an order to all servers
         public void BroadcastOrder(Order order) {
-            RemoteAsyncDelegate remoteDel;
-
-            for (int i = 0; i < Server.knownServerRemotes.Count; i++) {
-                remoteDel = new RemoteAsyncDelegate(Server.knownServerRemotes.ElementAt(i).OnReceiveMessage);
-                remoteDel.BeginInvoke(order, null, null);
-            }
+            Server.SendMessageToKnownServers(order);
             ++Server.LastOrderSequenceNumber;
         }
 
