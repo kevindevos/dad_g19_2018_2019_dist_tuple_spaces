@@ -58,6 +58,7 @@ namespace ScriptClient
                             continue;
                         }
 
+                        Tuple receivedTuple;
                         switch (splitLine[0])
                         {
                             case "add":
@@ -66,18 +67,16 @@ namespace ScriptClient
                                 Console.WriteLine("Added: " + tupleToAdd);
                                 break;
                             case "read":
-                                TupleSchema tupleSchemaToRead = new TupleSchema(ParseTuple(splitLine[1]));
-                                Tuple tupleToRead = tupleSchemaToRead.Schema;
-                                //client.Read(tupleToRead); // TODO should be tupleSchema in read arguments
+                                Tuple tupleToRead = ParseTuple(splitLine[1]);
+                                receivedTuple = client.Read(tupleToRead);
                                 Console.WriteLine("Tried to Read: " + tupleToRead + ", and got: " +
-                                                  "<insert here tuple>"); // TODO should receive a Tuple
+                                                  receivedTuple);
                                 break;
                             case "take":
-                                TupleSchema tupleSchemaToTake = new TupleSchema(ParseTuple(splitLine[1]));
-                                Tuple tupleToTake = tupleSchemaToTake.Schema;
-                                //client.Read(tupleToTake); // TODO should be tupleSchema in take arguments
+                                Tuple tupleToTake = ParseTuple(splitLine[1]);
+                                receivedTuple = client.Take(tupleToTake);
                                 Console.WriteLine("Tried to Take: " + tupleToTake + ", and got: " +
-                                                  "<insert here tuple>"); // TODO should receive a Tuple
+                                                  receivedTuple);
                                 break;
                             case "wait":
                                 var time = int.Parse(splitLine[1]);

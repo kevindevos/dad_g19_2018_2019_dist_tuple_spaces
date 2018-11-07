@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using CommonTypes;
 using CommonTypes.message;
 using ServerNamespace.Behaviour.SMR;
@@ -32,13 +34,17 @@ namespace ServerNamespace
         public override void OnReceiveMessage(Message message) {
             Log("OnReceiveMessage called, message: " + message);
 
-            if (message.GetType().Equals(typeof(Request))) {
+            if (message.GetType() == typeof(Request)) {
                 Behaviour.ProcessRequest((Request)message);
+                return;
             }
 
-            if (message.GetType().Equals(typeof(Order))) {
+            if (message.GetType() == typeof(Order)) {
                 Behaviour.ProcessOrder((Order)message);
+                return;
             }
+            
+            throw new NotImplementedException();
         }
 
         public override void OnSendMessage(Message message) {
