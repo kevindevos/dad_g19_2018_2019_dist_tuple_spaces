@@ -13,10 +13,10 @@ namespace CommonTypes {
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string defaultServerHost = "localhost";
-        protected const int defaultServerPort = 8080;
+        protected const int defaultServerPort = 8086;
 
         protected const string defaultClientHost = "localhost";
-        protected const int defaultClientPort = 8070;
+        protected const int defaultClientPort = 8096;
         protected string objIdentifier;
         public List<RemotingEndpoint> knownServerRemotes;
         public string endpointURL;
@@ -31,10 +31,13 @@ namespace CommonTypes {
             this.port = port;
             this.objIdentifier = objIdentifier;
             this.endpointURL = BuildRemoteUrl(host, port, objIdentifier);
-            this.knownServerRemotes = GetKnownServerRemotes();
 
-            RegisterTcpChannel();
-            RegisterService();
+            // register tcp channel and service
+            tcpChannel = new TcpChannel(port);
+            ChannelServices.RegisterChannel(tcpChannel, false);
+            RemotingServices.Marshal(this, objIdentifier, typeof(RemotingEndpoint));
+
+            this.knownServerRemotes = GetKnownServerRemotes();
         }
 
         protected RemotingEndpoint(string objIdentifier) {
@@ -76,16 +79,6 @@ namespace CommonTypes {
         public abstract void OnReceiveMessage(Message message);
 
         public abstract void OnSendMessage(Message message);
-
-
-        public void RegisterService() {
-            RemotingServices.Marshal(this, objIdentifier, typeof(RemotingEndpoint));
-        }
-
-        public void RegisterTcpChannel() {
-            tcpChannel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(tcpChannel, false);
-        }
 
         public string GetRemoteEndpointURL() {
             return endpointURL;
