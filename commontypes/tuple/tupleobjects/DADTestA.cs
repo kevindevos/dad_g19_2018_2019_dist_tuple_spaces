@@ -1,5 +1,8 @@
+using System;
+
 namespace CommonTypes.tuple.tupleobjects
 {
+    [Serializable] //TODO I've added this.. if its not allowed, we need to pass the tubles as the string representation of these classes
     public class DADTestA {
         public int i1;
         public string s1;
