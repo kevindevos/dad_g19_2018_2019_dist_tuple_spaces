@@ -10,6 +10,7 @@ namespace PuppetMaster
     {
         static void Main(string[] args)
         {
+            Interface i = new Interface();
         }
     }
 }
