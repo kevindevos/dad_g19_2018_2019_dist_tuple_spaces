@@ -11,7 +11,7 @@ namespace ServerNamespace.Behaviour {
             Server = server;
         }
 
-        abstract public Message ProcessMessage(Message message);
+        public abstract Message ProcessMessage(Message message);
 
         public Response PerformRequest(Request request) {
             // remove from the requestList

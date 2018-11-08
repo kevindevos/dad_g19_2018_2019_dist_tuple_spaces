@@ -82,8 +82,8 @@ namespace CommonTypes {
                 IAsyncResult ar = remoteDel.BeginInvoke(message, null, null);
                 remoteDel.EndInvoke(ar);
             }
-            catch(Exception) {
-                Console.WriteLine("Server at " + remotingEndpoint.endpointURL + " is unreachable.");
+            catch(Exception e) {
+                Console.WriteLine("Server at " + remotingEndpoint.endpointURL + " is unreachable. (For more detail: " + e.Message + ")");
             }
         }
 

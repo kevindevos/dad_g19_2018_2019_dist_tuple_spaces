@@ -1,5 +1,5 @@
-<<<<<<< HEAD
-﻿using CommonTypes;
+﻿<<<<<<< HEAD
+ using CommonTypes;
 using CommonTypes.message;
 using System;
 using System.Collections.Generic;

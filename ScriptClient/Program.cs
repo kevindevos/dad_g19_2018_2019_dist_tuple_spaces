@@ -63,7 +63,7 @@ namespace ScriptClient
                         {
                             case "add":
                                 Tuple tupleToAdd = ParseTuple(splitLine[1]);
-                                //client.Write(tupleToAdd);
+                                client.Write(tupleToAdd);
                                 Console.WriteLine("Added: " + tupleToAdd);
                                 break;
                             case "read":

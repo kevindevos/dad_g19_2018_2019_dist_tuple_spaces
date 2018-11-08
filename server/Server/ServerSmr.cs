@@ -23,7 +23,7 @@ namespace ServerNamespace
         public void UpgradeToMaster()
         {
             Behaviour = new MasterServerSMRBehaviour(this);
-            ((MasterServerSMRBehaviour)Behaviour).Decide(); 
+            while(((MasterServerSMRBehaviour)Behaviour).Decide()); 
         }
 
         public void DowngradeToNormal()

@@ -13,7 +13,7 @@ namespace ServerNamespace.Behaviour.SMR
         
         public override void ProcessRequest(Request request) {
             Server.SaveRequest(request);
-            Decide(request.SrcEndpointURL);
+            while(Decide(request.SrcEndpointURL));
         }
 
         public override Message ProcessOrder(Order order) {
@@ -25,27 +25,32 @@ namespace ServerNamespace.Behaviour.SMR
             return PerformRequest(order.Request);
         }
 
+        
+        //TODO refactor both Decide()s into one, and shorten it's lock duration
         // Check if there are requests with ANY client sequence number that is valid for execution 
-        public void Decide() {
+        // Return true, if it executed a request, false otherwise
+        public bool Decide() {
             lock (Server.RequestList) {
-                for (int i = 0; i < Server.RequestList.Count; i++) {
-                    Request request = Server.RequestList.ElementAt(i);
-
+                foreach (var request in Server.RequestList)
+                {
                     if (SequenceNumberIsNext(request)) {
                         Order order = new Order(request, Server.LastOrderSequenceNumber+1,Server.endpointURL);
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                         Server.SavedOrders.Add(order);
-                        Decide(); // check again if there are more
-                        return;
+                        
+                        //Decide();  // check again if there are more
+                        //Can't decide again here or we'll reach a deadlock
+                        return true;
                     }
-
                 }
             }
+            return false;
         }
-
+        
         // Check if there are requests with the same endpointURL (client identifier) that can be executed
-        public void Decide(string endpointURL) {
+        // Return true, if it executed a request, false otherwise
+        public bool Decide(string endpointURL) {
             lock (Server.RequestList) {
 
                 for (int i = 0; i < Server.RequestList.Count; i++) {
@@ -56,12 +61,14 @@ namespace ServerNamespace.Behaviour.SMR
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                         Server.SavedOrders.Add(order);
-                        Decide(endpointURL); // check again if there are more
-                        return;
+                        
+                        //Decide(endpointURL); // check again if there are more
+                        // Can't decide again here or we'll reach a deadlock
+                        return true;
                     }
-
                 }
             }
+            return false;
         }
 
         // Send an order to all servers
@@ -71,6 +78,7 @@ namespace ServerNamespace.Behaviour.SMR
         }
 
         // A Normal server sent us an AskOrder, so master needs to find the order in recently SavedOrders and resend it.
+        //TODO Does SavedOrders need to be synchronized?
         public override void ProcessAskOrder(AskOrder askOrder) {
             for(int i = 0; i < Server.SavedOrders.Count; i++) {
                 if(Server.SavedOrders.ElementAt(i).SeqNum == askOrder.WantedSequenceNumber) {

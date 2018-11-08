@@ -11,11 +11,11 @@ namespace ServerNamespace.Behaviour.SMR {
         public abstract void ProcessAskOrder(AskOrder askOrder);
 
         public override Message ProcessMessage(Message message) {
-            if (message.GetType().Equals(typeof(Request))) {
+            if (message.GetType() == typeof(Request)) {
                 ProcessRequest((Request)message);
             }
 
-            if (message.GetType().Equals(typeof(Order))) {
+            if (message.GetType() == typeof(Order)) {
                 return ProcessOrder((Order)message);
             }
 

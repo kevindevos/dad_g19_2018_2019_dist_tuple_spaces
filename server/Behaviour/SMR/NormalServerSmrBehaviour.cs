@@ -26,6 +26,7 @@ namespace ServerNamespace.Behaviour.SMR
         }
 
         // ask the master to send back the missing orders with sequence numbers from startSeqNum up to endSeqNum, inclusive
+        //TODO ask for all of them in one request
         private void AskForMissingOrders(int startSeqNum, int endSeqNum) {
             for (int i = startSeqNum; i <= endSeqNum; i++) {
                 AskForMissingOrder(i);
@@ -33,6 +34,7 @@ namespace ServerNamespace.Behaviour.SMR
         }
 
         // ask the master to send back missing order with sequence number i
+        //TODO ask for all of them in one request
         private void AskForMissingOrder(int wantedOrderSequenceNumber) {
             AskOrder askOrder = new AskOrder(Server.endpointURL, wantedOrderSequenceNumber);
             Server.SendMessageToKnownServers(askOrder);
