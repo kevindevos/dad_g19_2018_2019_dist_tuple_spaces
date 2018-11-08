@@ -6,15 +6,22 @@ namespace ServerNamespace.Behaviour.SMR
 {
     public class MasterServerSMRBehaviour : ServerSMRBehaviour {
         
-        public MasterServerSMRBehaviour(Server server) : base(server)
+        public MasterServerSMRBehaviour(ServerSMR server) : base(server)
         {
         }
 
         
-        public override void ProcessRequest(Request request) {
+        public override Message ProcessRequest(Request request) {
             Server.SaveRequest(request);
             while(Decide(request.SrcEndpointURL));
+
+            // create an ack that will be sent back to comfirm the request was received
+            Server.Log("Sending back an Ack");
+            Ack ack = new Ack(Server.EndpointURL, request);
+
+            return ack;
         }
+
 
         public override Message ProcessOrder(Order order) {
             // for when a master sends order, crashes and the order arrives after the election of a new master, act as a normal server executing an order
@@ -34,7 +41,7 @@ namespace ServerNamespace.Behaviour.SMR
                 foreach (var request in Server.RequestList)
                 {
                     if (SequenceNumberIsNext(request)) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber+1,Server.endpointURL);
+                        Order order = new Order(request, Server.LastOrderSequenceNumber+1,Server.EndpointURL);
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                         Server.SavedOrders.Add(order);
@@ -57,7 +64,7 @@ namespace ServerNamespace.Behaviour.SMR
                     Request request = Server.RequestList.ElementAt(i);
 
                     if (request.SrcEndpointURL.Equals(endpointURL) && (SequenceNumberIsNext(request))) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber+1, Server.endpointURL);
+                        Order order = new Order(request, Server.LastOrderSequenceNumber+1, Server.EndpointURL);
                         Server.RequestList.Remove(request);
                         BroadcastOrder(order);
                         Server.SavedOrders.Add(order);
@@ -82,7 +89,7 @@ namespace ServerNamespace.Behaviour.SMR
         public override void ProcessAskOrder(AskOrder askOrder) {
             for(int i = 0; i < Server.SavedOrders.Count; i++) {
                 if(Server.SavedOrders.ElementAt(i).SeqNum == askOrder.WantedSequenceNumber) {
-                    Server.SendMessateToRemoteURL(askOrder.SrcRemoteURL, Server.SavedOrders.ElementAt(i));
+                    Server.SendMessageToRemoteURL(askOrder.SrcRemoteURL, Server.SavedOrders.ElementAt(i));
                 }
             }
         }

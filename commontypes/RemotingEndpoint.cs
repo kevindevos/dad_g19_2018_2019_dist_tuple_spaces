@@ -8,50 +8,63 @@ using CommonTypes.message;
 using System.Collections;
 
 namespace CommonTypes {
-    public delegate void RemoteAsyncDelegate(Message message);
+    public delegate Message RemoteAsyncDelegate(Message message);
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
+        public const int NUM_SERVERS = 3;
+
         protected const string defaultServerHost = "localhost";
         protected const int defaultServerPort = 8080;
 
         protected const string defaultClientHost = "localhost";
         protected const int defaultClientPort = 8070;
-        protected string objIdentifier;
-        public List<RemotingEndpoint> knownServerRemotes;
-        public string endpointURL;
 
-        protected TcpChannel tcpChannel;
+        private string _objIdentifier;
+        public string ObjIdentifier { get; private set; }
 
-        protected int port;
-        protected string host;
+        private List<RemotingEndpoint> _knownServerRemotes;
+        public List<RemotingEndpoint> KnownServerRemotes;
+
+        private string _endpointURL;
+        public string EndpointURL { get; private set; }
+
+        private TcpChannel _tcpChannel;
+        public TcpChannel TcpChannel { get; private set; }
+
+        private int _port;
+        public int Port { get; set; }
+
+        private string _host;
+        public string Host { get; private set; }
+
 
         public RemotingEndpoint(string host, int port, string objIdentifier) {
-            this.host = host;
-            this.port = port;
-            this.objIdentifier = objIdentifier;
+            Host = host;
+            Port = port;
+            ObjIdentifier = objIdentifier;
 
-            endpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
+            EndpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
 
             // register tcp channel and service
             IDictionary dictionary = new System.Collections.Hashtable();
             dictionary["name"] = "tcp" + port;
             dictionary["port"] = port;
-            tcpChannel = new TcpChannel(dictionary, null,null);
-            ChannelServices.RegisterChannel(tcpChannel, false);
-            RemotingServices.Marshal(this, objIdentifier+port, typeof(RemotingEndpoint));
+            TcpChannel = new TcpChannel(dictionary, null,null);
+            ChannelServices.RegisterChannel(TcpChannel, false);
+            RemotingServices.Marshal(this, objIdentifier + port, typeof(RemotingEndpoint));
 
-            knownServerRemotes = GetKnownServerRemotes();
+            KnownServerRemotes = GetKnownServerRemotes();
         }
 
         protected RemotingEndpoint(string objIdentifier) {
-            this.objIdentifier = objIdentifier;
+            ObjIdentifier = objIdentifier;
         }
 
         private List<RemotingEndpoint> GetKnownServerRemotes() {
             List<RemotingEndpoint> knownRemotes = new List<RemotingEndpoint>();
 
-            for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
-                if (i == port) continue;
+            for(int i = defaultServerPort; i < defaultServerPort+NUM_SERVERS; i++) {
+                if (i == Port) continue;
                 string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"+i));
 
                 knownRemotes.Add(GetRemoteEndpoint(serverUrl));
@@ -60,7 +73,7 @@ namespace CommonTypes {
             return knownRemotes;
         }
 
-        public RemotingEndpoint GetRemoteEndpoint(string host, int destPort, string objIdentifier) {
+        public static RemotingEndpoint GetRemoteEndpoint(string host, int destPort, string objIdentifier) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
                 BuildRemoteUrl(host, destPort, objIdentifier+destPort));
@@ -68,7 +81,7 @@ namespace CommonTypes {
             return remote;
         }
 
-        public RemotingEndpoint GetRemoteEndpoint(string url) {
+        public static RemotingEndpoint GetRemoteEndpoint(string url) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
                 url);
@@ -76,39 +89,45 @@ namespace CommonTypes {
             return remote;
         }
 
-        public void SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
+        public Message SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
             try {
                 RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
                 IAsyncResult ar = remoteDel.BeginInvoke(message, null, null);
-                remoteDel.EndInvoke(ar);
+                ar.AsyncWaitHandle.WaitOne();
+                return remoteDel.EndInvoke(ar);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remotingEndpoint.endpointURL + " is unreachable. (For more detail: " + e.Message + ")");
+                Console.WriteLine("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
+                throw new NotImplementedException();
             }
         }
 
-        public void SendMessateToRemoteURL(string remoteURL, Message message) {
+
+        public Message SendMessageToRemoteURL(string remoteURL, Message message) {
             RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remoteURL);
-            SendMessageToRemote(remotingEndpoint, message);
+            return SendMessageToRemote(remotingEndpoint, message);
         }
 
-        public void SendMessageToKnownServers(Message message) {
-            foreach (var serverRemote in knownServerRemotes)
-            {
-                SendMessageToRemote(serverRemote, message);
+        public List<Message> SendMessageToKnownServers(Message message) {
+            List<Message> messages = new List<Message>();
+
+            for (int i = 0; i < KnownServerRemotes.Count; i++) {
+                messages.Add(SendMessageToRemote(KnownServerRemotes.ElementAt(i), message));
             }
+
+            return messages;
         }
 
-        public string BuildRemoteUrl(string host, int port, string objIdentifier) {
+        public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
 
-        public abstract void OnReceiveMessage(Message message);
+        public abstract Message OnReceiveMessage(Message message);
 
-        public abstract void OnSendMessage(Message message);
+        public abstract Message OnSendMessage(Message message);
 
         public string GetRemoteEndpointURL() {
-            return endpointURL;
+            return EndpointURL;
         }
     }
 }

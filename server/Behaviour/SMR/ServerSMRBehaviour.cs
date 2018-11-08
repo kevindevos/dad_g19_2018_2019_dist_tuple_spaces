@@ -3,16 +3,26 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR {
     public abstract class ServerSMRBehaviour : ServerBehaviour{
+        protected new ServerSMR Server;
 
-        public ServerSMRBehaviour(Server server) : base(server) { }
+        protected int DEFAULT_REQUEST_TO_MASTER_ACK_TIMEOUT_DURATION = 5; // seconds
 
-        public abstract void ProcessRequest(Request request);
+        public ServerSMRBehaviour(ServerSMR server) : base(server) {
+            Server = server;
+        }
+
+        public abstract Message ProcessRequest(Request request);
         public abstract Message ProcessOrder(Order order);
         public abstract void ProcessAskOrder(AskOrder askOrder);
 
         public override Message ProcessMessage(Message message) {
+            // if an Elect message, define new master as the one included in the Elect message
+            if (message.GetType() == typeof(Elect)){
+                Server.MasterEndpointURL = ((Elect)message).NewMasterURL;
+            }
+
             if (message.GetType() == typeof(Request)) {
-                ProcessRequest((Request)message);
+                return ProcessRequest((Request)message);
             }
 
             if (message.GetType() == typeof(Order)) {
@@ -24,14 +34,14 @@ namespace ServerNamespace.Behaviour.SMR {
 
         // check if the sequence number of this request is just 1 higher than the previous ( else there is a missing request )
         public bool SequenceNumberIsNext(Request request) {
-            return request.SeqNum == 0 || Server.LastExecutedRequests.GetOrAdd(request.SrcRemoteURL, request).SeqNum == request.SeqNum - 1 ||
-                   request.SeqNum == 0; //TODO do this better
+            Request lastExecutedRequest;
+            return Server.LastExecutedRequests.TryGetValue(request.SrcRemoteURL, out lastExecutedRequest) && lastExecutedRequest.SeqNum == request.SeqNum - 1;
         }
 
         // check if the sequence number of this order is just 1 higher than the previous ( else there is a missing order )
         public bool SequenceNumberIsNext(Order order) {
-            return order.SeqNum == 0 || Server.LastExecutedOrders.GetOrAdd(order.SrcRemoteURL, order).SeqNum == order.SeqNum - 1 ||
-                   order.SeqNum == 0; //TODO do this better
+            Order lastExecutedOrder;
+            return Server.LastExecutedOrders.TryGetValue(order.SrcRemoteURL, out lastExecutedOrder) && lastExecutedOrder.SeqNum == order.SeqNum - 1;
         }
     }
 }

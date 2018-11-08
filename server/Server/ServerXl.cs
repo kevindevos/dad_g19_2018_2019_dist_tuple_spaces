@@ -17,11 +17,11 @@ namespace ServerNamespace
 
         private ServerXL(int serverPort) : this(defaultServerHost, serverPort) { }
 
-        public override void OnReceiveMessage(Message message) {
+        public override Message OnReceiveMessage(Message message) {
             throw new System.NotImplementedException();
         }
 
-        public override void OnSendMessage(Message message) {
+        public override Message OnSendMessage(Message message) {
             throw new System.NotImplementedException();
         }
     }

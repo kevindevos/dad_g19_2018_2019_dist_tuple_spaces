@@ -14,9 +14,9 @@ namespace CommonTypes {
 
         public Request(int seqNum, string srcEndpointURL, RequestType requestType, Tuple tuple) : base(srcEndpointURL)
         {
-            _requestType = requestType;
-            _seqNum = seqNum;
-            _tuple = tuple;
+            RequestType = requestType;
+            SeqNum = seqNum;
+            Tuple = tuple;
             SrcEndpointURL = srcEndpointURL;
         }
 
