@@ -93,8 +93,9 @@ namespace CommonTypes {
         }
 
         public void SendMessageToKnownServers(Message message) {
-            for (int i = 0; i < knownServerRemotes.Count; i++) {
-                SendMessageToRemote(knownServerRemotes.ElementAt(i), message);
+            foreach (var serverRemote in knownServerRemotes)
+            {
+                SendMessageToRemote(serverRemote, message);
             }
         }
 

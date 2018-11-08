@@ -24,14 +24,14 @@ namespace ServerNamespace.Behaviour.SMR {
 
         // check if the sequence number of this request is just 1 higher than the previous ( else there is a missing request )
         public bool SequenceNumberIsNext(Request request) {
-            Request lastExecutedRequest;
-            return Server.LastExecutedRequests.TryGetValue(request.SrcRemoteURL, out lastExecutedRequest) && lastExecutedRequest.SeqNum == request.SeqNum - 1;
+            return request.SeqNum == 0 || Server.LastExecutedRequests.GetOrAdd(request.SrcRemoteURL, request).SeqNum == request.SeqNum - 1 ||
+                   request.SeqNum == 0; //TODO do this better
         }
 
         // check if the sequence number of this order is just 1 higher than the previous ( else there is a missing order )
         public bool SequenceNumberIsNext(Order order) {
-            Order lastExecutedOrder;
-            return Server.LastExecutedOrders.TryGetValue(order.SrcRemoteURL, out lastExecutedOrder) && lastExecutedOrder.SeqNum == order.SeqNum - 1;
+            return order.SeqNum == 0 || Server.LastExecutedOrders.GetOrAdd(order.SrcRemoteURL, order).SeqNum == order.SeqNum - 1 ||
+                   order.SeqNum == 0; //TODO do this better
         }
     }
 }

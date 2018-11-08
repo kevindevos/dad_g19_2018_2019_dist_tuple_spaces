@@ -17,7 +17,7 @@ namespace CommonTypes {
             _requestType = requestType;
             _seqNum = seqNum;
             _tuple = tuple;
-            _srcEndpointURL = srcEndpointURL;
+            SrcEndpointURL = srcEndpointURL;
         }
 
         public RequestType RequestType { get; private set; }
