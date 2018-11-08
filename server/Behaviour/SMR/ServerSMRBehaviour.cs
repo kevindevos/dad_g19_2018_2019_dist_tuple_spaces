@@ -3,16 +3,26 @@ using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR {
     public abstract class ServerSMRBehaviour : ServerBehaviour{
+        protected new ServerSMR Server;
 
-        public ServerSMRBehaviour(Server server) : base(server) { }
+        protected int DEFAULT_REQUEST_TO_MASTER_ACK_TIMEOUT_DURATION = 5; // seconds
 
-        public abstract void ProcessRequest(Request request);
+        public ServerSMRBehaviour(ServerSMR server) : base(server) {
+            Server = server;
+        }
+
+        public abstract Message ProcessRequest(Request request);
         public abstract Message ProcessOrder(Order order);
         public abstract void ProcessAskOrder(AskOrder askOrder);
 
         public override Message ProcessMessage(Message message) {
+            // if an Elect message, define new master as the one included in the Elect message
+            if (message.GetType().Equals(typeof(Elect))){
+                Server.MasterEndpointURL = ((Elect)message).NewMasterURL;
+            }
+
             if (message.GetType().Equals(typeof(Request))) {
-                ProcessRequest((Request)message);
+                return ProcessRequest((Request)message);
             }
 
             if (message.GetType().Equals(typeof(Order))) {

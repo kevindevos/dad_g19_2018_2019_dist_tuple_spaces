@@ -14,10 +14,10 @@ namespace CommonTypes {
 
         public Request(int seqNum, string srcEndpointURL, RequestType requestType, Tuple tuple) : base(srcEndpointURL)
         {
-            _requestType = requestType;
-            _seqNum = seqNum;
-            _tuple = tuple;
-            _srcEndpointURL = srcEndpointURL;
+            RequestType = requestType;
+            SeqNum = seqNum;
+            Tuple = tuple;
+            SrcEndpointURL = srcEndpointURL;
         }
 
         public RequestType RequestType { get; private set; }

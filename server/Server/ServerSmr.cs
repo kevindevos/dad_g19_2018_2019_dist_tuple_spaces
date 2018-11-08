@@ -31,25 +31,32 @@ namespace ServerNamespace
             Behaviour = new NormalServerSMRBehaviour(this);
         }
 
-        public override void OnReceiveMessage(Message message) {
-            Log("OnReceiveMessage called, message: " + message);
+        public override Message OnReceiveMessage(Message message) {
+            Log("Received message: " + message);
+
+            if(message.GetType() == typeof(Ack)) {
+                ReceivedAcks.Add((Ack)message);
+            }
 
             if (message.GetType() == typeof(Request)) {
-                Behaviour.ProcessRequest((Request)message);
-                return;
+                return Behaviour.ProcessRequest((Request)message);
             }
 
             if (message.GetType() == typeof(Order)) {
-                Behaviour.ProcessOrder((Order)message);
-                return;
+                return Behaviour.ProcessOrder((Order)message);
             }
             
             throw new NotImplementedException();
         }
 
-        public override void OnSendMessage(Message message) {
+        public override Message OnSendMessage(Message message) {
             throw new System.NotImplementedException();
         }
-        
+
+        public override void Log(string text) {
+            string serverType = Behaviour.GetType() == typeof(MasterServerSMRBehaviour) ? "MASTER" : "NORMAL";
+            Console.WriteLine("[SERVER:" + EndpointURL + "]["+serverType+"] : " + text);
+        }
+
     }
 }

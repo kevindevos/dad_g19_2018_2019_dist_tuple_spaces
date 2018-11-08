@@ -31,18 +31,18 @@ namespace ClientNamespace {
         public void Write(Tuple tuple) {
 
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, endpointURL, RequestType.WRITE, tuple);
+            Request request = new Request(clientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
-            SendMessageToKnownServers(request);
+            SendMessageToRandomServer(request);
             clientRequestSeqNumber++;
         }
 
         public Tuple Read(Tuple tuple) {
 
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, endpointURL,RequestType.READ, tuple);
+            Request request = new Request(clientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
 
-            SendMessageToKnownServers(request);
+            SendMessageToRandomServer(request);
             clientRequestSeqNumber++;
 
             
@@ -54,25 +54,31 @@ namespace ClientNamespace {
         public Tuple Take(Tuple tuple) {
 
             // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, endpointURL, RequestType.TAKE, tuple);
+            Request request = new Request(clientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
 
-            SendMessageToKnownServers(request);
+            SendMessageToRandomServer(request);
             clientRequestSeqNumber++;
 
             WaitForResponse(request.SeqNum);
             return receivedResponses[request.SeqNum].TupleList.First(); //TODO 2-phase locking?
         }
 
+
+        public void SendMessageToRandomServer(Message message) {
+            Random random = new Random();
+            int i = random.Next(0, KnownServerRemotes.Count);
+            SendMessageToRemote(KnownServerRemotes[i], message);
+        }
         
 
-        public override void OnReceiveMessage(Message message) {
+        public override Message OnReceiveMessage(Message message) {
             if (message.GetType() == typeof(Response)){
                 Response response = (Response)message;
 
                 // NOTE: this assumes a server sends back the perfectly correct response that we wanted
                 // if the request we sent out has already gotten the respective response ( same seqNumber in request and response of the client ) then ignore
                 if (receivedResponses.Keys.Contains(response.Request.SeqNum)) {
-                    return;
+                    return null;
                 }
 
                 // if receives at least one response for a blocking request then unlock ( can only send one and then block, so it will always unblock properly? )
@@ -94,9 +100,10 @@ namespace ClientNamespace {
                     receivedResponses.Add(response.Request.SeqNum, response);
                 }
             }
+            return null;
         }
 
-        public override void OnSendMessage(Message message) {
+        public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();
         }
         

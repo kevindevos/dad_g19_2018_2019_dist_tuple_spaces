@@ -1,11 +1,13 @@
 using CommonTypes;
 using CommonTypes.message;
+using System;
+using System.Linq;
 
 namespace ServerNamespace.Behaviour.SMR
 {
     public class NormalServerSMRBehaviour : ServerSMRBehaviour
     {
-        public NormalServerSMRBehaviour(Server server) : base(server)
+        public NormalServerSMRBehaviour(ServerSMR server) : base(server)
         {
         }
 
@@ -18,8 +20,6 @@ namespace ServerNamespace.Behaviour.SMR
                 return PerformRequest(order.Request);
             }
 
-            // TODO special case, what if a normal server crashes, and the last order sequence number is reset to 0, 
-            // and it receives order nr 1994 , does it ask for 1993 orders even without knowing how many were executed ( if there's no persistency, we need to execute all again), causing data inconsistency?
             AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);
             return null;
 
@@ -34,15 +34,46 @@ namespace ServerNamespace.Behaviour.SMR
 
         // ask the master to send back missing order with sequence number i
         private void AskForMissingOrder(int wantedOrderSequenceNumber) {
-            AskOrder askOrder = new AskOrder(Server.endpointURL, wantedOrderSequenceNumber);
-            Server.SendMessageToKnownServers(askOrder);
+            AskOrder askOrder = new AskOrder(Server.EndpointURL, wantedOrderSequenceNumber);
+            SendMessageToMaster(askOrder);
         }
 
-        public override void ProcessRequest(Request request) {
+        public override Message ProcessRequest(Request request) {
             Server.SaveRequest(request);
+            Server.Log("Sending request to Master");
+
+            Message response = SendMessageToMaster(request);
+
+            // wait a few seconds and then check wether or not an Ack was received 
+            Server.Log("NET Remoting Thread Sleeping now");
+            System.Threading.Thread.Sleep(DEFAULT_REQUEST_TO_MASTER_ACK_TIMEOUT_DURATION*1000);
+            Server.Log("Waking up");
+            if (response != null || response.GetType() != typeof(Ack) || ((Ack)response).Message != request) {
+                Server.Log("Did not receive Ack, triggering new election");
+                TriggerReelection();
+            }
+            else {
+                Server.Log("Received an Ack");
+            }
+            return null;
+        }
+
+        public void TriggerReelection() {
+            // TODO
+            throw new NotImplementedException();
         }
 
         public override void ProcessAskOrder(AskOrder askOrder) {
+        }
+
+        public Message SendMessageToMaster(Message request) {
+            if(Server.MasterEndpointURL != null) {
+                return Server.SendMessageToRemoteURL(Server.MasterEndpointURL, request);
+            }
+            else {
+                // TODO master is not known, problem?
+                return null;
+            }
         }
     }
 }
