@@ -48,7 +48,7 @@ namespace ServerNamespace.Behaviour.SMR
             Server.Log("NET Remoting Thread Sleeping now");
             System.Threading.Thread.Sleep(DEFAULT_REQUEST_TO_MASTER_ACK_TIMEOUT_DURATION*1000);
             Server.Log("Waking up");
-            if (response != null || response.GetType() != typeof(Ack) || ((Ack)response).Message != request) {
+            if (response != null && response.GetType() != typeof(Ack) ) {
                 Server.Log("Did not receive Ack, triggering new election");
                 TriggerReelection();
             }

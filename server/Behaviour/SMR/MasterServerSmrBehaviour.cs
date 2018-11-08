@@ -46,7 +46,6 @@ namespace ServerNamespace.Behaviour.SMR
                         Decide(); // check again if there are more
                         return;
                     }
-
                 }
             }
         }
