@@ -53,7 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\commontypes\CommonTypes.csproj">
-      <Project>{6ade780d-1807-438d-8e75-154cadde2bf1}</Project>
+      <Project>{6ADE780D-1807-438D-8E75-154CADDE2BF1}</Project>
       <Name>CommonTypes</Name>
     </ProjectReference>
   </ItemGroup>

@@ -1,9 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 
 namespace CommonTypes.tuple
 {
     // a "pattern" to match against, consists of a list of fields that have to be all contained in a tuple for there to be a match
-    
+    [Serializable]
     public class TupleSchema
     {
         public readonly Tuple Schema;
@@ -13,36 +14,32 @@ namespace CommonTypes.tuple
             Schema = tuple;
         }
 
-
         public bool Match(Tuple tuple)
         {
             // if there are more required tuple members than they exist, return false
-            if (tuple.GetSize() < Schema.GetSize())
+            if (tuple.GetSize() != Schema.GetSize())
                 return false;
 
             for (var i = 0; i < Schema.GetSize(); i++) {
-                for (var j = 0; j < tuple.GetSize(); j++) {
-                    var schemaField = Schema.Fields[i];
-                    var tupleField = tuple.Fields[j];
+                var schemaField = Schema.Fields[i];
+                var tupleField = tuple.Fields[i];
 
-                    // check type
-                    if (schemaField.GetType() != tupleField.GetType())
-                        return false;
+                // check string match
+                if (tupleField is string && 
+                    Regex.IsMatch(tupleField.ToString(), WildCardToRegular(schemaField.ToString())))
+                    return true;
+                
 
-                    // check string match
-                    if (Regex.IsMatch(tupleField.ToString(), WildCardToRegular(schemaField.ToString())))
-                        return true;
-
-                    // TODO ( only works for ITupleObject instances ? )
-                    // check for object match , and numbers match
-                    if (tupleField.Equals(schemaField)) {
-                        return true;
-                    }
-
+                // TODO ( only works for ITupleObject instances ? )
+                // check for object match , and numbers match
+                if (schemaField == null || tupleField.Equals(schemaField)) {
+                    return true;
                 }
-            }
 
-            return true;
+                if (schemaField is Type && tupleField.GetType().Equals(schemaField))
+                    return true;
+            }
+            return false;
         }
 
         // https://stackoverflow.com/questions/30299671/matching-strings-with-wildcard

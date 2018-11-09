@@ -1,70 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes.message;
+using System.Collections;
 
 namespace CommonTypes {
-    public delegate void RemoteAsyncDelegate(Message message);
+    public delegate Message RemoteAsyncDelegate(Message message);
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
-        protected const string defaultServerHost = "localhost";
-        protected const int defaultServerPort = 8080;
+        private const int NumServers = 3;
 
-        protected const string defaultClientHost = "localhost";
-        protected const int defaultClientPort = 8070;
-        protected string objIdentifier;
-        public List<RemotingEndpoint> knownServerRemotes;
-        public string endpointURL;
+        protected const string DefaultServerHost = "localhost";
+        protected const int DefaultServerPort = 8080;
 
-        protected TcpChannel tcpChannel;
+        protected const string DefaultClientHost = "localhost";
+        protected const int DefaultClientPort = 8070;
 
-        protected int port;
-        protected string host;
+        private string ObjIdentifier { get; }
 
-        public RemotingEndpoint(string host, int port, string objIdentifier) {
-            this.host = host;
-            this.port = port;
-            this.objIdentifier = objIdentifier;
-            this.endpointURL = BuildRemoteUrl(host, port, objIdentifier);
+        protected readonly List<RemotingEndpoint> KnownServerRemotes;
+
+        public string EndpointURL { get; }
+
+        private TcpChannel TcpChannel { get; }
+
+        protected int Port { private get; set; }
+
+        private string Host { get; }
+
+
+        protected RemotingEndpoint(string host, int port, string objIdentifier) {
+            Host = host;
+            Port = port;
+            ObjIdentifier = objIdentifier;
+
+            EndpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
 
             // register tcp channel and service
-            tcpChannel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(tcpChannel, false);
-            RemotingServices.Marshal(this, objIdentifier, typeof(RemotingEndpoint));
+            IDictionary dictionary = new Hashtable();
+            dictionary["name"] = "tcp" + port;
+            dictionary["port"] = port;
+            TcpChannel = new TcpChannel(dictionary, null,null);
+            ChannelServices.RegisterChannel(TcpChannel, false);
+            RemotingServices.Marshal(this, objIdentifier + port, typeof(RemotingEndpoint));
 
-            this.knownServerRemotes = GetKnownServerRemotes();
-        }
-
-        protected RemotingEndpoint(string objIdentifier) {
-            this.objIdentifier = objIdentifier;
+            KnownServerRemotes = GetKnownServerRemotes();
         }
 
         private List<RemotingEndpoint> GetKnownServerRemotes() {
-            List<RemotingEndpoint> knownRemotes = new List<RemotingEndpoint>();
+            var knownRemotes = new List<RemotingEndpoint>();
 
-            for(int i = defaultServerPort; i < defaultServerPort+3; i++) {
-                if (i == this.port) continue;
-                string serverUrl = (BuildRemoteUrl(defaultServerHost, i, "Server"));
+            for(var i = DefaultServerPort; i < DefaultServerPort+NumServers; i++) {
+                if (i == Port) continue;
+                string serverUrl = (BuildRemoteUrl(DefaultServerHost, i, "Server"+i));
+
                 knownRemotes.Add(GetRemoteEndpoint(serverUrl));
             }
-
             return knownRemotes;
         }
 
-        public RemotingEndpoint GetRemoteEndpoint(string host, int destPort, string objIdentifier) {
-            RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
-                typeof(RemotingEndpoint),
-                BuildRemoteUrl(host, destPort, objIdentifier));
-
-            return remote;
-        }
-
-        public RemotingEndpoint GetRemoteEndpoint(string url) {
+        public static RemotingEndpoint GetRemoteEndpoint(string url) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
                 url);
@@ -72,32 +70,47 @@ namespace CommonTypes {
             return remote;
         }
 
-        public void SendMessateToRemote(RemotingEndpoint remotingEndpoint, Message message) {
-            RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
-            remoteDel.BeginInvoke(message, null, null);
-        }
-
-        public void SendMessateToRemoteURL(string remoteURL, Message message) {
-            RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remoteURL);
-            SendMessateToRemote(remotingEndpoint, message);
-        }
-
-        public void SendMessageToKnownServers(Message message) {
-            for (int i = 0; i < knownServerRemotes.Count; i++) {
-                SendMessateToRemote(knownServerRemotes.ElementAt(i), message);
+        public Message SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
+            try {
+                RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
+                IAsyncResult ar = remoteDel.BeginInvoke(message, null, null);
+                ar.AsyncWaitHandle.WaitOne();
+                return remoteDel.EndInvoke(ar);
+            }
+            catch(Exception e) {
+                Console.WriteLine("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
+                throw new NotImplementedException();
             }
         }
 
-        public string BuildRemoteUrl(string host, int port, string objIdentifier) {
+        public Message SendMessageToRemoteURL(string remoteURL, Message message) {
+            RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remoteURL);
+            return SendMessageToRemote(remotingEndpoint, message);
+        }
+
+        public List<Message> SendMessageToKnownServers(Message message) {
+            List<Message> messages = new List<Message>();
+
+            foreach (var serverRemote in KnownServerRemotes)
+            {
+                messages.Add(SendMessageToRemote(serverRemote, message));
+
+            }
+            return messages;
+        }
+
+        protected Message SendMessageToRandomServer(Message message) {
+            var random = new Random();
+            var i = random.Next(0, KnownServerRemotes.Count);
+            return SendMessageToRemote(KnownServerRemotes[i], message);
+        }
+
+        public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
 
-        public abstract void OnReceiveMessage(Message message);
+        public abstract Message OnReceiveMessage(Message message);
 
-        public abstract void OnSendMessage(Message message);
-
-        public string GetRemoteEndpointURL() {
-            return endpointURL;
-        }
+        public abstract Message OnSendMessage(Message message);
     }
 }

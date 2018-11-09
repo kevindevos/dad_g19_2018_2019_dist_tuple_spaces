@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace CommonTypes.tuple{
+    [System.Serializable]
     public class Tuple{
         public readonly List<object> Fields;
 
@@ -17,13 +14,14 @@ namespace CommonTypes.tuple{
             return Fields.Count;
         }
 
-        public bool Contains(object member) {
-            return Fields.Contains(member);
-        }
-
         public override string ToString()
         {
-            return "(" + string.Join(", ", Fields.ToArray()) + ")";
+            var listWithNull = new List<object>();
+            foreach (var field in Fields)
+            {
+                listWithNull.Add(field ?? "null");
+            }
+            return "(" + string.Join(", ", listWithNull.ToArray()) + ")";
         }
     }
 }

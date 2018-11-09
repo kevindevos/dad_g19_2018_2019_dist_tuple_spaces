@@ -48,15 +48,13 @@
   <ItemGroup>
     <Compile Include="message\AskOrder.cs" />
     <Compile Include="PCSRemotingInterface.cs" />
+    <Compile Include="message\Elect.cs" />
+    <Compile Include="message\Ack.cs" />
     <Compile Include="RemotingEndpoint.cs" />
     <Compile Include="message\Response.cs" />
-    <Compile Include="tuple\tupleobjects\Animal.cs" />
-    <Compile Include="tuple\tupleobjects\Cat.cs" />
     <Compile Include="tuple\tupleobjects\DADTestA.cs" />
     <Compile Include="tuple\tupleobjects\DADTestB.cs" />
     <Compile Include="tuple\tupleobjects\DADTestC.cs" />
-    <Compile Include="tuple\tupleobjects\Dog.cs" />
-    <Compile Include="tuple\tupleobjects\ITupleObject.cs" />
     <Compile Include="message\Message.cs" />
     <Compile Include="message\Order.cs" />
     <Compile Include="message\Request.cs" />

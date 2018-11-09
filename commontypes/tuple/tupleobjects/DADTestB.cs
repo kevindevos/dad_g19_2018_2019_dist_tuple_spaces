@@ -1,5 +1,8 @@
+using System;
+
 namespace CommonTypes.tuple.tupleobjects
 {
+    [Serializable] //TODO I've added this.. if its not allowed, we need to pass the tubles as the string representation of these classes
     public class DADTestB {
         public int i1;
         public string s1;
@@ -17,6 +20,11 @@ namespace CommonTypes.tuple.tupleobjects
             } else {
                 return ((this.i1 == o.i1) && (this.s1.Equals (o.s1)) && (this.i2 == o.i2));
             }
+        }
+        
+        public override string ToString()
+        {
+            return "DADTestB(" + i1 + ", " + s1 + ", " + i2 + ")" ;
         }
     }
 }

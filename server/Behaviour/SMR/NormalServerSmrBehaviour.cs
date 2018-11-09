@@ -1,33 +1,40 @@
-using System;
 using CommonTypes;
 using CommonTypes.message;
+using System;
+using System.Linq;
 
 namespace ServerNamespace.Behaviour.SMR
 {
     public class NormalServerSMRBehaviour : ServerSMRBehaviour
     {
-        public NormalServerSMRBehaviour(Server server) : base(server)
+        public NormalServerSMRBehaviour(ServerSMR server) : base(server)
         {
         }
 
+        // shorten the locks
         public override Message ProcessOrder(Order order) {
-            if (SequenceNumberIsNext(order)) {
-                Server.SavedOrders.Add(order);
-                Server.DeleteRequest(order.Request);
-                Server.LastOrderSequenceNumber = order.SeqNum;
+            Server.Log("Received an order");
+            lock (Server.LastExecutedOrders)
+            {
+                if (CanExecuteOrder(order)) {
+                    Server.SavedOrders.Add(order);
+                    Server.DeleteRequest(order.Request);
+                    Server.LastOrderSequenceNumber = order.SeqNum;
 
-                return PerformRequest(order.Request);
-            }
-            else {
-                // TODO special case, what if a normal server crashes, and the last order sequence number is reset to 0, 
-                // and it receives order nr 1994 , does it ask for 1993 orders even without knowing how many were executed ( if there's no persistency, we need to execute all again), causing data inconsistency?
+                    Server.UpdateLastExecutedOrder(order);
+                    Server.UpdateLastExecutedRequest(order.Request);
+
+                    Server.Log("Executing the order");
+                    return PerformRequest(order.Request);
+                }
+
                 AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);
                 return null;
             }
-
         }
 
         // ask the master to send back the missing orders with sequence numbers from startSeqNum up to endSeqNum, inclusive
+        //TODO ask for all of them in one request
         private void AskForMissingOrders(int startSeqNum, int endSeqNum) {
             for (int i = startSeqNum; i <= endSeqNum; i++) {
                 AskForMissingOrder(i);
@@ -35,17 +42,50 @@ namespace ServerNamespace.Behaviour.SMR
         }
 
         // ask the master to send back missing order with sequence number i
+        //TODO ask for all of them in one request
         private void AskForMissingOrder(int wantedOrderSequenceNumber) {
-            AskOrder askOrder = new AskOrder(Server.endpointURL, wantedOrderSequenceNumber);
-            Server.SendMessageToKnownServers(askOrder);
+            AskOrder askOrder = new AskOrder(Server.EndpointURL, wantedOrderSequenceNumber);
+            SendMessageToMaster(askOrder);
         }
 
-        public override void ProcessRequest(Request request) {
+        public override Message ProcessRequest(Request request) {
             Server.SaveRequest(request);
+            Server.Log("Sending request to Master");
+
+            Message response = SendMessageToMaster(request);
+
+            // check periodically for answer
+            int timeBetweenChecks = 50; // ms
+            for(int i = 0; i < DefaultRequestToMasterAckTimeoutDuration; i+=timeBetweenChecks) {
+                if(response != null && response.GetType() != typeof(Ack)) {
+                    Server.Log("Waiting " + timeBetweenChecks + " ms");
+                    System.Threading.Thread.Sleep(i);
+                }
+                else {
+                    Server.Log("Received an Ack");
+                    return null;
+                }
+            }
+            TriggerReelection();
+            return null;
+        }
+
+        private void TriggerReelection() {
+            // TODO
+            throw new NotImplementedException();
         }
 
         public override void ProcessAskOrder(AskOrder askOrder) {
-            return; // Normal server does nothing, only master takes care of it, reduces message flooding
+        }
+
+        private Message SendMessageToMaster(Message request) {
+            if(Server.MasterEndpointURL != null) {
+                return Server.SendMessageToRemoteURL(Server.MasterEndpointURL, request);
+            }
+            else {
+                // TODO master is not known, problem?
+                return null;
+            }
         }
     }
 }

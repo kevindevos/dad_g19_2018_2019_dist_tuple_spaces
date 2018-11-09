@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using CommonTypes;
 using CommonTypes.message;
@@ -7,14 +6,19 @@ namespace ServerNamespace.Behaviour.SMR
 {
     public class MasterServerSMRBehaviour : ServerSMRBehaviour {
         
-        public MasterServerSMRBehaviour(Server server) : base(server)
+        public MasterServerSMRBehaviour(ServerSMR server) : base(server)
         {
         }
 
-        
-        public override void ProcessRequest(Request request) {
+        public override Message ProcessRequest(Request request) {
             Server.SaveRequest(request);
-            Decide(request.SrcEndpointURL);
+            while(Decide(request.SrcRemoteURL));
+
+            // create an ack that will be sent back to confirm the request was received
+            Server.Log("Sending back an Ack");
+            Ack ack = new Ack(Server.EndpointURL, request);
+
+            return ack;
         }
 
         public override Message ProcessOrder(Order order) {
@@ -25,57 +29,75 @@ namespace ServerNamespace.Behaviour.SMR
 
             return PerformRequest(order.Request);
         }
-
+        
         // Check if there are requests with ANY client sequence number that is valid for execution 
-        public void Decide() {
+        // Return true, if it executed a request, false otherwise
+        public bool Decide() {
             lock (Server.RequestList) {
-                for (int i = 0; i < Server.RequestList.Count; i++) {
-                    Request request = Server.RequestList.ElementAt(i);
-
-                    if (SequenceNumberIsNext(request)) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber+1,Server.endpointURL);
-                        Server.RequestList.Remove(request);
-                        BroadcastOrder(order);
-                        Server.SavedOrders.Add(order);
-                        Decide(); // check again if there are more
-                        return;
+                foreach (var request in Server.RequestList)
+                {
+                    if (!CanExecuteRequest(request)) {
+                        Server.Log("Can't execute request with sequence number: " + request.SeqNum);
+                        continue;
                     }
+                    OrderRequestForExecution(request);
 
+                    return true;
                 }
             }
+            return false;
         }
-
+        
         // Check if there are requests with the same endpointURL (client identifier) that can be executed
-        public void Decide(string endpointURL) {
+        // Return true, if it executed a request, false otherwise
+        private bool Decide(string endpointURL) {
             lock (Server.RequestList) {
-
-                for (int i = 0; i < Server.RequestList.Count; i++) {
-                    Request request = Server.RequestList.ElementAt(i);
-
-                    if (request.SrcEndpointURL.Equals(endpointURL) && (SequenceNumberIsNext(request))) {
-                        Order order = new Order(request, Server.LastOrderSequenceNumber+1, Server.endpointURL);
-                        Server.RequestList.Remove(request);
-                        BroadcastOrder(order);
-                        Server.SavedOrders.Add(order);
-                        Decide(endpointURL); // check again if there are more
-                        return;
+                foreach (var request in Server.RequestList)
+                {
+                    if (!request.SrcRemoteURL.Equals(endpointURL) || (!CanExecuteRequest(request))) {
+                        Server.Log("Can't execute request with sequence number: " + request.SeqNum);
+                        Server.Log("request remoteurl : " + request.SrcRemoteURL);
+                        Server.Log("given remoteurl : " + endpointURL);
+                        continue;
                     }
-
+                    OrderRequestForExecution(request);
+                    
+                    return true;
                 }
             }
+            return false;
         }
 
-        // Send an order to all servers
-        public void BroadcastOrder(Order order) {
+       
+
+        private void OrderRequestForExecution(Request request) {
+            Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
+            Server.RequestList.Remove(request);
+            Server.Log("Sending Order to all servers.");
             Server.SendMessageToKnownServers(order);
-            ++Server.LastOrderSequenceNumber;
+            Server.SavedOrders.Add(order);
+
+            Server.UpdateLastExecutedOrder(order);
+            Server.UpdateLastExecutedRequest(order.Request);
+
+            Response response = PerformRequest(order.Request);  
+            // if read or take answer to client
+            if(order.Request.RequestType == RequestType.READ || order.Request.RequestType == RequestType.TAKE) {
+                Server.Log("Sending back message to client with response: " + response);
+                Server.SendMessageToRemoteURL(request.SrcRemoteURL, response);
+            }
+            
         }
+        
 
         // A Normal server sent us an AskOrder, so master needs to find the order in recently SavedOrders and resend it.
+        // TODO Does SavedOrders need to be synchronized?
+        // TODO should receive and send a List
         public override void ProcessAskOrder(AskOrder askOrder) {
-            for(int i = 0; i < Server.SavedOrders.Count; i++) {
-                if(Server.SavedOrders.ElementAt(i).SeqNum == askOrder.WantedSequenceNumber) {
-                    Server.SendMessateToRemoteURL(askOrder.SrcRemoteURL, Server.SavedOrders.ElementAt(i));
+            foreach (var order in Server.SavedOrders)
+            {
+                if(order.SeqNum == askOrder.WantedSequenceNumber) {
+                    Server.SendMessageToRemoteURL(askOrder.SrcRemoteURL, order);
                 }
             }
         }

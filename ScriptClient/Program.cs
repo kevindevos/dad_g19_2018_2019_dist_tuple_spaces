@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ClientNamespace;
-using CommonTypes.tuple;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ScriptClient
@@ -17,13 +18,13 @@ namespace ScriptClient
             var client = new Client();
 
 
-            var inputFile =
-                "sampleClientScript.txt"; // TODO this path doesn't work. It works if it's provided on args[]
+            string inputFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"sampleClientScript.txt");
+            
             if (args.Length > 1)
                 inputFile = args[0];
 
 
-            var instructions = System.IO.File.ReadAllLines(inputFile);
+            var instructions = File.ReadAllLines(inputFile);
 
             ProcessLines(instructions, 1);
 
@@ -56,26 +57,25 @@ namespace ScriptClient
                             continue;
                         }
 
+                        Tuple receivedTuple;
                         switch (splitLine[0])
                         {
                             case "add":
                                 Tuple tupleToAdd = ParseTuple(splitLine[1]);
-                                //client.Write(tupleToAdd);
+                                client.Write(tupleToAdd);
                                 Console.WriteLine("Added: " + tupleToAdd);
                                 break;
                             case "read":
-                                TupleSchema tupleSchemaToRead = new TupleSchema(ParseTuple(splitLine[1]));
-                                Tuple tupleToRead = tupleSchemaToRead.Schema;
-                                //client.Read(tupleToRead); // TODO should be tupleSchema in read arguments
+                                Tuple tupleToRead = ParseTuple(splitLine[1]);
+                                receivedTuple = client.Read(tupleToRead);
                                 Console.WriteLine("Tried to Read: " + tupleToRead + ", and got: " +
-                                                  "<insert here tuple>"); // TODO should receive a Tuple
+                                                  receivedTuple);
                                 break;
                             case "take":
-                                TupleSchema tupleSchemaToTake = new TupleSchema(ParseTuple(splitLine[1]));
-                                Tuple tupleToTake = tupleSchemaToTake.Schema;
-                                //client.Read(tupleToTake); // TODO should be tupleSchema in take arguments
+                                Tuple tupleToTake = ParseTuple(splitLine[1]);
+                                receivedTuple = client.Take(tupleToTake);
                                 Console.WriteLine("Tried to Take: " + tupleToTake + ", and got: " +
-                                                  "<insert here tuple>"); // TODO should receive a Tuple
+                                                  receivedTuple);
                                 break;
                             case "wait":
                                 var time = int.Parse(splitLine[1]);
@@ -97,7 +97,7 @@ namespace ScriptClient
             {
                 var fields = new List<object>();
 
-                var matches = Regex.Matches(stringTuple, "\"[^\"]+\"|\\w+[^\\)]+\\)");
+                var matches = Regex.Matches(stringTuple, "\"[^\"]+\"|\\w+\\([^\\)]+\\)|\\w+");
                 foreach (var match in matches)
                 {
                     var field = match.ToString();
@@ -110,21 +110,37 @@ namespace ScriptClient
                     // if it's an object
                     else
                     {
-                        object[] classArgs = field.Split("(),\"".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                        var classType = classArgs[0];
-                        // convert strings to int if applicable
-                        classArgs = Array.ConvertAll(classArgs.Skip(1).ToArray(),
-                            s => int.TryParse(s.ToString(), out var i) ? i : s);
+                        if (field.Equals("null"))
+                        {
+                            fields.Add(null);
+                        }
+                        else
+                        {
+                            object[] classArgs = field.Split("(),\"".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                            
+                            
+                            var classType = Type.GetType("CommonTypes.tuple.tupleobjects." + classArgs[0] +
+                                                         ", CommonTypes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.") ??
+                                            throw new InvalidOperationException("Could not create instance using classType: " + classArgs[0]);
 
-                        // instantiate dadTestObject using the arguments provided 
-                        var dadTestObject = Activator.CreateInstance(
-                            Type.GetType("CommonTypes.tuple.tupleobjects." + classType +
-                                         ", CommonTypes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.") ??
-                            throw new InvalidOperationException("Could not create instance using classType: " + classType)
-                            , classArgs);
+                            // if it has arguments
+                            if (classArgs.Length > 1)
+                            {
+                                // convert strings to int if applicable
+                                classArgs = Array.ConvertAll(classArgs.Skip(1).ToArray(),
+                                    s => int.TryParse(s.ToString(), out var i) ? i : s);
 
-                        // add to the list of object (the tuple fields)
-                        fields.Add(dadTestObject);
+                                // instantiate dadTestObject using the arguments provided 
+                                var dadTestObject = Activator.CreateInstance(classType, classArgs);
+
+                                // add to the list of object (the tuple fields)
+                                fields.Add(dadTestObject);
+                            }
+                            else
+                            {
+                                fields.Add(classType);
+                            }
+                        } 
                     }
                 }
                 return new Tuple(fields);

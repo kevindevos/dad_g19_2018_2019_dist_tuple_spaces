@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CommonTypes.tuple
 {
@@ -19,11 +20,10 @@ namespace CommonTypes.tuple
 
         public void Write(Tuple tuple)
         {
-            // TODO better alternative?
-            lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new Object()))
+            lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new object()))
             {
                 _tupleSpace.AddOrUpdate(tuple.GetSize(),
-                                   (valueToAdd) => new List<Tuple>() { tuple },
+                                   valueToAdd => new List<Tuple> { tuple },
                                    (key, oldValue) => new List<Tuple>(oldValue) { tuple }
                                   );
             }
@@ -32,26 +32,48 @@ namespace CommonTypes.tuple
         // TODO what if there is no tuple? how do we wait? above?
         public List<Tuple> Read(TupleSchema tupleSchema)
         {
-            List<Tuple> matchingTuples;
+            List<Tuple> tuples;
 
-            // TODO better alternative?
             lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object()))
             {
-                matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
+                tuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
             }
 
-            return matchingTuples;
+            return tuples;
         }
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
-            throw new NotImplementedException();
+            List<Tuple> matchingTuples;
+
+            lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object())) {
+                
+                // get matching tuples
+                matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
+                var nonMatchingTuples = _tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), 
+                        new List<Tuple>()).Except(matchingTuples).ToList();
+                
+                // replace oldList with nonMatchingTuples
+                _tupleSpace.AddOrUpdate(tupleSchema.Schema.GetSize(),
+                    valueToAdd => nonMatchingTuples,
+                    (key, oldValue) => new List<Tuple>(nonMatchingTuples)
+                );
+            }
+
+            return matchingTuples;
         }
 
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
         {
             return listOfTuples.FindAll(tupleSchema.Match);
         }
+
+        private Tuple GetMatchingTuple(List<Tuple> listOfTuples, TupleSchema tupleSchema) {
+            return listOfTuples.FindAll(tupleSchema.Match).First();
+        }
+
+
+
 
         // TODO can we guarantee that this returns deterministically always the same value?
         private Tuple GetFirstMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)

@@ -23,7 +23,7 @@ namespace PCS
             {
                 Console.Write("\n[1|2] ");
                 response = Console.ReadLine();
-                Int32.TryParse(response, out value);
+                int.TryParse(response, out value);
             }
 
             return value;

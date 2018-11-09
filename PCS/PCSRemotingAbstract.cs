@@ -30,11 +30,6 @@ namespace PCS
             clientPortCounter++;
         }
 
-        public void Status()
-        {
-            // TODO implement the Status method on the clients and servers
-        }
-
         public abstract void Server(string server_id, string URL, int min_delay, int max_delay);
     }
 }

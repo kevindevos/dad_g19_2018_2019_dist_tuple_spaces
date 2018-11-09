@@ -122,8 +122,8 @@ namespace PuppetMaster
 
             if (pcs.ContainsKey(addr))
             {
-                // PCSRemotingInterface p = pcs[addr];
-                // p.Server(server_id, URL, min_delay, max_delay);
+                PCSRemotingInterface p = pcs[addr];
+                p.Server(server_id, URL, min_delay, max_delay);
 
                 ConnectToProcess(server_id, URL);
             }
@@ -142,11 +142,11 @@ namespace PuppetMaster
 
             if (pcs.ContainsKey(addr))
             {
-                // PCSRemotingInterface p = pcs[addr];
+                PCSRemotingInterface p = pcs[addr];
                 string[] script = File.ReadAllLines(
                     @PROJECT_PATH + CLIENT_SCRIPTS_REL_PATH + script_file);
 
-                // p.Client(client_id, URL, script);
+                p.Client(client_id, URL, script);
             }
 
             else
@@ -158,7 +158,8 @@ namespace PuppetMaster
         private void Status()
         {
             Console.WriteLine("[DEBUG] Getting status");
-            // foreach(PCSRemotingInterface p in processes.Values)
+            // TODO
+            // foreach(RemotingEndpoint p in processes.Values)
             //     p.Status();
         }
 

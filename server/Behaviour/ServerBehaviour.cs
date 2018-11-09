@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
-using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace.Behaviour {
     public abstract class ServerBehaviour {
@@ -13,32 +11,9 @@ namespace ServerNamespace.Behaviour {
             Server = server;
         }
 
-        abstract public Message ProcessMessage(Message message);
+        public abstract Message ProcessMessage(Message message);
+        public abstract Response PerformRequest(Request request);
 
-        public Response PerformRequest(Request request) {
-            // remove from the requestList
-            Server.DeleteRequest(request);
-
-            var tupleSchema = new TupleSchema(request.Tuple);
-            switch (request.RequestType) {
-                case RequestType.READ:
-                    var resultTuples = Server.Read(tupleSchema);
-                    return new Response(request, resultTuples, Server.endpointURL);
-
-                case RequestType.WRITE:
-                    Server.Write(request.Tuple);
-                    return null;
-
-                case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.Tuple);
-                    resultTuples = Server.Take(tupleSchema);
-                    return new Response(request, resultTuples, Server.endpointURL);
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        
 
     }
 }

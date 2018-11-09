@@ -1,77 +1,73 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Tcp;
+using System.Linq;
 using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
 using ServerNamespace.Behaviour;
 using Tuple = CommonTypes.tuple.Tuple;
-using System.Linq;
 
 namespace ServerNamespace {
     public abstract class Server : RemotingEndpoint, ITupleOperations {
-        // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
-        public ServerBehaviour Behaviour;
+        public delegate Message SendMessageDelegate(Message message);
 
-        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public readonly Dictionary<string, int> MostRecentClientRequestSeqNumbers;
+        // TODO move variables and logic from Server to ServerSMR that doesn't belong here
+
+        // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
+        public ServerBehaviour Behaviour { get; private set; }
 
         // A list of requests the server receives, defines the order 
         // for a FIFO order process requests from index 0 and do RemoveAt(0)
-        public List<Request> RequestList;
-
-        private int lastOrderSequenceNumber;
-        public int LastOrderSequenceNumber { get; set; }
-
-        private List<RemotingEndpoint> otherServers;
-        public List<RemotingEndpoint> OtherServers { get; private set; }
-
-        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public ConcurrentDictionary<string, Request> LastExecutedRequests;
-
-        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public ConcurrentDictionary<string, Order> LastExecutedOrders;
-
-        public List<Order> SavedOrders;
+        public List<Request> RequestList { get; }
 
         // Tuple space
-        private readonly TupleSpace _tupleSpace;
+        private TupleSpace TupleSpace { get; }
 
-        public Server(string host, int port) : base(host, port, "Server") {
-            this.port = port;
-            _tupleSpace = new TupleSpace();
+        protected Server(string host, int port) : base(host, port, "Server") {
+            Port = port;
+            TupleSpace = new TupleSpace();
             RequestList = new List<Request>();
-            LastExecutedRequests = new ConcurrentDictionary<string, Request>();
-            LastExecutedOrders = new ConcurrentDictionary<string, Order>();
-            SavedOrders = new List<Order>();
-            LastOrderSequenceNumber = 0; // resets the counter if the server went down and had to be recreated!, we'd need to know which orders were executed here before if there's persistency,
-            //or we need to ask for ALL previous orders..
         }
 
-        public Server() : this(defaultServerHost, defaultServerPort) { }
+        protected Server() : this(DefaultServerHost, DefaultServerPort) { }
 
-        private Server(int serverPort) : this(defaultServerHost, serverPort) { }
+        private Server(int serverPort) : this(DefaultServerHost, serverPort) { }
 
         // ITupleOperations Methods
         public void Write(Tuple tuple)
         {
-            _tupleSpace.Write(tuple);
+            TupleSpace.Write(tuple);
+            Log("Wrote : " + tuple);
+        }
+
+        public void Write(List<Tuple> tuples) {
+            foreach(Tuple tuple in tuples) {
+                Write(tuple);
+            }
         }
 
         public List<Tuple> Read(TupleSchema tupleSchema)
         {
-            return _tupleSpace.Read(tupleSchema);
+            var listTuple = TupleSpace.Read(tupleSchema);
+            if(listTuple.Count > 0) {
+                Log("Read (first tuple): " + listTuple.First());
+            }
+            return listTuple;
         }
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
-            // TODO 2 phase lock - first list what there is and lock those, only then on comfirm the client takes them?
-            return _tupleSpace.Take(tupleSchema);
+            List<Tuple> tuples = TupleSpace.Take(tupleSchema);
+            if(tuples.Count > 0) {
+                List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);
+                tuplesWriteBack.Remove(tuplesWriteBack.First());
+                Write(tuplesWriteBack);
+                Log("Took (first tuple): " + tuples.First());
+            }
+            
+            return tuples;
         }
-
 
         public void SaveRequest(Request request) {
             lock (RequestList) {
@@ -85,10 +81,11 @@ namespace ServerNamespace {
             }
         }
 
-        public void Log(string text) {
-            Console.WriteLine(text);
+        public virtual void Log(string text) {
+            Console.WriteLine("[SERVER:"+EndpointURL +"]   " + text);
         }
-      
+
+        
     }
 
 }
