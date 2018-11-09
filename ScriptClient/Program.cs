@@ -15,7 +15,7 @@ namespace ScriptClient
         public static void Main(string[] args)
         {
 
-            var client = new Client();
+            var client = new ClientSMR();
 
 
             string inputFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"sampleClientScript.txt");
