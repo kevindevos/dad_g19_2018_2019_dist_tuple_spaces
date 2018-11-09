@@ -19,7 +19,6 @@ namespace CommonTypes.tuple
 
         public void Write(Tuple tuple)
         {
-            // TODO better alternative?
             lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new Object()))
             {
                 _tupleSpace.AddOrUpdate(tuple.GetSize(),
@@ -34,7 +33,6 @@ namespace CommonTypes.tuple
         {
             List<Tuple> matchingTuples;
 
-            // TODO better alternative?
             lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object()))
             {
                 matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
@@ -45,12 +43,26 @@ namespace CommonTypes.tuple
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
-            throw new NotImplementedException();
+            List<Tuple> matchingTuples;
+
+            lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object())) {
+                matchingTuples = GetAndRemoveMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
+            }
+
+            return matchingTuples;
         }
 
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
         {
             return listOfTuples.FindAll(tupleSchema.Match);
+        }
+
+        private List<Tuple> GetAndRemoveMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema) {
+            List<Tuple> tuples = GetMatchingTuples(listOfTuples, tupleSchema);
+            foreach (Tuple tuple in tuples) {
+                listOfTuples.Remove(tuple);
+            }
+            return listOfTuples;
         }
 
         // TODO can we guarantee that this returns deterministically always the same value?
