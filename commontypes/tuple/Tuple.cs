@@ -5,6 +5,8 @@ namespace CommonTypes.tuple{
     public class Tuple{
         public readonly List<object> Fields;
 
+        public object LogicalName { get { return Fields[0]; } set { Fields[0] = value; } }
+
         public Tuple(List<object> fields) {
             Fields = fields;
         }

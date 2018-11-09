@@ -53,8 +53,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="SMR\ServerSMR.cs" />
-    <Compile Include="XL\tuple\Tuple.cs" />
-    <Compile Include="XL\tuple\TupleSet.cs" />
     <Compile Include="XL\Worker.cs" />
     <Compile Include="XL\Replica.cs" />
   </ItemGroup>

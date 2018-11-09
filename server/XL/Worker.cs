@@ -7,11 +7,10 @@ using System.Threading.Tasks;
 
 namespace ServerNamespace.XL {
     public class Worker {
-        private TupleSpace _tupleSet;
-        public TupleSpace TupleSet; // local worker's tuple set
+        public TupleSpace TupleSpace; 
 
-        public Worker(TupleSpace TupleSet) {
-            TupleSet = TupleSet;
+        public Worker(TupleSpace tupleSpace) {
+            TupleSpace = tupleSpace;
         }
     }
 }
