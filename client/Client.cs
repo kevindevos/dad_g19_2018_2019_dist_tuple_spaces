@@ -8,97 +8,104 @@ using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
     public class Client : RemotingEndpoint {
-        private int clientRequestSeqNumber;
-        public int ClientRequestSeqNumber { get; set; }
+        private int _clientRequestSeqNumber;
 
-        public bool IsBlockedFromSendingRequests { get; private set; }
-
-        private Dictionary<int, Response> receivedResponses;
-        public Dictionary<int, Response> ReceivedResponses { get; private set; }
-
-        private Dictionary<int, SemaphoreSlim> _requestSemaphore; 
+        // <Request.sequenceNumber, Response>
+        private readonly Dictionary<int, Response> _receivedResponses;
+        // <Request.sequenceNumber, Semaphore>
+        private readonly Dictionary<int, SemaphoreSlim> _requestSemaphore; 
         
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0,1);
+        public Client() : this(DefaultClientHost, DefaultClientPort) { }
         
-        public Client() : this(defaultClientHost, defaultClientPort) { }
-
         public Client(string host, int port) : base(host, port, "Client") {
-            receivedResponses = new Dictionary<int, Response>();
+            _receivedResponses = new Dictionary<int, Response>();
             _requestSemaphore = new Dictionary<int, SemaphoreSlim>();
-            clientRequestSeqNumber = 0;
+            _clientRequestSeqNumber = 0;
         }
 
         public void Write(Tuple tuple) {
+            // TODO remote exceptions?
+            var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
-            // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
-
+            _requestSemaphore[request.SeqNum] = new SemaphoreSlim(0,1);
+            
             SendMessageToRandomServer(request);
-            clientRequestSeqNumber++;
+            _clientRequestSeqNumber++;
         }
 
         public Tuple Read(Tuple tuple) {
-
-            // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
-
+            // TODO remote exceptions?
+            var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
+            
+            _requestSemaphore[request.SeqNum] = new SemaphoreSlim(0,1);
+            
             SendMessageToRandomServer(request);
-            clientRequestSeqNumber++;
+            _clientRequestSeqNumber++;
 
             
             WaitForResponse(request.SeqNum);
-            return receivedResponses[request.SeqNum].TupleList.First(); //TODO first? what is the order? does it matter?
+            
+            //TODO first? what is the order? does it matter?
+            
+            // TODO the master is not responding anything
+            var tupleList = _receivedResponses[request.SeqNum].TupleList;
+            if (tupleList != null)
+                return tupleList.First();
+            else
+            {
+                return null;
+            }
         }
-
 
         public Tuple Take(Tuple tuple) {
+            // TODO remote exceptions?
+            var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
 
-            // remote exceptions?
-            Request request = new Request(clientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
-
+            _requestSemaphore[request.SeqNum] = new SemaphoreSlim(0,1);
+            
             SendMessageToRandomServer(request);
-            clientRequestSeqNumber++;
+            _clientRequestSeqNumber++;
 
             WaitForResponse(request.SeqNum);
-            return receivedResponses[request.SeqNum].TupleList.First(); //TODO 2-phase locking?
+            
+            //TODO 2-phase locking?
+            return _receivedResponses[request.SeqNum].TupleList.First(); 
         }
 
 
-        public void SendMessageToRandomServer(Message message) {
-            Random random = new Random();
-            int i = random.Next(0, KnownServerRemotes.Count);
+        private void SendMessageToRandomServer(Message message) {
+            var random = new Random();
+            var i = random.Next(0, KnownServerRemotes.Count);
             SendMessageToRemote(KnownServerRemotes[i], message);
         }
         
 
         public override Message OnReceiveMessage(Message message) {
-            if (message.GetType() == typeof(Response)){
-                Response response = (Response)message;
+            
+            if (message.GetType() != typeof(Response)) throw new NotImplementedException();
+            
+            var response = (Response)message;
 
-                // NOTE: this assumes a server sends back the perfectly correct response that we wanted
-                // if the request we sent out has already gotten the respective response ( same seqNumber in request and response of the client ) then ignore
-                if (receivedResponses.Keys.Contains(response.Request.SeqNum)) {
+            lock (_receivedResponses)
+            {
+                // if duplicated response, ignore
+                if (_receivedResponses.ContainsKey(response.Request.SeqNum)) return null;
+                
+                _receivedResponses.Add(response.Request.SeqNum, response);
+            }
+            
+            
+            // if it receives at least one response for a blocking request then unblock ( can only send one and then block, so it will always unblock properly? )
+            if (response.Request.RequestType.Equals(RequestType.READ) ||
+                response.Request.RequestType.Equals(RequestType.TAKE))
+            {
+                if (_requestSemaphore.TryGetValue(response.Request.SeqNum, out var semaphore))
+                {
+                    semaphore.Release();
                     return null;
                 }
-
-                // if receives at least one response for a blocking request then unlock ( can only send one and then block, so it will always unblock properly? )
-                if (response.Request.RequestType.Equals(RequestType.READ) ||
-                    response.Request.RequestType.Equals(RequestType.TAKE))
-                {
-                    if (_requestSemaphore.TryGetValue(response.Request.SeqNum, out var semaphore))
-                    {
-                        receivedResponses.Add(response.Request.SeqNum, response);
-                        semaphore.Release();
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
-                else
-                {
-                    receivedResponses.Add(response.Request.SeqNum, response);
-                }
+                    
+                throw new NotImplementedException("No semaphore was allocated.");
             }
             return null;
         }
@@ -107,11 +114,10 @@ namespace ClientNamespace {
             throw new NotImplementedException();
         }
         
-        // Create semaphore. Wait for response, then disposes and removes.
+        // Wait for response. Disposes and removes semaphore.
         private void WaitForResponse(int requestSeqNum)
         {
-            _requestSemaphore[requestSeqNum] = new SemaphoreSlim(0,1);
-            _requestSemaphore[requestSeqNum].Wait();
+            //_requestSemaphore[requestSeqNum].Wait();
             _requestSemaphore[requestSeqNum].Dispose();
             _requestSemaphore.Remove(requestSeqNum);
         }

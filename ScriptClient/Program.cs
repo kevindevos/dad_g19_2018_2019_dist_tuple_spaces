@@ -98,7 +98,7 @@ namespace ScriptClient
             {
                 var fields = new List<object>();
 
-                var matches = Regex.Matches(stringTuple, "\"[^\"]+\"|\\w+[^\\)]+\\)");
+                var matches = Regex.Matches(stringTuple, "\"[^\"]+\"|\\w+\\([^\\)]+\\)|\\w+");
                 foreach (var match in matches)
                 {
                     var field = match.ToString();
@@ -111,21 +111,37 @@ namespace ScriptClient
                     // if it's an object
                     else
                     {
-                        object[] classArgs = field.Split("(),\"".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                        var classType = classArgs[0];
-                        // convert strings to int if applicable
-                        classArgs = Array.ConvertAll(classArgs.Skip(1).ToArray(),
-                            s => int.TryParse(s.ToString(), out var i) ? i : s);
+                        if (field.Equals("null"))
+                        {
+                            fields.Add(null);
+                        }
+                        else
+                        {
+                            object[] classArgs = field.Split("(),\"".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                            
+                            
+                            var classType = Type.GetType("CommonTypes.tuple.tupleobjects." + classArgs[0] +
+                                                         ", CommonTypes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.") ??
+                                            throw new InvalidOperationException("Could not create instance using classType: " + classArgs[0]);
 
-                        // instantiate dadTestObject using the arguments provided 
-                        var dadTestObject = Activator.CreateInstance(
-                            Type.GetType("CommonTypes.tuple.tupleobjects." + classType +
-                                         ", CommonTypes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.") ??
-                            throw new InvalidOperationException("Could not create instance using classType: " + classType)
-                            , classArgs);
+                            // if it has arguments
+                            if (classArgs.Length > 1)
+                            {
+                                // convert strings to int if applicable
+                                classArgs = Array.ConvertAll(classArgs.Skip(1).ToArray(),
+                                    s => int.TryParse(s.ToString(), out var i) ? i : s);
 
-                        // add to the list of object (the tuple fields)
-                        fields.Add(dadTestObject);
+                                // instantiate dadTestObject using the arguments provided 
+                                var dadTestObject = Activator.CreateInstance(classType, classArgs);
+
+                                // add to the list of object (the tuple fields)
+                                fields.Add(dadTestObject);
+                            }
+                            else
+                            {
+                                fields.Add(classType);
+                            }
+                        } 
                     }
                 }
                 return new Tuple(fields);

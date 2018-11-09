@@ -1,11 +1,12 @@
-﻿using CommonTypes;
+﻿using System;
+using CommonTypes;
 using CommonTypes.message;
 
 namespace ServerNamespace.Behaviour.SMR {
     public abstract class ServerSMRBehaviour : ServerBehaviour{
-        protected new ServerSMR Server;
+        protected new readonly ServerSMR Server;
 
-        protected int DEFAULT_REQUEST_TO_MASTER_ACK_TIMEOUT_DURATION = 5; // seconds
+        protected const int DefaultRequestToMasterAckTimeoutDuration = 5; // seconds
 
         public ServerSMRBehaviour(ServerSMR server) : base(server) {
             Server = server;
@@ -16,11 +17,6 @@ namespace ServerNamespace.Behaviour.SMR {
         public abstract void ProcessAskOrder(AskOrder askOrder);
 
         public override Message ProcessMessage(Message message) {
-            // if an Elect message, define new master as the one included in the Elect message
-            if (message.GetType() == typeof(Elect)){
-                Server.MasterEndpointURL = ((Elect)message).NewMasterURL;
-            }
-
             if (message.GetType() == typeof(Request)) {
                 return ProcessRequest((Request)message);
             }
@@ -28,20 +24,27 @@ namespace ServerNamespace.Behaviour.SMR {
             if (message.GetType() == typeof(Order)) {
                 return ProcessOrder((Order)message);
             }
-
-            return null;
+            
+            // if an Elect message, define new master as the one included in the Elect message
+            if (message.GetType() == typeof(Elect)){
+                Server.MasterEndpointURL = ((Elect)message).NewMasterURL;
+                //TODO
+                throw new NotImplementedException();
+            }
+            
+            throw new NotImplementedException();
         }
 
         // check if the sequence number of this request is just 1 higher than the previous ( else there is a missing request )
-        public bool SequenceNumberIsNext(Request request) {
-            Request lastExecutedRequest;
-            return Server.LastExecutedRequests.TryGetValue(request.SrcRemoteURL, out lastExecutedRequest) && lastExecutedRequest.SeqNum == request.SeqNum - 1;
+        protected bool SequenceNumberIsNext(Request request) {
+            var lastRequest = Server.LastExecutedRequests.GetOrAdd(request.SrcRemoteURL, request);
+            return lastRequest.SeqNum + 1 == request.SeqNum || request.SeqNum == 0;
         }
 
         // check if the sequence number of this order is just 1 higher than the previous ( else there is a missing order )
-        public bool SequenceNumberIsNext(Order order) {
-            Order lastExecutedOrder;
-            return Server.LastExecutedOrders.TryGetValue(order.SrcRemoteURL, out lastExecutedOrder) && lastExecutedOrder.SeqNum == order.SeqNum - 1;
+        protected bool SequenceNumberIsNext(Order order) {
+            var lastOrder = Server.LastExecutedOrders.GetOrAdd(order.SrcRemoteURL, order);
+            return lastOrder.SeqNum + 1 == order.SeqNum || order.SeqNum == 0;
         }
     }
 }

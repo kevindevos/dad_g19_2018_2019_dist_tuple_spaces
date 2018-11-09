@@ -11,18 +11,21 @@ namespace ServerNamespace.Behaviour.SMR
         {
         }
 
+        // shorten the locks
         public override Message ProcessOrder(Order order) {
-            if (SequenceNumberIsNext(order)) {
-                Server.SavedOrders.Add(order);
-                Server.DeleteRequest(order.Request);
-                Server.LastOrderSequenceNumber = order.SeqNum;
+            lock (Server.LastExecutedOrders)
+            {
+                if (SequenceNumberIsNext(order)) {
+                    Server.SavedOrders.Add(order);
+                    Server.DeleteRequest(order.Request);
+                    Server.LastOrderSequenceNumber = order.SeqNum;
 
-                return PerformRequest(order.Request);
+                    return PerformRequest(order.Request);
+                }
+
+                AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);
+                return null;
             }
-
-            AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);
-            return null;
-
         }
 
         // ask the master to send back the missing orders with sequence numbers from startSeqNum up to endSeqNum, inclusive
@@ -46,9 +49,9 @@ namespace ServerNamespace.Behaviour.SMR
 
             Message response = SendMessageToMaster(request);
 
-            // wait a few seconds and then check wether or not an Ack was received 
+            // wait a few seconds and then check whether or not an Ack was received 
             Server.Log("NET Remoting Thread Sleeping now");
-            System.Threading.Thread.Sleep(DEFAULT_REQUEST_TO_MASTER_ACK_TIMEOUT_DURATION*1000);
+            System.Threading.Thread.Sleep(DefaultRequestToMasterAckTimeoutDuration*1000);
             Server.Log("Waking up");
             if (response != null && response.GetType() != typeof(Ack) ) {
                 Server.Log("Did not receive Ack, triggering new election");
@@ -60,7 +63,7 @@ namespace ServerNamespace.Behaviour.SMR
             return null;
         }
 
-        public void TriggerReelection() {
+        private void TriggerReelection() {
             // TODO
             throw new NotImplementedException();
         }
@@ -68,7 +71,7 @@ namespace ServerNamespace.Behaviour.SMR
         public override void ProcessAskOrder(AskOrder askOrder) {
         }
 
-        public Message SendMessageToMaster(Message request) {
+        private Message SendMessageToMaster(Message request) {
             if(Server.MasterEndpointURL != null) {
                 return Server.SendMessageToRemoteURL(Server.MasterEndpointURL, request);
             }

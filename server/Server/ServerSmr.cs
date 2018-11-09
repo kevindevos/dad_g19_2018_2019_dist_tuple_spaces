@@ -11,14 +11,12 @@ namespace ServerNamespace
         // new hides the Behaviour of the base class Server, basically replacing the base type of Behaviour to ServerSMRBehaviour here
         new ServerSMRBehaviour Behaviour;
 
+        public ServerSMR(int serverPort) : this(DefaultServerHost, serverPort) { }
+        
         public ServerSMR(string host, int port) : base(host, port) 
         {
             Behaviour = new NormalServerSMRBehaviour(this);
         }
-
-        public ServerSMR() : this(defaultServerHost, defaultServerPort) { }
-
-        public ServerSMR(int serverPort) : this(defaultServerHost, serverPort) { }
 
         public void UpgradeToMaster()
         {

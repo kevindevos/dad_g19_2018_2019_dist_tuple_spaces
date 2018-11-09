@@ -7,11 +7,12 @@ namespace CommonTypes {
 
     [System.Serializable]
     public class Request : Message {
-        private int _seqNum;
-        private RequestType _requestType;
-        private Tuple _tuple;
-        private string _srcEndpointURL;
-
+        
+        public RequestType RequestType { get; }
+        public int SeqNum { get; }
+        public Tuple Tuple { get; }
+        public string SrcEndpointURL { get; }
+        
         public Request(int seqNum, string srcEndpointURL, RequestType requestType, Tuple tuple) : base(srcEndpointURL)
         {
             RequestType = requestType;
@@ -20,11 +21,5 @@ namespace CommonTypes {
             SrcEndpointURL = srcEndpointURL;
         }
 
-        public RequestType RequestType { get; private set; }
-        public int SeqNum { get; private set; }
-        public Tuple Tuple { get; private set; }
-        public string SrcEndpointURL { get; private set; }
-
-        
     }
 }
