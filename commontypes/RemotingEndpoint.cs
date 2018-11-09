@@ -99,6 +99,12 @@ namespace CommonTypes {
             return messages;
         }
 
+        protected Message SendMessageToRandomServer(Message message) {
+            var random = new Random();
+            var i = random.Next(0, KnownServerRemotes.Count);
+            return SendMessageToRemote(KnownServerRemotes[i], message);
+        }
+
         public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }

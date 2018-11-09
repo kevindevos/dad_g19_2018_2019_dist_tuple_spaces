@@ -51,15 +51,18 @@ namespace ServerNamespace.Behaviour.SMR
 
             Message response = SendMessageToMaster(request);
 
-            // wait a few seconds and then check whether or not an Ack was received 
-            System.Threading.Thread.Sleep(DefaultRequestToMasterAckTimeoutDuration*1000);
-            if (response != null && response.GetType() != typeof(Ack) ) {
-                Server.Log("Did not receive Ack, triggering new election");
-                TriggerReelection();
+            // check periodically for answer
+            int timeBetweenChecks = 50; // ms
+            for(int i = 0; i < DefaultRequestToMasterAckTimeoutDuration/timeBetweenChecks; i+=timeBetweenChecks) {
+                if(response != null && response.GetType() != typeof(Ack)) {
+                    System.Threading.Thread.Sleep(i);
+                }
+                else {
+                    Server.Log("Received an Ack");
+                    return null;
+                }
             }
-            else {
-                Server.Log("Received an Ack");
-            }
+            TriggerReelection();
             return null;
         }
 

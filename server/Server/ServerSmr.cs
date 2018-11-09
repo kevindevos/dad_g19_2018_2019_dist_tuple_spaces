@@ -57,10 +57,6 @@ namespace ServerNamespace
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
 
-            if(message.GetType() == typeof(Ack)) {
-                ReceivedAcks.Add((Ack)message);
-            }
-
             if (message.GetType() == typeof(Request)) {
                 return Behaviour.ProcessRequest((Request)message);
             }
@@ -73,7 +69,7 @@ namespace ServerNamespace
         }
 
         public override Message OnSendMessage(Message message) {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public override void Log(string text) {
