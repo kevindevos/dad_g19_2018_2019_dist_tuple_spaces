@@ -30,5 +30,9 @@ namespace ClientNamespace {
         public abstract Tuple Read(Tuple tuple);
         public abstract Tuple Take(Tuple tuple);
 
+
+        public virtual void Log(string text) {
+            Console.WriteLine("[CLIENT:" + EndpointURL + "] : " + text);
+        }
     }
 }
