@@ -72,7 +72,7 @@ namespace ServerNamespace.XL
                     // Send back an Ack of the remove
                     ack = new Ack(EndpointURL, request);
                     SendMessageToRemoteURL(request.SrcRemoteURL, request);
-                    break;
+                    return ack;
 
 
                 default:
