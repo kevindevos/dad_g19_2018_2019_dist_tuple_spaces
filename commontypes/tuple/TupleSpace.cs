@@ -20,7 +20,7 @@ namespace CommonTypes.tuple
 
         public void Write(Tuple tuple)
         {
-            lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new Object()))
+            lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new object()))
             {
                 _tupleSpace.AddOrUpdate(tuple.GetSize(),
                                    valueToAdd => new List<Tuple> { tuple },
@@ -44,13 +44,23 @@ namespace CommonTypes.tuple
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
-            List<Tuple> tuples;
+            List<Tuple> matchingTuples;
 
             lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object())) {
-                _tupleSpace.TryRemove(tupleSchema.Schema.GetSize(), out tuples);
+                
+                // get matching tuples
+                matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
+                var nonMatchingTuples = _tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), 
+                        new List<Tuple>()).Except(matchingTuples).ToList();
+                
+                // replace oldList with nonMatchingTuples
+                _tupleSpace.AddOrUpdate(tupleSchema.Schema.GetSize(),
+                    valueToAdd => nonMatchingTuples,
+                    (key, oldValue) => new List<Tuple>(nonMatchingTuples)
+                );
             }
 
-            return tuples;
+            return matchingTuples;
         }
 
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
