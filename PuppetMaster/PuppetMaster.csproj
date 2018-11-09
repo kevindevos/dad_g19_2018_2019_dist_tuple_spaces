@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{05DE06AE-BF4A-461D-A9CE-40DDE24E5A1F}</ProjectGuid>
+    <ProjectGuid>{CCCBD034-93B1-4DAA-8EB8-2E80EA0FDB4D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>ClientNamespace</RootNamespace>
-    <AssemblyName>Client</AssemblyName>
+    <RootNamespace>PuppetMaster</RootNamespace>
+    <AssemblyName>PuppetMaster</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -44,14 +44,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client.cs" />
-    <Compile Include="ClientSMR.cs" />
-    <Compile Include="ClientXL.cs" />
+    <Compile Include="Exceptions\InvalidCommandException.cs" />
+    <Compile Include="Exceptions\ProcessNotFoundException.cs" />
+    <Compile Include="Exceptions\PCSNotFoundException.cs" />
+    <Compile Include="Interface.cs" />
+    <Compile Include="Controller.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\pcs_addrs.txt" />
+    <Content Include="Resources\script.txt" />
+    <Content Include="Resources\client_script_1.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\commontypes\CommonTypes.csproj">

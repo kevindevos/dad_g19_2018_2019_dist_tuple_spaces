@@ -11,6 +11,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTypes", "commontypes\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptClient", "ScriptClient\ScriptClient.csproj", "{B786D242-4DAA-4E2E-AF70-F4038EC24603}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCS", "PCS\PCS.csproj", "{8B13B11C-AB20-4EBA-90CE-87BE348289CA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6ADE780D-1807-438D-8E75-154CADDE2BF1} = {6ADE780D-1807-438D-8E75-154CADDE2BF1}
+		{F598C00E-6AEB-4478-99B3-E821D1596579} = {F598C00E-6AEB-4478-99B3-E821D1596579}
+		{05DE06AE-BF4A-461D-A9CE-40DDE24E5A1F} = {05DE06AE-BF4A-461D-A9CE-40DDE24E5A1F}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{CCCBD034-93B1-4DAA-8EB8-2E80EA0FDB4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +42,14 @@ Global
 		{B786D242-4DAA-4E2E-AF70-F4038EC24603}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B786D242-4DAA-4E2E-AF70-F4038EC24603}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B786D242-4DAA-4E2E-AF70-F4038EC24603}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B13B11C-AB20-4EBA-90CE-87BE348289CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B13B11C-AB20-4EBA-90CE-87BE348289CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B13B11C-AB20-4EBA-90CE-87BE348289CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B13B11C-AB20-4EBA-90CE-87BE348289CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCCBD034-93B1-4DAA-8EB8-2E80EA0FDB4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCCBD034-93B1-4DAA-8EB8-2E80EA0FDB4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCCBD034-93B1-4DAA-8EB8-2E80EA0FDB4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCCBD034-93B1-4DAA-8EB8-2E80EA0FDB4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
