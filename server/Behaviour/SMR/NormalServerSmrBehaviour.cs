@@ -53,7 +53,7 @@ namespace ServerNamespace.Behaviour.SMR
 
             // check periodically for answer
             int timeBetweenChecks = 50; // ms
-            for(int i = 0; i < DefaultRequestToMasterAckTimeoutDuration/timeBetweenChecks; i+=timeBetweenChecks) {
+            for(int i = 0; i < DefaultRequestToMasterAckTimeoutDuration; i+=timeBetweenChecks) {
                 if(response != null && response.GetType() != typeof(Ack)) {
                     System.Threading.Thread.Sleep(i);
                 }
