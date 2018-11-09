@@ -12,6 +12,7 @@ namespace ClientNamespace
             Tuple tuple = new Tuple(new List<object>(new object[] { "hello", "world", 2 }));
             client.Write(tuple);
 
+
             Console.ReadLine();
         }
 

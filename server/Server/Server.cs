@@ -17,28 +17,9 @@ namespace ServerNamespace {
         // the server's functionality, can be changed when upgrading to or downgrading from MasterServerBehaviour
         public ServerBehaviour Behaviour { get; private set; }
 
-        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public Dictionary<string, int> MostRecentClientRequestSeqNumbers;
-
         // A list of requests the server receives, defines the order 
         // for a FIFO order process requests from index 0 and do RemoveAt(0)
         public List<Request> RequestList { get; }
-
-        public int LastOrderSequenceNumber { get; set; }
-
-        public List<RemotingEndpoint> OtherServers { get; private set; }
-
-        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public ConcurrentDictionary<string, Request> LastExecutedRequests { get; }
-
-        // A dictionary containing the most recent sequence numbers of the most recent requests of each client.  <clientRemoteURL, SeqNum>
-        public ConcurrentDictionary<string, Order> LastExecutedOrders { get; private set; }
-
-        public List<Order> SavedOrders { get; }
-
-        protected List<Ack> ReceivedAcks { get; private set; }
-
-        public string MasterEndpointURL { get; set; }
 
         // Tuple space
         private TupleSpace TupleSpace { get; }
@@ -47,10 +28,6 @@ namespace ServerNamespace {
             Port = port;
             TupleSpace = new TupleSpace();
             RequestList = new List<Request>();
-            LastExecutedRequests = new ConcurrentDictionary<string, Request>();
-            LastExecutedOrders = new ConcurrentDictionary<string, Order>();
-            SavedOrders = new List<Order>();
-            LastOrderSequenceNumber = 0; 
         }
 
         protected Server() : this(DefaultServerHost, DefaultServerPort) { }
@@ -92,7 +69,7 @@ namespace ServerNamespace {
         }
 
         public virtual void Log(string text) {
-            Console.WriteLine("[SERVER:"+EndpointURL +"] : " + text);
+            Console.WriteLine("[SERVER:"+EndpointURL +"]   " + text);
         }
       
     }

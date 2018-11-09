@@ -28,8 +28,6 @@ namespace ServerNamespace.Behaviour.SMR {
             // if an Elect message, define new master as the one included in the Elect message
             if (message.GetType() == typeof(Elect)){
                 Server.MasterEndpointURL = ((Elect)message).NewMasterURL;
-                //TODO
-                throw new NotImplementedException();
             }
             
             throw new NotImplementedException();

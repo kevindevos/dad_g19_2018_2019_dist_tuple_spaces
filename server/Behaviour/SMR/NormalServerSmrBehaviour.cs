@@ -13,6 +13,7 @@ namespace ServerNamespace.Behaviour.SMR
 
         // shorten the locks
         public override Message ProcessOrder(Order order) {
+            Server.Log("Received an order");
             lock (Server.LastExecutedOrders)
             {
                 if (SequenceNumberIsNext(order)) {
@@ -20,6 +21,7 @@ namespace ServerNamespace.Behaviour.SMR
                     Server.DeleteRequest(order.Request);
                     Server.LastOrderSequenceNumber = order.SeqNum;
 
+                    Server.Log("Executing the order");
                     return PerformRequest(order.Request);
                 }
 
@@ -50,9 +52,7 @@ namespace ServerNamespace.Behaviour.SMR
             Message response = SendMessageToMaster(request);
 
             // wait a few seconds and then check whether or not an Ack was received 
-            Server.Log("NET Remoting Thread Sleeping now");
             System.Threading.Thread.Sleep(DefaultRequestToMasterAckTimeoutDuration*1000);
-            Server.Log("Waking up");
             if (response != null && response.GetType() != typeof(Ack) ) {
                 Server.Log("Did not receive Ack, triggering new election");
                 TriggerReelection();
