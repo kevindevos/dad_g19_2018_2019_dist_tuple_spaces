@@ -37,11 +37,8 @@ namespace ServerNamespace.Behaviour.SMR
                 foreach (var request in Server.RequestList)
                 {
                     if (!SequenceNumberIsNext(request)) continue;
-                    
-                    Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
-                    Server.RequestList.Remove(request);
-                    Server.SendMessageToKnownServers(order);
-                    Server.SavedOrders.Add(order);
+
+                    OrderRequestForExecution(request);
 
                     return true;
                 }
@@ -56,19 +53,25 @@ namespace ServerNamespace.Behaviour.SMR
                 foreach (var request in Server.RequestList)
                 {
                     if (!request.SrcEndpointURL.Equals(endpointURL) || (!SequenceNumberIsNext(request))) continue;
-                    
-                    Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
-                    Server.RequestList.Remove(request);
-                    Server.Log("Sending Order to all servers.");
-                    Server.SendMessageToKnownServers(order);
-                    Server.SavedOrders.Add(order);
 
+                    OrderRequestForExecution(request);
+                    
                     return true;
                 }
             }
             return false;
         }
 
+        private void OrderRequestForExecution(Request request) {
+            Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
+            Server.RequestList.Remove(request);
+            Server.Log("Sending Order to all servers.");
+            Server.SendMessageToKnownServers(order);
+            Server.SavedOrders.Add(order);
+
+            Response response = PerformRequest(order.Request);
+            Server.SendMessageToRemoteURL(request.SrcEndpointURL, response);
+        }
         
 
         // A Normal server sent us an AskOrder, so master needs to find the order in recently SavedOrders and resend it.

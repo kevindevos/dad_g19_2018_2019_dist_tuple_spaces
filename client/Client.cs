@@ -27,8 +27,6 @@ namespace ClientNamespace {
             // TODO remote exceptions?
             var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
-            _requestSemaphore[request.SeqNum] = new SemaphoreSlim(0,1);
-            
             SendMessageToRandomServer(request);
             _clientRequestSeqNumber++;
         }
@@ -73,12 +71,6 @@ namespace ClientNamespace {
         }
 
 
-        private void SendMessageToRandomServer(Message message) {
-            var random = new Random();
-            var i = random.Next(0, KnownServerRemotes.Count);
-            SendMessageToRemote(KnownServerRemotes[i], message);
-        }
-        
 
         public override Message OnReceiveMessage(Message message) {
             
@@ -117,7 +109,7 @@ namespace ClientNamespace {
         // Wait for response. Disposes and removes semaphore.
         private void WaitForResponse(int requestSeqNum)
         {
-            //_requestSemaphore[requestSeqNum].Wait();
+            _requestSemaphore[requestSeqNum].Wait();
             _requestSemaphore[requestSeqNum].Dispose();
             _requestSemaphore.Remove(requestSeqNum);
         }

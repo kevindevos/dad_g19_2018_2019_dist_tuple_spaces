@@ -8,10 +8,9 @@
         public int SeqNum { get; private set; }
         public Request Request { get; private set; }
 
-        public Order(Request request, int orderSequenceNumber, string srcRemoteURL) : base(srcRemoteURL){
+        public Order(Request request, int orderSequenceNumber, string srcRemoteURL) : base(srcRemoteURL) {
             Request = request;
             SeqNum = orderSequenceNumber;
         }
-
     }
 }
