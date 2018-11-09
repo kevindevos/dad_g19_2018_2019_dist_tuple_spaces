@@ -7,57 +7,18 @@ using Tuple = CommonTypes.tuple.Tuple;
 using System.Linq;
 
 namespace ServerNamespace.SMR.Behaviour {
-    public abstract class ServerSMRBehaviour : ServerBehaviour{
-        protected new readonly ServerSMR Server;
+    public abstract class ServerSMRBehaviour {
+        protected readonly ServerSMR Server;
 
         protected const int DefaultRequestToMasterAckTimeoutDuration = 5; // seconds
 
-        public ServerSMRBehaviour(ServerSMR server) : base(server) {
+        public ServerSMRBehaviour(ServerSMR server) {
             Server = server;
         }
 
-        public abstract Message ProcessRequest(Request request);
         public abstract Message ProcessOrder(Order order);
         public abstract void ProcessAskOrder(AskOrder askOrder);
-
-        public override Message ProcessMessage(Message message) {
-            if (message.GetType() == typeof(Request)) {
-                return ProcessRequest((Request)message);
-            }
-
-            if (message.GetType() == typeof(Order)) {
-                return ProcessOrder((Order)message);
-            }
-            
-            // if an Elect message, define new master as the one included in the Elect message
-            if (message.GetType() == typeof(Elect)){
-                Server.MasterEndpointURL = ((Elect)message).NewMasterURL;
-            }
-            
-            throw new NotImplementedException();
-        }
-
-        public override Response PerformRequest(Request request) {
-            var tupleSchema = new TupleSchema(request.Tuple);
-
-            switch (request.RequestType) {
-                case RequestType.READ:
-                    var resultTuples = Server.Read(tupleSchema);
-                    return new Response(request, resultTuples, Server.EndpointURL);
-
-                case RequestType.WRITE:
-                    Server.Write(request.Tuple);
-                    return null;
-
-                case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.Tuple);
-                    resultTuples = Server.Take(tupleSchema);
-                    return new Response(request, resultTuples, Server.EndpointURL);
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
+        public abstract Message ProcessRequest(Request request);
 
         // check if the sequence number of this request is just 1 higher than the previous ( else there is a missing request )
         protected bool CanExecuteRequest(Request request) {
@@ -72,5 +33,6 @@ namespace ServerNamespace.SMR.Behaviour {
         }
 
         
+
     }
 }

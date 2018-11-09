@@ -44,11 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ServerBehaviour.cs" />
     <Compile Include="SMR\behaviour\MasterServerSMRBehaviour.cs" />
     <Compile Include="SMR\behaviour\NormalServerSMRBehaviour.cs" />
     <Compile Include="SMR\behaviour\ServerSMRBehaviour.cs" />
-    <Compile Include="XL\behaviour\ServerXLBehaviour.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />

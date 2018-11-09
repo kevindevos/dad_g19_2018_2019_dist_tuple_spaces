@@ -27,7 +27,7 @@ namespace ServerNamespace.SMR.Behaviour
             Server.DeleteRequest(order.Request);
             Server.LastOrderSequenceNumber = order.SeqNum;
 
-            return PerformRequest(order.Request);
+            return Server.PerformRequest(order.Request);
         }
         
         // Check if there are requests with ANY client sequence number that is valid for execution 
@@ -80,7 +80,7 @@ namespace ServerNamespace.SMR.Behaviour
             Server.UpdateLastExecutedOrder(order);
             Server.UpdateLastExecutedRequest(order.Request);
 
-            Response response = PerformRequest(order.Request);  
+            Response response = Server.PerformRequest(order.Request);  
             // if read or take answer to client
             if(order.Request.RequestType == RequestType.READ || order.Request.RequestType == RequestType.TAKE) {
                 Server.Log("Sending back message to client with response: " + response);

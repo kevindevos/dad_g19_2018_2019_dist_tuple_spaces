@@ -24,7 +24,7 @@ namespace ServerNamespace.SMR.Behaviour {
                     Server.UpdateLastExecutedRequest(order.Request);
 
                     Server.Log("Executing the order");
-                    return PerformRequest(order.Request);
+                    return Server.PerformRequest(order.Request);
                 }
 
                 AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);

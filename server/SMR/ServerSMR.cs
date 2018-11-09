@@ -32,8 +32,7 @@ namespace ServerNamespace
         // Tuple space
         private TupleSpace TupleSpace { get; }
 
-        // new hides the Behaviour of the base class Server, basically replacing the base type of Behaviour to ServerSMRBehaviour here
-        new ServerSMRBehaviour Behaviour;
+        public ServerSMRBehaviour Behaviour;
 
         public ServerSMR(int serverPort) : this(DefaultServerHost, serverPort) { }
         
@@ -68,7 +67,12 @@ namespace ServerNamespace
             if (message.GetType() == typeof(Order)) {
                 return Behaviour.ProcessOrder((Order)message);
             }
-            
+
+            // if an Elect message, define new master as the one included in the Elect message
+            if (message.GetType() == typeof(Elect)) {
+                MasterEndpointURL = ((Elect)message).NewMasterURL;
+            }
+
             throw new NotImplementedException();
         }
 
@@ -103,6 +107,7 @@ namespace ServerNamespace
 
             return tuples;
         }
+        
 
         public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();

@@ -1,20 +1,15 @@
 using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
-using ServerNamespace.XL.Behaviour;
 using System;
 using System.Collections.Generic;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace.XL
-
 {
     // ServerXL
     public class Node : Server
     {
-        // new hides the Behaviour of the base class Server, basically replacing the base type of Behaviour to ServerXLBehaviour here
-        new ServerXLBehaviour Behaviour;
-
         // Workers that carry out operations on a replica
         public List<Worker> Workers;
 
@@ -26,7 +21,6 @@ namespace ServerNamespace.XL
 
         public Node(string host, int port) : base(host,port)
         {
-            Behaviour = new ServerXLBehaviour(this);
             Workers = new List<Worker>();
             View = new List<TupleSpace>();
         }
@@ -39,12 +33,14 @@ namespace ServerNamespace.XL
             Log("Received message: " + message);
 
             if (message.GetType() == typeof(Request)) {
-
-                // TODO
-                return null;
+                return ProcessRequest((Request)message);
             }
 
-            return null;
+            throw new NotImplementedException();
+        }
+
+        private Message ProcessRequest(Request message) {
+            throw new NotImplementedException();
         }
 
         public override Message OnSendMessage(Message message) {

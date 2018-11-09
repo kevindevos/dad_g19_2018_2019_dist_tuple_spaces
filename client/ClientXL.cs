@@ -9,7 +9,6 @@ using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
     public class ClientXL : Client {
-        public List<RemotingEndpoint> View { get { return KnownServerRemotes; } } // change name for XL
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
             SendMessageDel = new SendMessageDelegate(SendMessageToView);
