@@ -6,24 +6,31 @@ using System.Collections.Generic;
 namespace ServerNamespace.XL
 
 {
-    public class ServerXL : Server
+    // ServerXL
+    public class Node : Server
     {
         // new hides the Behaviour of the base class Server, basically replacing the base type of Behaviour to ServerXLBehaviour here
         new ServerXLBehaviour Behaviour;
 
-        // Workers
-        public List<Worker> Workers = new List<Worker>();
-        public List<TupleSpace> Replicas = new List<TupleSpace>();
+        // Workers that carry out operations on a replica
+        public List<Worker> Workers;
 
+        // set of tuple space replicas
+        public List<TupleSpace> Replicas;
 
-        public ServerXL(string host, int port) : base(host,port)
+        // The view, the agreed set of replicas
+        public List<TupleSpace> View; // must be the same across all nodes 
+
+        public Node(string host, int port) : base(host,port)
         {
             Behaviour = new ServerXLBehaviour(this);
+            Workers = new List<Worker>();
+            View = new List<TupleSpace>();
         }
 
-        public ServerXL() : this(DefaultServerHost, DefaultServerPort) { }
+        public Node() : this(DefaultServerHost, DefaultServerPort) { }
 
-        private ServerXL(int serverPort) : this(DefaultServerHost, serverPort) { }
+        private Node(int serverPort) : this(DefaultServerHost, serverPort) { }
 
         public override Message OnReceiveMessage(Message message) {
             throw new System.NotImplementedException();
