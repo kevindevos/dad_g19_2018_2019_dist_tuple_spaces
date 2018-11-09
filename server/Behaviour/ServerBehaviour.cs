@@ -14,9 +14,6 @@ namespace ServerNamespace.Behaviour {
         public abstract Message ProcessMessage(Message message);
 
         public Response PerformRequest(Request request) {
-            // remove from the requestList
-            Server.DeleteRequest(request);
-
             var tupleSchema = new TupleSchema(request.Tuple);
             switch (request.RequestType) {
                 case RequestType.READ:
