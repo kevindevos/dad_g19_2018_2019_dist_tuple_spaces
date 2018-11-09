@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ClientNamespace;
-using CommonTypes.tuple;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ScriptClient

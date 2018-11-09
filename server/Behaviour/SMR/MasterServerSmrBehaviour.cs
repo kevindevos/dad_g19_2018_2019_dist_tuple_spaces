@@ -69,8 +69,13 @@ namespace ServerNamespace.Behaviour.SMR
             Server.SendMessageToKnownServers(order);
             Server.SavedOrders.Add(order);
 
-            Response response = PerformRequest(order.Request);
-            Server.SendMessageToRemoteURL(request.SrcEndpointURL, response);
+            Response response = PerformRequest(order.Request);  
+            // if read or take answer to client
+            if(order.Request.RequestType == RequestType.READ || order.Request.RequestType == RequestType.TAKE) {
+                Server.Log("Sending back message to client with response: " + response);
+                Server.SendMessageToRemoteURL(request.SrcEndpointURL, response);
+            }
+            
         }
         
 
