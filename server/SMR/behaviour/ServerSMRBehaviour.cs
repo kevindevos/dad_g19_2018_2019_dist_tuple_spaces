@@ -6,7 +6,7 @@ using CommonTypes.tuple;
 using Tuple = CommonTypes.tuple.Tuple;
 using System.Linq;
 
-namespace ServerNamespace.Behaviour.SMR {
+namespace ServerNamespace.SMR.Behaviour {
     public abstract class ServerSMRBehaviour : ServerBehaviour{
         protected new readonly ServerSMR Server;
 

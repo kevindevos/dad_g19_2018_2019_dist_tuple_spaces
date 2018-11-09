@@ -3,8 +3,7 @@ using CommonTypes.message;
 using System;
 using System.Linq;
 
-namespace ServerNamespace.Behaviour.SMR
-{
+namespace ServerNamespace.SMR.Behaviour {
     public class NormalServerSMRBehaviour : ServerSMRBehaviour
     {
         public NormalServerSMRBehaviour(ServerSMR server) : base(server)

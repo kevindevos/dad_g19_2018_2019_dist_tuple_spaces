@@ -2,7 +2,7 @@ using System.Linq;
 using CommonTypes;
 using CommonTypes.message;
 
-namespace ServerNamespace.Behaviour.SMR
+namespace ServerNamespace.SMR.Behaviour
 {
     public class MasterServerSMRBehaviour : ServerSMRBehaviour {
         

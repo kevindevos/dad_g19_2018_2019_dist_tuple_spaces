@@ -44,16 +44,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Behaviour\ServerBehaviour.cs" />
-    <Compile Include="Behaviour\SMR\MasterServerSMRBehaviour.cs" />
-    <Compile Include="Behaviour\SMR\NormalServerSMRBehaviour.cs" />
-    <Compile Include="Behaviour\SMR\ServerSMRBehaviour.cs" />
-    <Compile Include="Behaviour\XL\ServerXLBehaviour.cs" />
+    <Compile Include="ServerBehaviour.cs" />
+    <Compile Include="SMR\behaviour\MasterServerSMRBehaviour.cs" />
+    <Compile Include="SMR\behaviour\NormalServerSMRBehaviour.cs" />
+    <Compile Include="SMR\behaviour\ServerSMRBehaviour.cs" />
+    <Compile Include="XL\behaviour\ServerXLBehaviour.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Server\Server.cs" />
-    <Compile Include="Server\ServerSMR.cs" />
-    <Compile Include="Server\ServerXL.cs" />
+    <Compile Include="Server.cs" />
+    <Compile Include="SMR\ServerSMR.cs" />
+    <Compile Include="XL\Worker.cs" />
+    <Compile Include="XL\ServerXL.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -4,7 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using CommonTypes;
 using CommonTypes.message;
-using ServerNamespace.Behaviour.SMR;
+using CommonTypes.tuple;
+using ServerNamespace.SMR.Behaviour;
+using Tuple = CommonTypes.tuple.Tuple;
+using System.Linq;
 
 namespace ServerNamespace
 {
@@ -26,6 +29,9 @@ namespace ServerNamespace
 
         public string MasterEndpointURL { get; set; }
 
+        // Tuple space
+        private TupleSpace TupleSpace { get; }
+
         // new hides the Behaviour of the base class Server, basically replacing the base type of Behaviour to ServerSMRBehaviour here
         new ServerSMRBehaviour Behaviour;
 
@@ -38,6 +44,7 @@ namespace ServerNamespace
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
             SavedOrders = new List<Order>();
             LastOrderSequenceNumber = 0;
+            TupleSpace = new TupleSpace();
         }
 
         public void UpgradeToMaster()
@@ -63,6 +70,38 @@ namespace ServerNamespace
             }
             
             throw new NotImplementedException();
+        }
+
+        // ITupleOperations Methods
+        public override void Write(Tuple tuple) {
+            TupleSpace.Write(tuple);
+            Log("Wrote : " + tuple);
+        }
+
+        public void Write(List<Tuple> tuples) {
+            foreach (Tuple tuple in tuples) {
+                Write(tuple);
+            }
+        }
+
+        public override List<Tuple> Read(TupleSchema tupleSchema) {
+            var listTuple = TupleSpace.Read(tupleSchema);
+            if (listTuple.Count > 0) {
+                Log("Read (first tuple): " + listTuple.First());
+            }
+            return listTuple;
+        }
+
+        public override List<Tuple> Take(TupleSchema tupleSchema) {
+            List<Tuple> tuples = TupleSpace.Take(tupleSchema);
+            if (tuples.Count > 0) {
+                List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);
+                tuplesWriteBack.Remove(tuplesWriteBack.First());
+                Write(tuplesWriteBack);
+                Log("Took (first tuple): " + tuples.First());
+            }
+
+            return tuples;
         }
 
         public override Message OnSendMessage(Message message) {
