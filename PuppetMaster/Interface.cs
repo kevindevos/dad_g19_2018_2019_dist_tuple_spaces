@@ -164,9 +164,5 @@ namespace PuppetMaster
 
             Console.WriteLine("=====================\n");
         }
-
-        
-        
-
     }
 }
