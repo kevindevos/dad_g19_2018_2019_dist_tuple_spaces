@@ -43,6 +43,7 @@ namespace ClientNamespace {
             // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
+            Log("[SEQ:" + ClientRequestSeqNumber + "] Write: " + tuple.ToString());
             SendMessageDel(request);
             ClientRequestSeqNumber++;
         }
@@ -50,13 +51,14 @@ namespace ClientNamespace {
         public override Tuple Read(Tuple tuple) {
             // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
-
+            Log("[SEQ:" + ClientRequestSeqNumber + "] Read: " + tuple.ToString());
             return SendBlockingRequest(request);
         }
 
         public override Tuple Take(Tuple tuple) {
             // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
+            Log("[SEQ:"+ClientRequestSeqNumber+"] Take: " + tuple.ToString());
             return SendBlockingRequest(request);
         }
 
