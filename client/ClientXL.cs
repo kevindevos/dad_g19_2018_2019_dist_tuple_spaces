@@ -12,31 +12,16 @@ namespace ClientNamespace {
         public List<RemotingEndpoint> View { get { return KnownServerRemotes; } } // change name for XL
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
+            SendMessageDel = new SendMessageDelegate(SendMessageToView);
         }
 
         public ClientXL(string host, int port) : base(host, port) {
         }
 
-       
-        public override void Write(Tuple tuple) {
-            // TODO remote exceptions?
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
-
-            Console.WriteLine("Sending request with sequence number: " + request.SeqNum);
-            SendMessageToView(request);
-            ClientRequestSeqNumber++;
-        }
-
-        private void SendMessageToView(Request request) {
-            SendMessageToRemotes(KnownServerRemotes, request);
-        }
-
-        public override Tuple Read(Tuple tuple) {
+        private Message SendMessageToView(Message message) {
+            SendMessageToRemotes(KnownServerRemotes, message);
             return null;
         }
 
-        public override Tuple Take(Tuple tuple) {
-            return null;
-        }
     }
 }

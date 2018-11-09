@@ -7,11 +7,13 @@ using CommonTypes.message;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
+    public delegate Message SendMessageDelegate(Message message);
+
     public abstract class Client : RemotingEndpoint {
         protected int ClientRequestSeqNumber;
-
         // <Request.sequenceNumber, Response>
         protected readonly Dictionary<int, Response> ReceivedResponses;
+        protected SendMessageDelegate SendMessageDel;
 
         // <Request.sequenceNumber, Semaphore>
         protected readonly Dictionary<int, SemaphoreSlim> RequestSemaphore;
@@ -53,12 +55,48 @@ namespace ClientNamespace {
             throw new NotImplementedException();
         }
 
-        public abstract void Write(Tuple tuple);
-        public abstract Tuple Read(Tuple tuple);
-        public abstract Tuple Take(Tuple tuple);
+        public void Write(Tuple tuple) {
+            // TODO remote exceptions?
+            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
-        
+            SendMessageDel(request);
+            ClientRequestSeqNumber++;
+        }
 
+        public Tuple Read(Tuple tuple) {
+            // TODO remote exceptions?
+            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
+
+            return SendBlockingRequest(request);
+        }
+
+        public Tuple Take(Tuple tuple) {
+            // TODO remote exceptions?
+            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
+            return SendBlockingRequest(request);
+        }
+
+        private Tuple SendBlockingRequest(Request request) {
+            RequestSemaphore[request.SeqNum] = new SemaphoreSlim(0, 1);
+            SendMessageDel(request);
+            ClientRequestSeqNumber++;
+
+            WaitForResponse(request.SeqNum);
+
+            if (ReceivedResponses[request.SeqNum].Tuples != null && ReceivedResponses[request.SeqNum].Tuples.Count > 0) {
+                return ReceivedResponses[request.SeqNum].Tuples.First();
+            }
+            else {
+                return null;
+            }
+        }
+
+        // Wait for response. Disposes and removes semaphore.
+        private void WaitForResponse(int requestSeqNum) {
+            RequestSemaphore[requestSeqNum].Wait();
+            RequestSemaphore[requestSeqNum].Dispose();
+            RequestSemaphore.Remove(requestSeqNum);
+        }
 
     }
 }
