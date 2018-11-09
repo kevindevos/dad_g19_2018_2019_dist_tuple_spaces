@@ -77,11 +77,19 @@ namespace ServerNamespace.XL
         }
 
         public override List<Tuple> Read(TupleSchema tupleSchema) {
-            throw new System.NotImplementedException();
+            List<Tuple> tuples = new List<Tuple>();
+            foreach (Worker worker in Workers) {
+                tuples.AddRange(worker.Read(tupleSchema));
+            }
+            return tuples;
         }
 
         public override List<Tuple> Take(TupleSchema tupleSchema) {
-            throw new System.NotImplementedException();
+            List<Tuple> tuples = new List<Tuple>();
+            foreach (Worker worker in Workers) {
+                tuples.AddRange(worker.Take(tupleSchema));
+            }
+            return tuples;
         }
     }
 }

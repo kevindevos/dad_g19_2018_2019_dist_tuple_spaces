@@ -11,7 +11,12 @@ using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
     public class ClientXL : Client {
+        // request seq number, counter
         private ConcurrentDictionary<int, int> ackReceivedCounterPerRequest;
+
+        // request seq number, responses
+        private ConcurrentDictionary<int, List<Response>> responsesReceivedPerRequest;
+
         protected const int DefaultTimeoutForReadAcks = 5;
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
@@ -42,16 +47,30 @@ namespace ClientNamespace {
         }
 
         public override Tuple Read(Tuple tuple) {
-            throw new NotImplementedException();
+            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
+            SendMessageDel(request);
+
+            int timeBetweenChecks = 200; // ms
+            for (int i = 0; i < DefaultTimeoutForReadAcks; i += timeBetweenChecks) {
+                List<Response> responses;
+                responsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                if (responses.Count >= 1) {
+                    return responses.First().Tuples.First();
+                }
+            }
+            // failed timeout, redo read
+            Read(tuple);
+
+            return null;
         }
 
         public override Tuple Take(Tuple tuple) {
-            throw new NotImplementedException();
+            // TODO
         }
 
         public override Message OnReceiveMessage(Message message) {
             // if ack for read request, increment counter
-            if(message.GetType() == typeof(Ack)) {
+            if(message.GetType() == typeof(Ack)  ) {
                 Ack ack = (Ack)message;
                 if(ack.Message.GetType() == typeof(Request)) {
                     Request request = (Request)ack.Message;
@@ -61,10 +80,24 @@ namespace ClientNamespace {
                         ackReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
                     }
                 }
-
-                
-
             }
+            // answer from read or take
+            if(message.GetType() == typeof(Response)) {
+                Response response = (Response)message;
+                if(response.Request.RequestType == RequestType.READ) {
+                    List<Response> storedResponses;
+                    responsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out storedResponses);
+                    storedResponses.Add(response);
+                    responsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
+                }
+
+                if (response.Request.RequestType == RequestType.TAKE) {
+                    // TODO
+                }
+
+                throw new NotImplementedException();
+            }
+
 
             return null;
         }

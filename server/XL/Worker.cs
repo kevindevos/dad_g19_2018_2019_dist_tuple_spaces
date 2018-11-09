@@ -13,15 +13,15 @@ namespace ServerNamespace.XL {
         }
 
         public List<Tuple> Read(TupleSchema tupleSchema) {
-            throw new NotImplementedException();
+            throw new NotImplementedException(); //TODO
         }
 
         public List<Tuple> Take(TupleSchema tupleSchema) {
-            throw new NotImplementedException();
+            throw new NotImplementedException(); //TODO
         }
 
         public void Write(Tuple tuple) {
-            throw new NotImplementedException();
+            throw new NotImplementedException(); //TODO
         }
     }
 }
