@@ -140,8 +140,15 @@ namespace ClientNamespace {
                 ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
             }
 
-            // TODO update numAcceptedLocks when a lock was accepted at server
-            
+            // save the number of locks that were accepted for a specific request
+            if(message.GetType() == typeof(TakeLockStatusResponse)) {
+                TakeLockStatusResponse resp = (TakeLockStatusResponse)message;
+                if(resp.LockAccepted) {
+                    int oldLockCounter;
+                    LocksTakenCountPerRequest.TryGetValue(resp.Request.SeqNum, out oldLockCounter);
+                    LocksTakenCountPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
+                }
+            }
 
             return null;
         }
