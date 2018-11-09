@@ -44,6 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\InvalidCommandException.cs" />
+    <Compile Include="Exceptions\ProcessNotFoundException.cs" />
+    <Compile Include="Exceptions\PCSNotFoundException.cs" />
     <Compile Include="Interface.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="Program.cs" />
@@ -53,7 +56,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="pcs_addrs.txt" />
+    <Content Include="Resources\pcs_addrs.txt" />
+    <Content Include="Resources\script.txt" />
+    <Content Include="Resources\client_script_1.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\commontypes\CommonTypes.csproj">

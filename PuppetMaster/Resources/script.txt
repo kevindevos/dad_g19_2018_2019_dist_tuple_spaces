@@ -1,0 +1,7 @@
+﻿Server s1 tcp://localhost:50001/S 10 1000
+Wait 500
+Client c1 tcp://localhost:60001/C client_script_1.txt
+Status
+Freeze s1
+Unfreeze s1
+Crash s1
