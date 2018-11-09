@@ -41,6 +41,12 @@ namespace ServerNamespace {
             Log("Wrote : " + tuple);
         }
 
+        public void Write(List<Tuple> tuples) {
+            foreach(Tuple tuple in tuples) {
+                Write(tuple);
+            }
+        }
+
         public List<Tuple> Read(TupleSchema tupleSchema)
         {
             var listTuple = TupleSpace.Read(tupleSchema);
@@ -50,10 +56,12 @@ namespace ServerNamespace {
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
-            // TODO 2 phase lock - first list what there is and lock those, only then on confirm the client takes them?
-            var listTuple = TupleSpace.Take(tupleSchema);;
-            Log("Took (first tuple): " + listTuple.First());
-            return listTuple;
+            List<Tuple> tuples = TupleSpace.Take(tupleSchema);
+            List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);
+            tuplesWriteBack.Remove(tuplesWriteBack.First());
+            Write(tuplesWriteBack);
+            Log("Took (first tuple): " + tuples.First());
+            return tuples;
         }
 
         public void SaveRequest(Request request) {
@@ -71,7 +79,8 @@ namespace ServerNamespace {
         public virtual void Log(string text) {
             Console.WriteLine("[SERVER:"+EndpointURL +"]   " + text);
         }
-      
+
+        
     }
 
 }

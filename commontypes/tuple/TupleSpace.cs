@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CommonTypes.tuple
 {
@@ -31,25 +32,25 @@ namespace CommonTypes.tuple
         // TODO what if there is no tuple? how do we wait? above?
         public List<Tuple> Read(TupleSchema tupleSchema)
         {
-            List<Tuple> matchingTuples;
+            List<Tuple> tuples;
 
             lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object()))
             {
-                matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
+                tuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
             }
 
-            return matchingTuples;
+            return tuples;
         }
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
-            List<Tuple> matchingTuples;
+            List<Tuple> tuples;
 
             lock (_tupleSpaceLocks.GetOrAdd(tupleSchema.Schema.GetSize(), new object())) {
-                matchingTuples = GetAndRemoveMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
+                _tupleSpace.TryRemove(tupleSchema.Schema.GetSize(), out tuples);
             }
 
-            return matchingTuples;
+            return tuples;
         }
 
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
@@ -57,13 +58,12 @@ namespace CommonTypes.tuple
             return listOfTuples.FindAll(tupleSchema.Match);
         }
 
-        private List<Tuple> GetAndRemoveMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema) {
-            List<Tuple> tuples = GetMatchingTuples(listOfTuples, tupleSchema);
-            foreach (Tuple tuple in tuples) {
-                listOfTuples.Remove(tuple);
-            }
-            return listOfTuples;
+        private Tuple GetMatchingTuple(List<Tuple> listOfTuples, TupleSchema tupleSchema) {
+            return listOfTuples.FindAll(tupleSchema.Match).First();
         }
+
+
+
 
         // TODO can we guarantee that this returns deterministically always the same value?
         private Tuple GetFirstMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)

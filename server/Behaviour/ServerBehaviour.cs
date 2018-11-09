@@ -12,28 +12,8 @@ namespace ServerNamespace.Behaviour {
         }
 
         public abstract Message ProcessMessage(Message message);
+        public abstract Response PerformRequest(Request request);
 
-        public Response PerformRequest(Request request) {
-            var tupleSchema = new TupleSchema(request.Tuple);
-            switch (request.RequestType) {
-                case RequestType.READ:
-                    var resultTuples = Server.Read(tupleSchema);
-                    return new Response(request, resultTuples, Server.EndpointURL);
-
-                case RequestType.WRITE:
-                    Server.Write(request.Tuple);
-                    return null;
-
-                case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.Tuple);
-                    resultTuples = Server.Take(tupleSchema);
-                    return new Response(request, resultTuples, Server.EndpointURL);
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        
 
     }
 }

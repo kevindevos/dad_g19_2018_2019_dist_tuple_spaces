@@ -46,13 +46,7 @@ namespace ClientNamespace {
             //TODO first? what is the order? does it matter?
             
             // TODO the master is not responding anything
-            var tupleList = _receivedResponses[request.SeqNum].TupleList;
-            if (tupleList != null)
-                return tupleList.First();
-            else
-            {
-                return null;
-            }
+            return _receivedResponses[request.SeqNum].Tuples.First();
         }
 
         public Tuple Take(Tuple tuple) {
@@ -65,9 +59,9 @@ namespace ClientNamespace {
             _clientRequestSeqNumber++;
 
             WaitForResponse(request.SeqNum);
-            
+
             //TODO 2-phase locking?
-            return _receivedResponses[request.SeqNum].TupleList.First(); 
+            return _receivedResponses[request.SeqNum].Tuples.First();
         }
 
 
