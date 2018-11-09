@@ -16,7 +16,12 @@ namespace CommonTypes.tuple{
 
         public override string ToString()
         {
-            return "(" + string.Join(", ", Fields.ToArray()) + ")";
+            var listWithNull = new List<object>();
+            foreach (var field in Fields)
+            {
+                listWithNull.Add(field ?? "null");
+            }
+            return "(" + string.Join(", ", listWithNull.ToArray()) + ")";
         }
     }
 }
