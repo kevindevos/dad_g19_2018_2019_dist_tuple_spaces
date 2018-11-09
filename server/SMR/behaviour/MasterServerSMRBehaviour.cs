@@ -2,7 +2,7 @@ using System.Linq;
 using CommonTypes;
 using CommonTypes.message;
 
-namespace ServerNamespace.Behaviour.SMR
+namespace ServerNamespace.SMR.Behaviour
 {
     public class MasterServerSMRBehaviour : ServerSMRBehaviour {
         
@@ -27,7 +27,7 @@ namespace ServerNamespace.Behaviour.SMR
             Server.DeleteRequest(order.Request);
             Server.LastOrderSequenceNumber = order.SeqNum;
 
-            return PerformRequest(order.Request);
+            return Server.PerformRequest(order.Request);
         }
         
         // Check if there are requests with ANY client sequence number that is valid for execution 
@@ -74,13 +74,13 @@ namespace ServerNamespace.Behaviour.SMR
             Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
             Server.RequestList.Remove(request);
             Server.Log("Sending Order to all servers.");
-            Server.SendMessageToKnownServers(order);
+            Server.SendMessageToRemotes(Server.KnownServerRemotes, order);
             Server.SavedOrders.Add(order);
 
             Server.UpdateLastExecutedOrder(order);
             Server.UpdateLastExecutedRequest(order.Request);
 
-            Response response = PerformRequest(order.Request);  
+            Response response = Server.PerformRequest(order.Request);  
             // if read or take answer to client
             if(order.Request.RequestType == RequestType.READ || order.Request.RequestType == RequestType.TAKE) {
                 Server.Log("Sending back message to client with response: " + response);

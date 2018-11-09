@@ -5,8 +5,10 @@ namespace ServerNamespace
     public static class Program
     {
         public static void Main(string[] args) {
-            // TESTING //
+            testSMR();
+        }
 
+        public static void testSMR() {
             ServerSMR server1 = new ServerSMR(8080);
             ServerSMR server2 = new ServerSMR(8081);
             ServerSMR server3 = new ServerSMR(8082);
@@ -21,9 +23,11 @@ namespace ServerNamespace
             server2.Log(hello);
             server3.Log(hello);
 
-            // END TESTING //
-
             Console.ReadLine();
+        }
+
+        public static void testXL() {
+
         }
     }
 }

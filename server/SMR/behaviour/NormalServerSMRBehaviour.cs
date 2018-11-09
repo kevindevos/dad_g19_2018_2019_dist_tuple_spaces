@@ -3,8 +3,7 @@ using CommonTypes.message;
 using System;
 using System.Linq;
 
-namespace ServerNamespace.Behaviour.SMR
-{
+namespace ServerNamespace.SMR.Behaviour {
     public class NormalServerSMRBehaviour : ServerSMRBehaviour
     {
         public NormalServerSMRBehaviour(ServerSMR server) : base(server)
@@ -25,7 +24,7 @@ namespace ServerNamespace.Behaviour.SMR
                     Server.UpdateLastExecutedRequest(order.Request);
 
                     Server.Log("Executing the order");
-                    return PerformRequest(order.Request);
+                    return Server.PerformRequest(order.Request);
                 }
 
                 AskForMissingOrders(Server.LastOrderSequenceNumber + 1, order.SeqNum - 1);

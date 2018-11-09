@@ -8,6 +8,7 @@ namespace CommonTypes.tuple
     public class TupleSchema
     {
         public readonly Tuple Schema;
+        public object LogicalName { get { return Schema.LogicalName; } set { Schema.LogicalName = value; } }
 
         public TupleSchema(Tuple tuple)
         {

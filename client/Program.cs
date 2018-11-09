@@ -7,7 +7,7 @@ namespace ClientNamespace
     public static class Program
     {
         public static void Main(string[] args) {
-            Client client = new Client();
+            Client client = new ClientSMR();
 
             Tuple tuple1 = new Tuple(new List<object>(new object[] { "hello", "world", 2 }));
             client.Write(tuple1);

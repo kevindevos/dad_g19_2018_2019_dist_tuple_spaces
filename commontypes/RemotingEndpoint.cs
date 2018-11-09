@@ -21,7 +21,7 @@ namespace CommonTypes {
 
         private string ObjIdentifier { get; }
 
-        protected readonly List<RemotingEndpoint> KnownServerRemotes;
+        public readonly List<RemotingEndpoint> KnownServerRemotes;
 
         public string EndpointURL { get; }
 
@@ -70,6 +70,7 @@ namespace CommonTypes {
             return remote;
         }
 
+
         public Message SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
             try {
                 RemoteAsyncDelegate remoteDel = new RemoteAsyncDelegate(remotingEndpoint.OnReceiveMessage);
@@ -88,16 +89,18 @@ namespace CommonTypes {
             return SendMessageToRemote(remotingEndpoint, message);
         }
 
-        public List<Message> SendMessageToKnownServers(Message message) {
-            List<Message> messages = new List<Message>();
-
-            foreach (var serverRemote in KnownServerRemotes)
-            {
-                messages.Add(SendMessageToRemote(serverRemote, message));
-
+        public void SendMessageToRemotesURL(List<string> remotingURLS, Message message) {
+            foreach (string ru in remotingURLS) {
+                SendMessageToRemoteURL(ru, message);
             }
-            return messages;
         }
+
+        public void SendMessageToRemotes(List<RemotingEndpoint> servers, Message message) {
+            foreach(RemotingEndpoint re in servers) {
+                SendMessageToRemote(re, message);
+            }
+        }
+        
 
         protected Message SendMessageToRandomServer(Message message) {
             var random = new Random();

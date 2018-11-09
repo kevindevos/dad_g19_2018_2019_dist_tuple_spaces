@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="message\AskOrder.cs" />
     <Compile Include="PCSRemotingInterface.cs" />
+    <Compile Include="message\TakeLockStatusResponse.cs" />
     <Compile Include="message\Elect.cs" />
     <Compile Include="message\Ack.cs" />
     <Compile Include="RemotingEndpoint.cs" />
