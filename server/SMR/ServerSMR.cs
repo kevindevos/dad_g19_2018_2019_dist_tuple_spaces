@@ -107,7 +107,27 @@ namespace ServerNamespace
 
             return tuples;
         }
-        
+        public Response PerformRequest(Request request) {
+            var tupleSchema = new TupleSchema(request.Tuple);
+
+            switch (request.RequestType) {
+                case RequestType.READ:
+                    var resultTuples = Read(tupleSchema);
+                    return new Response(request, resultTuples, EndpointURL);
+
+                case RequestType.WRITE:
+                    Write(request.Tuple);
+                    return null;
+
+                case RequestType.TAKE:
+                    tupleSchema = new TupleSchema(request.Tuple);
+                    resultTuples = Take(tupleSchema);
+                    return new Response(request, resultTuples, EndpointURL);
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
 
         public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();
