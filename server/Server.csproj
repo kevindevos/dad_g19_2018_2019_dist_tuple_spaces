@@ -54,7 +54,7 @@
     <Compile Include="Server.cs" />
     <Compile Include="SMR\ServerSMR.cs" />
     <Compile Include="XL\Worker.cs" />
-    <Compile Include="XL\Replica.cs" />
+    <Compile Include="XL\Node.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

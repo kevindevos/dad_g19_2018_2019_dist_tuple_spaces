@@ -1,16 +1,27 @@
-﻿using CommonTypes.tuple;
+﻿using CommonTypes;
+using CommonTypes.tuple;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace.XL {
-    public class Worker {
+    public class Worker : ITupleOperations {
         public TupleSpace TupleSpace; 
 
         public Worker(TupleSpace tupleSpace) {
             TupleSpace = tupleSpace;
+        }
+
+        public List<Tuple> Read(TupleSchema tupleSchema) {
+            throw new NotImplementedException();
+        }
+
+        public List<Tuple> Take(TupleSchema tupleSchema) {
+            throw new NotImplementedException();
+        }
+
+        public void Write(Tuple tuple) {
+            throw new NotImplementedException();
         }
     }
 }

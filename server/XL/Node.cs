@@ -1,7 +1,10 @@
+using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
 using ServerNamespace.XL.Behaviour;
+using System;
 using System.Collections.Generic;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace.XL
 
@@ -33,11 +36,19 @@ namespace ServerNamespace.XL
         private Node(int serverPort) : this(DefaultServerHost, serverPort) { }
 
         public override Message OnReceiveMessage(Message message) {
-            throw new System.NotImplementedException();
+            Log("Received message: " + message);
+
+            if (message.GetType() == typeof(Request)) {
+
+                // TODO
+                return null;
+            }
+
+            return null;
         }
 
         public override Message OnSendMessage(Message message) {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public override void Write(Tuple tuple) {
