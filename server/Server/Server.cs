@@ -50,17 +50,22 @@ namespace ServerNamespace {
         public List<Tuple> Read(TupleSchema tupleSchema)
         {
             var listTuple = TupleSpace.Read(tupleSchema);
-            Log("Read (first tuple): " + listTuple.First());
+            if(listTuple.Count > 0) {
+                Log("Read (first tuple): " + listTuple.First());
+            }
             return listTuple;
         }
 
         public List<Tuple> Take(TupleSchema tupleSchema)
         {
             List<Tuple> tuples = TupleSpace.Take(tupleSchema);
-            List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);
-            tuplesWriteBack.Remove(tuplesWriteBack.First());
-            Write(tuplesWriteBack);
-            Log("Took (first tuple): " + tuples.First());
+            if(tuples.Count > 0) {
+                List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);
+                tuplesWriteBack.Remove(tuplesWriteBack.First());
+                Write(tuplesWriteBack);
+                Log("Took (first tuple): " + tuples.First());
+            }
+            
             return tuples;
         }
 

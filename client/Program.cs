@@ -13,13 +13,13 @@ namespace ClientNamespace
             client.Write(tuple1);
 
             Tuple tuple2 = client.Read(tuple1);
-            Console.WriteLine(tuple2.ToString());
+            Console.WriteLine("Tuple: " + tuple2.ToString());
 
             Tuple tuple3 = client.Take(tuple1);
-            Console.WriteLine(tuple3.ToString());
+            Console.WriteLine("Tuple: " + tuple3.ToString());
 
             Tuple tuple4 = client.Read(tuple1);
-
+            Console.WriteLine("Tuple: " + tuple4);
 
             Console.ReadLine();
         }

@@ -39,6 +39,7 @@ namespace ServerNamespace.Behaviour.SMR {
 
         public override Response PerformRequest(Request request) {
             var tupleSchema = new TupleSchema(request.Tuple);
+
             switch (request.RequestType) {
                 case RequestType.READ:
                     var resultTuples = Server.Read(tupleSchema);
@@ -59,15 +60,17 @@ namespace ServerNamespace.Behaviour.SMR {
         }
 
         // check if the sequence number of this request is just 1 higher than the previous ( else there is a missing request )
-        protected bool SequenceNumberIsNext(Request request) {
+        protected bool CanExecuteRequest(Request request) {
             var lastRequest = Server.LastExecutedRequests.GetOrAdd(request.SrcRemoteURL, request);
             return lastRequest.SeqNum + 1 == request.SeqNum || request.SeqNum == 0;
         }
 
         // check if the sequence number of this order is just 1 higher than the previous ( else there is a missing order )
-        protected bool SequenceNumberIsNext(Order order) {
+        protected bool CanExecuteOrder(Order order) {
             var lastOrder = Server.LastExecutedOrders.GetOrAdd(order.SrcRemoteURL, order);
             return lastOrder.SeqNum + 1 == order.SeqNum || order.SeqNum == 0;
         }
+
+        
     }
 }

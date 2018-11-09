@@ -12,7 +12,7 @@ namespace ServerNamespace.Behaviour.SMR
 
         public override Message ProcessRequest(Request request) {
             Server.SaveRequest(request);
-            while(Decide(request.SrcEndpointURL));
+            while(Decide(request.SrcRemoteURL));
 
             // create an ack that will be sent back to confirm the request was received
             Server.Log("Sending back an Ack");
@@ -36,8 +36,10 @@ namespace ServerNamespace.Behaviour.SMR
             lock (Server.RequestList) {
                 foreach (var request in Server.RequestList)
                 {
-                    if (!SequenceNumberIsNext(request)) continue;
-
+                    if (!CanExecuteRequest(request)) {
+                        Server.Log("Can't execute request with sequence number: " + request.SeqNum);
+                        continue;
+                    }
                     OrderRequestForExecution(request);
 
                     return true;
@@ -52,8 +54,12 @@ namespace ServerNamespace.Behaviour.SMR
             lock (Server.RequestList) {
                 foreach (var request in Server.RequestList)
                 {
-                    if (!request.SrcEndpointURL.Equals(endpointURL) || (!SequenceNumberIsNext(request))) continue;
-
+                    if (!request.SrcRemoteURL.Equals(endpointURL) || (!CanExecuteRequest(request))) {
+                        Server.Log("Can't execute request with sequence number: " + request.SeqNum);
+                        Server.Log("request remoteurl : " + request.SrcRemoteURL);
+                        Server.Log("given remoteurl : " + endpointURL);
+                        continue;
+                    }
                     OrderRequestForExecution(request);
                     
                     return true;
@@ -62,6 +68,8 @@ namespace ServerNamespace.Behaviour.SMR
             return false;
         }
 
+       
+
         private void OrderRequestForExecution(Request request) {
             Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
             Server.RequestList.Remove(request);
@@ -69,11 +77,14 @@ namespace ServerNamespace.Behaviour.SMR
             Server.SendMessageToKnownServers(order);
             Server.SavedOrders.Add(order);
 
+            Server.UpdateLastExecutedOrder(order);
+            Server.UpdateLastExecutedRequest(order.Request);
+
             Response response = PerformRequest(order.Request);  
             // if read or take answer to client
             if(order.Request.RequestType == RequestType.READ || order.Request.RequestType == RequestType.TAKE) {
                 Server.Log("Sending back message to client with response: " + response);
-                Server.SendMessageToRemoteURL(request.SrcEndpointURL, response);
+                Server.SendMessageToRemoteURL(request.SrcRemoteURL, response);
             }
             
         }

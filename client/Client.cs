@@ -27,6 +27,7 @@ namespace ClientNamespace {
             // TODO remote exceptions?
             var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
+            Console.WriteLine("Sending request with sequence number: " + request.SeqNum);
             SendMessageToRandomServer(request);
             _clientRequestSeqNumber++;
         }
@@ -36,7 +37,8 @@ namespace ClientNamespace {
             var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
             
             _requestSemaphore[request.SeqNum] = new SemaphoreSlim(0,1);
-            
+
+            Console.WriteLine("Sending request with sequence number: " + request.SeqNum);
             SendMessageToRandomServer(request);
             _clientRequestSeqNumber++;
 
@@ -57,7 +59,8 @@ namespace ClientNamespace {
             var request = new Request(_clientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
 
             _requestSemaphore[request.SeqNum] = new SemaphoreSlim(0,1);
-            
+
+            Console.WriteLine("Sending request with sequence number: " + request.SeqNum);
             SendMessageToRandomServer(request);
             _clientRequestSeqNumber++;
 

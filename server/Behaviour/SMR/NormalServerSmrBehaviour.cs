@@ -16,10 +16,13 @@ namespace ServerNamespace.Behaviour.SMR
             Server.Log("Received an order");
             lock (Server.LastExecutedOrders)
             {
-                if (SequenceNumberIsNext(order)) {
+                if (CanExecuteOrder(order)) {
                     Server.SavedOrders.Add(order);
                     Server.DeleteRequest(order.Request);
                     Server.LastOrderSequenceNumber = order.SeqNum;
+
+                    Server.UpdateLastExecutedOrder(order);
+                    Server.UpdateLastExecutedRequest(order.Request);
 
                     Server.Log("Executing the order");
                     return PerformRequest(order.Request);
@@ -55,6 +58,7 @@ namespace ServerNamespace.Behaviour.SMR
             int timeBetweenChecks = 50; // ms
             for(int i = 0; i < DefaultRequestToMasterAckTimeoutDuration; i+=timeBetweenChecks) {
                 if(response != null && response.GetType() != typeof(Ack)) {
+                    Server.Log("Waiting " + timeBetweenChecks + " ms");
                     System.Threading.Thread.Sleep(i);
                 }
                 else {
