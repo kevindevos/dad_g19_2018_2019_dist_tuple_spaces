@@ -21,8 +21,10 @@ namespace ServerNamespace.XL
 
         public Node(string host, int port) : base(host,port)
         {
-            Workers = new List<Worker>();
+            Workers = new List<Worker>(); 
             View = new List<TupleSpace>();
+
+            // TODO assign replicas to the workers
         }
 
         public Node() : this(DefaultServerHost, DefaultServerPort) { }
@@ -51,20 +53,34 @@ namespace ServerNamespace.XL
                 case RequestType.WRITE:
                     Write(request.Tuple);
 
-                    // Send Ack
+                    // Send back an Ack of the write
                     Ack ack = new Ack(EndpointURL, request);
                     SendMessageToRemoteURL(request.SrcRemoteURL, request);
                     return ack;
 
                 case RequestType.TAKE:
+                    // TODO attempt lock, if fail return reject, if not return list of possible tuples to choose from
+
                     tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Take(tupleSchema);
                     return new Response(request, resultTuples, EndpointURL);
+
+                case RequestType.REMOVE:
+                    tupleSchema = new TupleSchema(request.Tuple);
+                    Remove(tupleSchema);
+                    
+                    // Send back an Ack of the remove
+                    ack = new Ack(EndpointURL, request);
+                    SendMessageToRemoteURL(request.SrcRemoteURL, request);
+                    break;
+
 
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
+
+       
 
         public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();
@@ -90,6 +106,12 @@ namespace ServerNamespace.XL
                 tuples.AddRange(worker.Take(tupleSchema));
             }
             return tuples;
+        }
+
+        private void Remove(TupleSchema tupleSchema) {
+            foreach (Worker worker in Workers) {
+                worker.Remove(tupleSchema);
+            }
         }
     }
 }

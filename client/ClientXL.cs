@@ -12,16 +12,18 @@ using Tuple = CommonTypes.tuple.Tuple;
 namespace ClientNamespace {
     public class ClientXL : Client {
         // request seq number, counter
-        private ConcurrentDictionary<int, int> ackReceivedCounterPerRequest;
+        private ConcurrentDictionary<int, int> AckReceivedCounterPerRequest;
 
         // request seq number, responses
-        private ConcurrentDictionary<int, List<Response>> responsesReceivedPerRequest;
+        private ConcurrentDictionary<int, List<Response>> ResponsesReceivedPerRequest;
 
-        protected const int DefaultTimeoutForReadAcks = 5;
+        private ConcurrentDictionary<int, int> LocksTakenCountPerRequest;
+
+        protected const int DefaultTimeoutDuration = 5;
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
             SendMessageDel = new SendMessageDelegate(SendMessageToView);
-            ackReceivedCounterPerRequest = new ConcurrentDictionary<int, int>();
+            AckReceivedCounterPerRequest = new ConcurrentDictionary<int, int>();
         }
 
         public ClientXL(string host, int port) : base(host, port) {
@@ -35,9 +37,9 @@ namespace ClientNamespace {
             ClientRequestSeqNumber++;
 
             int timeBetweenChecks = 200; // ms
-            for (int i = 0; i < DefaultTimeoutForReadAcks; i += timeBetweenChecks) {
+            for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
                 int acksReceivedSoFar;
-                ackReceivedCounterPerRequest.TryGetValue(request.SeqNum, out acksReceivedSoFar);
+                AckReceivedCounterPerRequest.TryGetValue(request.SeqNum, out acksReceivedSoFar);
                 if(acksReceivedSoFar >= KnownServerRemotes.Count) {
                     return;
                 }
@@ -49,23 +51,71 @@ namespace ClientNamespace {
         public override Tuple Read(Tuple tuple) {
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
             SendMessageDel(request);
+            ClientRequestSeqNumber++;
 
             int timeBetweenChecks = 200; // ms
-            for (int i = 0; i < DefaultTimeoutForReadAcks; i += timeBetweenChecks) {
+            for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
                 List<Response> responses;
-                responsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
                 if (responses.Count >= 1) {
                     return responses.First().Tuples.First();
                 }
             }
             // failed timeout, redo read
-            Read(tuple);
-
-            return null;
+            return Read(tuple);
         }
 
         public override Tuple Take(Tuple tuple) {
-            // TODO
+            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
+            Tuple selectedTuple = null;
+            SendMessageDel(request);
+            ClientRequestSeqNumber++;
+
+            int timeBetweenChecks = 250; // ms
+            for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
+                List<Response> responses;
+                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                if (responses.Count == KnownServerRemotes.Count) {
+                    List<Tuple> matchingTuples = new List<Tuple>();
+                    foreach(Response response in responses) {
+                        matchingTuples = (List<Tuple>) matchingTuples.Intersect(response.Tuples); // get common tuples in all response lists
+                    }
+                    // if there are any tuples common to all lists, select one randomly according to the algorithm
+                    if(matchingTuples.Count != 0) {
+                        selectedTuple = matchingTuples.ElementAt((new Random()).Next(0, matchingTuples.Count));
+                    }
+
+                    // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
+                    for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
+                        int numAcceptedLocks;
+                        LocksTakenCountPerRequest.TryGetValue(request.SeqNum, out numAcceptedLocks);
+                        // if majority proceed to phase 2
+                        if(numAcceptedLocks > KnownServerRemotes.Count / 2) {
+                            //  PHASE 2
+                            // proceed to multicast a Remove, and only return when all acks were received!
+                            Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
+                            ClientRequestSeqNumber++;
+
+                            // return when all acks received
+                            int ackCount;
+                            do {
+                                AckReceivedCounterPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
+                                System.Threading.Thread.Sleep(timeBetweenChecks); // prevent CPU massacre
+                                // TODO possible infinite loop here? for example if after removing a tuple, one of the servers dies we die of old age
+                            } while (ackCount < KnownServerRemotes.Count);
+
+                            // at this point the tuple should have been removed from all Replicas
+                            return selectedTuple;
+
+                        }
+                    }
+                    // redo take and hope we get majority of locks
+                    return Take(tuple);
+                }
+            }
+
+
+            return null;
         }
 
         public override Message OnReceiveMessage(Message message) {
@@ -76,28 +126,22 @@ namespace ClientNamespace {
                     Request request = (Request)ack.Message;
                     if(request.RequestType == RequestType.READ) {
                         int oldCounter;
-                        ackReceivedCounterPerRequest.TryRemove(request.SeqNum, out oldCounter);
-                        ackReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
+                        AckReceivedCounterPerRequest.TryRemove(request.SeqNum, out oldCounter);
+                        AckReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
                     }
                 }
             }
             // answer from read or take
             if(message.GetType() == typeof(Response)) {
                 Response response = (Response)message;
-                if(response.Request.RequestType == RequestType.READ) {
-                    List<Response> storedResponses;
-                    responsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out storedResponses);
-                    storedResponses.Add(response);
-                    responsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
-                }
-
-                if (response.Request.RequestType == RequestType.TAKE) {
-                    // TODO
-                }
-
-                throw new NotImplementedException();
+                List<Response> storedResponses;
+                ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out storedResponses);
+                storedResponses.Add(response);
+                ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
             }
 
+            // TODO update numAcceptedLocks when a lock was accepted at server
+            
 
             return null;
         }

@@ -26,8 +26,6 @@ namespace ServerNamespace {
 
         private Server(int serverPort) : this(DefaultServerHost, serverPort) { }
 
-        
-
         public void SaveRequest(Request request) {
             lock (RequestList) {
                 RequestList.Add(request);

@@ -12,16 +12,20 @@ namespace ServerNamespace.XL {
             TupleSpace = tupleSpace;
         }
 
+        public void Write(Tuple tuple) {
+            TupleSpace.Write(tuple);
+        }
+
         public List<Tuple> Read(TupleSchema tupleSchema) {
-            throw new NotImplementedException(); //TODO
+            return TupleSpace.Read(tupleSchema);
         }
 
         public List<Tuple> Take(TupleSchema tupleSchema) {
-            throw new NotImplementedException(); //TODO
+            return TupleSpace.Take(tupleSchema);
         }
 
-        public void Write(Tuple tuple) {
-            throw new NotImplementedException(); //TODO
+        public void Remove(TupleSchema tupleSchema) {
+            TupleSpace.Remove(tupleSchema);
         }
     }
 }

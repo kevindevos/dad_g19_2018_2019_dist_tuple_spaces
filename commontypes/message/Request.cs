@@ -3,7 +3,7 @@ using CommonTypes.tuple;
 
 namespace CommonTypes {
 
-    public enum RequestType { READ, WRITE, TAKE }
+    public enum RequestType { READ, WRITE, TAKE, REMOVE }
 
     [System.Serializable]
     public class Request : Message {

@@ -63,6 +63,12 @@ namespace CommonTypes.tuple
             return matchingTuples;
         }
 
+        // remove tuples , used for take's phase 2 in Xu and Liskov
+        public List<Tuple> Remove(TupleSchema tupleSchema) {
+            // TODO
+            return null;
+        }
+
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
         {
             return listOfTuples.FindAll(tupleSchema.Match);
