@@ -13,7 +13,7 @@ namespace ClientNamespace {
         public ClientSMR(string host, int port) {
         }
 
-        public ClientSMR() :base(DefaultClientHost, DefaultClientPort){
+        public ClientSMR() :this(DefaultClientHost, DefaultClientPort){
         }
 
         public override void Write(Tuple tuple) {

@@ -8,21 +8,13 @@ using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ClientNamespace {
     public class ClientXL : Client {
-        public ClientXL() : base(DefaultClientHost, DefaultClientPort) {
+        public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
         }
 
         public ClientXL(string host, int port) : base(host, port) {
         }
 
-        public override Message OnReceiveMessage(Message message) {
-            throw new NotImplementedException();
-        }
-
-        public override Message OnSendMessage(Message message) {
-            throw new NotImplementedException();
-        }
-
-
+       
         public override void Write(Tuple tuple) {
             
         }
