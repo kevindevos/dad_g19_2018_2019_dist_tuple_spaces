@@ -22,10 +22,13 @@ namespace ClientNamespace {
         private const int DefaultTimeoutDuration = 5;
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
-            AckReceivedCounterPerRequest = new ConcurrentDictionary<int, int>();
         }
 
-        public ClientXL(string host, int port) : base(host, port) {
+        public ClientXL(string host, int port) : this(BuildRemoteUrl(host, port, ClientObjName)) {
+        }
+
+        public ClientXL(string remoteUrl) : base(remoteUrl) {
+            AckReceivedCounterPerRequest = new ConcurrentDictionary<int, int>();
         }
 
         public override void Write(Tuple tuple) {

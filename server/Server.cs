@@ -11,18 +11,23 @@ namespace ServerNamespace {
     public abstract class Server : RemotingEndpoint, ITupleOperations {
         public delegate Message SendMessageDelegate(Message message);
 
+        protected const string ServerObjName = "Server";
+
         // A list of requests the server receives, defines the order 
         // for a FIFO order process requests from index 0 and do RemoveAt(0)
         public List<Request> RequestList { get; }
 
-        protected Server(string host, int port) : base(host, port, "Server") {
-            Port = port;
-            RequestList = new List<Request>();
+        protected Server(string host, int port) : this(BuildRemoteUrl(host, port, ServerObjName)) {
+            
         }
 
         protected Server() : this(DefaultServerHost, DefaultServerPort) { }
 
         private Server(int serverPort) : this(DefaultServerHost, serverPort) { }
+
+        public Server(string remoteUrl) : base(remoteUrl){
+            RequestList = new List<Request>();
+        }
 
         public void SaveRequest(Request request) {
             lock (RequestList) {

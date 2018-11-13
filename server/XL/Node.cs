@@ -19,7 +19,7 @@ namespace ServerNamespace.XL
         // The view, the agreed set of replicas
         public List<TupleSpace> View; // must be the same across all nodes 
 
-        public Node(string host, int port) : base(host,port)
+        public Node(string host, int port) : base(BuildRemoteUrl(host,port, ServerObjName))
         {
             Workers = new List<Worker>(); 
             View = new List<TupleSpace>();

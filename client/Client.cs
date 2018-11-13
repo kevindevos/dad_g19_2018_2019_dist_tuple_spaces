@@ -13,13 +13,18 @@ namespace ClientNamespace {
         protected int ClientRequestSeqNumber;
         // <Request.sequenceNumber, Response>
         protected readonly Dictionary<int, Response> ReceivedResponses;
+        
+        protected const string ClientObjName = "Client";
 
         // <Request.sequenceNumber, Semaphore>
         protected readonly Dictionary<int, SemaphoreSlim> RequestSemaphore;
-
+        
         public Client() : this(DefaultClientHost, DefaultClientPort) { }
         
-        public Client(string host, int port) : base(host, port, "Client") {
+        public Client(string host, int port) : this(BuildRemoteUrl(host,port,ClientObjName)) {
+        }
+
+        protected Client(string remoteUrl) : base(remoteUrl){
             ReceivedResponses = new Dictionary<int, Response>();
             ClientRequestSeqNumber = 0;
             RequestSemaphore = new Dictionary<int, SemaphoreSlim>();

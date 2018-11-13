@@ -25,29 +25,42 @@ namespace CommonTypes {
 
         public string EndpointURL { get; }
 
-        private TcpChannel TcpChannel { get; }
+        private TcpChannel TcpChannel{ get; set; }
 
         protected int Port { private get; set; }
 
         private string Host { get; }
 
 
-        protected RemotingEndpoint(string host, int port, string objIdentifier) {
-            Host = host;
-            Port = port;
-            ObjIdentifier = objIdentifier;
+        protected RemotingEndpoint(string remoteUrl){
+            string[] splitUrl = SplitUrlIntoHostPortAndId(remoteUrl);
 
-            EndpointURL = BuildRemoteUrl(host, port, objIdentifier+port);
+            if (splitUrl.Count() != 3){
+                throw new Exception("Invalid remote Url passed to constructor.");
+            }
+            
+            Host = splitUrl[0];
+            Port = int.Parse(splitUrl[1]);
+            ObjIdentifier = splitUrl[2]+Port;
 
-            // register tcp channel and service
+            EndpointURL = BuildRemoteUrl(Host, Port, ObjIdentifier);
             IDictionary dictionary = new Hashtable();
-            dictionary["name"] = "tcp" + port;
-            dictionary["port"] = port;
+            dictionary["name"] = "tcp" + Port;
+            dictionary["port"] = Port;
             TcpChannel = new TcpChannel(dictionary, null,null);
             ChannelServices.RegisterChannel(TcpChannel, false);
-            RemotingServices.Marshal(this, objIdentifier + port, typeof(RemotingEndpoint));
-
+            RemotingServices.Marshal(this, ObjIdentifier, typeof(RemotingEndpoint));
             KnownServerRemotes = GetKnownServerRemotes();
+        }
+        
+        
+
+        public static RemotingEndpoint GetRemoteEndpoint(string url) {
+            RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
+                typeof(RemotingEndpoint),
+                url);
+
+            return remote;
         }
 
         private List<RemotingEndpoint> GetKnownServerRemotes() {
@@ -61,15 +74,6 @@ namespace CommonTypes {
             }
             return knownRemotes;
         }
-
-        public static RemotingEndpoint GetRemoteEndpoint(string url) {
-            RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
-                typeof(RemotingEndpoint),
-                url);
-
-            return remote;
-        }
-
 
         public Message SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
             try {
@@ -108,8 +112,12 @@ namespace CommonTypes {
             return SendMessageToRemote(KnownServerRemotes[i], message);
         }
 
-        public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
+        protected static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
+        }
+
+        protected string[] SplitUrlIntoHostPortAndId(string url){
+            return url.Substring(6).Split(new char[]{':', '/'});
         }
 
         public abstract Message OnReceiveMessage(Message message);

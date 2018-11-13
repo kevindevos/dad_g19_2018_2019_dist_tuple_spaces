@@ -21,7 +21,6 @@ namespace ClientNamespace
             Tuple tuple4 = client.Read(tuple1);
             client.Log("Output: " + tuple4);
 
-            Console.ReadLine();
         }
 
     }

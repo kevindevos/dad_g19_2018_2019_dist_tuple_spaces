@@ -35,15 +35,20 @@ namespace ServerNamespace
         public ServerSMRBehaviour Behaviour;
 
         public ServerSMR(int serverPort) : this(DefaultServerHost, serverPort) { }
-        
-        public ServerSMR(string host, int port) : base(host, port) 
+
+        private ServerSMR(string host, int port) : this(BuildRemoteUrl(host, port, ServerObjName)) 
         {
+            
+        }
+
+        public ServerSMR(string remoteUrl) : base(remoteUrl){
             Behaviour = new NormalServerSMRBehaviour(this);
             LastExecutedRequests = new ConcurrentDictionary<string, Request>();
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
             SavedOrders = new List<Order>();
             LastOrderSequenceNumber = 0;
             TupleSpace = new TupleSpace();
+            ReceivedAcks = new List<Ack>();
         }
 
         public void UpgradeToMaster()
