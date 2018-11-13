@@ -13,7 +13,6 @@ namespace ClientNamespace {
         protected int ClientRequestSeqNumber;
         // <Request.sequenceNumber, Response>
         protected readonly Dictionary<int, Response> ReceivedResponses;
-        protected SendMessageDelegate SendMessageDel;
 
         // <Request.sequenceNumber, Semaphore>
         protected readonly Dictionary<int, SemaphoreSlim> RequestSemaphore;

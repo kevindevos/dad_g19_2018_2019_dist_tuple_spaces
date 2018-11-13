@@ -19,10 +19,9 @@ namespace ClientNamespace {
 
         private ConcurrentDictionary<int, int> LocksTakenCountPerRequest;
 
-        protected const int DefaultTimeoutDuration = 5;
+        private const int DefaultTimeoutDuration = 5;
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
-            SendMessageDel = new SendMessageDelegate(SendMessageToView);
             AckReceivedCounterPerRequest = new ConcurrentDictionary<int, int>();
         }
 
@@ -33,13 +32,12 @@ namespace ClientNamespace {
             // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
-            SendMessageDel(request);
+            SendMessageToView(request);
             ClientRequestSeqNumber++;
 
             int timeBetweenChecks = 200; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
-                int acksReceivedSoFar;
-                AckReceivedCounterPerRequest.TryGetValue(request.SeqNum, out acksReceivedSoFar);
+                AckReceivedCounterPerRequest.TryGetValue(request.SeqNum, out var acksReceivedSoFar);
                 if(acksReceivedSoFar >= KnownServerRemotes.Count) {
                     return;
                 }
@@ -50,13 +48,12 @@ namespace ClientNamespace {
 
         public override Tuple Read(Tuple tuple) {
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
-            SendMessageDel(request);
+            SendMessageToView(request);
             ClientRequestSeqNumber++;
 
             int timeBetweenChecks = 200; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
-                List<Response> responses;
-                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
                 if (responses.Count >= 1) {
                     return responses.First().Tuples.First();
                 }
@@ -64,17 +61,19 @@ namespace ClientNamespace {
             // failed timeout, redo read
             return Read(tuple);
         }
+        
+        
+        
 
         public override Tuple Take(Tuple tuple) {
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
             Tuple selectedTuple = null;
-            SendMessageDel(request);
+            SendMessageToView(request);
             ClientRequestSeqNumber++;
 
             int timeBetweenChecks = 250; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
-                List<Response> responses;
-                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
                 if (responses.Count == KnownServerRemotes.Count) {
                     List<Tuple> matchingTuples = new List<Tuple>();
                     foreach(Response response in responses) {
@@ -87,8 +86,7 @@ namespace ClientNamespace {
 
                     // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
                     for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
-                        int numAcceptedLocks;
-                        LocksTakenCountPerRequest.TryGetValue(request.SeqNum, out numAcceptedLocks);
+                        LocksTakenCountPerRequest.TryGetValue(request.SeqNum, out var numAcceptedLocks);
                         // if majority proceed to phase 2
                         if(numAcceptedLocks > KnownServerRemotes.Count / 2) {
                             //  PHASE 2
@@ -125,8 +123,7 @@ namespace ClientNamespace {
                 if(ack.Message.GetType() == typeof(Request)) {
                     Request request = (Request)ack.Message;
                     if(request.RequestType == RequestType.READ) {
-                        int oldCounter;
-                        AckReceivedCounterPerRequest.TryRemove(request.SeqNum, out oldCounter);
+                        AckReceivedCounterPerRequest.TryRemove(request.SeqNum, out var oldCounter);
                         AckReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
                     }
                 }
@@ -134,8 +131,7 @@ namespace ClientNamespace {
             // answer from read or take
             if(message.GetType() == typeof(Response)) {
                 Response response = (Response)message;
-                List<Response> storedResponses;
-                ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out storedResponses);
+                ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out var storedResponses);
                 storedResponses.Add(response);
                 ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
             }
@@ -144,8 +140,7 @@ namespace ClientNamespace {
             if(message.GetType() == typeof(TakeLockStatusResponse)) {
                 TakeLockStatusResponse resp = (TakeLockStatusResponse)message;
                 if(resp.LockAccepted) {
-                    int oldLockCounter;
-                    LocksTakenCountPerRequest.TryGetValue(resp.Request.SeqNum, out oldLockCounter);
+                    LocksTakenCountPerRequest.TryGetValue(resp.Request.SeqNum, out var oldLockCounter);
                     LocksTakenCountPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
                 }
             }
@@ -155,9 +150,8 @@ namespace ClientNamespace {
 
 
 
-        private Message SendMessageToView(Message message) {
+        private void SendMessageToView(Message message) {
             SendMessageToRemotes(KnownServerRemotes, message);
-            return null;
         }
 
         

@@ -11,8 +11,6 @@ namespace ServerNamespace {
     public abstract class Server : RemotingEndpoint, ITupleOperations {
         public delegate Message SendMessageDelegate(Message message);
 
-        // TODO move variables and logic from Server to ServerSMR that doesn't belong here
-
         // A list of requests the server receives, defines the order 
         // for a FIFO order process requests from index 0 and do RemoveAt(0)
         public List<Request> RequestList { get; }

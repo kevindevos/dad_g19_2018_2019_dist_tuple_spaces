@@ -8,7 +8,6 @@ using Tuple = CommonTypes.tuple.Tuple;
 namespace ClientNamespace {
     public class ClientSMR : Client{
         public ClientSMR(string host, int port) {
-            SendMessageDel = new SendMessageDelegate(SendMessageToRandomServer);
         }
 
         public ClientSMR() :this(DefaultClientHost, DefaultClientPort){
@@ -39,24 +38,23 @@ namespace ClientNamespace {
             return null;
         }
 
+        
         public override void Write(Tuple tuple) {
             // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
             Log("[SEQ:" + ClientRequestSeqNumber + "] Write: " + tuple.ToString());
-            SendMessageDel(request);
+            SendMessageToRandomServer(request);
             ClientRequestSeqNumber++;
         }
 
         public override Tuple Read(Tuple tuple) {
-            // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
             Log("[SEQ:" + ClientRequestSeqNumber + "] Read: " + tuple.ToString());
             return SendBlockingRequest(request);
         }
 
         public override Tuple Take(Tuple tuple) {
-            // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
             Log("[SEQ:"+ClientRequestSeqNumber+"] Take: " + tuple.ToString());
             return SendBlockingRequest(request);
@@ -64,7 +62,7 @@ namespace ClientNamespace {
 
         private Tuple SendBlockingRequest(Request request) {
             RequestSemaphore[request.SeqNum] = new SemaphoreSlim(0, 1);
-            SendMessageDel(request);
+            SendMessageToRandomServer(request);
             ClientRequestSeqNumber++;
 
             WaitForResponse(request.SeqNum);
