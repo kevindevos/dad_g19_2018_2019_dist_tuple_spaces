@@ -27,6 +27,10 @@ namespace ClientNamespace {
         public Client(string host, int port) : this(BuildRemoteUrl(host,port,ClientObjName)) {
         }
 
+        protected Client(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls)
+        {
+        }
+
         protected Client(string remoteUrl) : base(remoteUrl){
             ReceivedResponses = new Dictionary<int, Response>();
             ClientRequestSeqNumber = 0;
@@ -42,14 +46,19 @@ namespace ClientNamespace {
             Console.WriteLine("[CLIENT:" + EndpointURL + "] : " + text);
         }
 
-        public void runScript(string file="sampleClientScript.txt")
-        {
 
-            string inputFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"Resources/" + file);
+        public void runScript(string file = "sampleClientScript.txt")
+        {
+            var inputFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"Resources/" + file);
                 
             var instructions = File.ReadAllLines(inputFile);
+            runScript(instructions);
+        }
 
-            ProcessLines(instructions, 1);
+        public void runScript(string[] script)
+        {
+
+            ProcessLines(script, 1);
 
             // process the lines with instructions n times
             void ProcessLines(string[] lines, int n)

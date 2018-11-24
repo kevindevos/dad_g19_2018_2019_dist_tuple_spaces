@@ -31,6 +31,10 @@ namespace CommonTypes {
 
         private string Host { get; }
 
+        protected RemotingEndpoint(string remoteUrl, List<string> knownServerUrls) : this(remoteUrl)
+        {
+            KnownServerRemotes = GetKnownServerRemotes(knownServerUrls);
+        }
 
         protected RemotingEndpoint(string remoteUrl){
             string[] splitUrl = SplitUrlIntoHostPortAndId(remoteUrl);
@@ -50,7 +54,6 @@ namespace CommonTypes {
             TcpChannel = new TcpChannel(dictionary, null,null);
             ChannelServices.RegisterChannel(TcpChannel, false);
             RemotingServices.Marshal(this, ObjIdentifier, typeof(RemotingEndpoint));
-            KnownServerRemotes = GetKnownServerRemotes();
         }
         
         
@@ -63,15 +66,14 @@ namespace CommonTypes {
             return remote;
         }
 
-        private List<RemotingEndpoint> GetKnownServerRemotes() {
+        private List<RemotingEndpoint> GetKnownServerRemotes(List<string> knownServerUrls) {
             var knownRemotes = new List<RemotingEndpoint>();
 
-            for(var i = DefaultServerPort; i < DefaultServerPort+NumServers; i++) {
-                if (i == Port) continue;
-                string serverUrl = (BuildRemoteUrl(DefaultServerHost, i, "Server"+i));
-
+            foreach (var serverUrl in knownServerUrls)
+            {
                 knownRemotes.Add(GetRemoteEndpoint(serverUrl));
             }
+            
             return knownRemotes;
         }
 

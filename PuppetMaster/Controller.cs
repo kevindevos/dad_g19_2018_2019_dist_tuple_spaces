@@ -6,6 +6,7 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Collections.Generic;
 using System.IO;
+using PCS;
 
 namespace PuppetMaster
 {
@@ -15,7 +16,7 @@ namespace PuppetMaster
         private readonly string PROJECT_PATH = Directory.GetParent(Directory.GetCurrentDirectory())
             .Parent.FullName;
 
-        private readonly Dictionary<string, PCSRemotingInterface> pcs;
+        private readonly Dictionary<string, PCSRemotingAbstract> pcs;
         private readonly Dictionary<string, RemotingEndpoint> processes;
         private readonly TcpChannel channel;
 
@@ -23,7 +24,7 @@ namespace PuppetMaster
 
         public Controller(string[] addrs)
         {
-            pcs = new Dictionary<string, PCSRemotingInterface>();
+            pcs = new Dictionary<string, PCSRemotingAbstract>();
             processes = new Dictionary<string, RemotingEndpoint>();
 
             channel = new TcpChannel();
@@ -33,8 +34,8 @@ namespace PuppetMaster
             {
                 string URL = "tcp://{0}:{1}/PCS";
 
-                PCSRemotingInterface obj = (PCSRemotingInterface)Activator.GetObject(
-                    typeof(PCSRemotingInterface),
+                PCSRemotingAbstract obj = (PCSRemotingAbstract)Activator.GetObject(
+                    typeof(PCSRemotingAbstract),
                     string.Format(URL, addr, PCS_PORT)
                 );
 
@@ -122,7 +123,7 @@ namespace PuppetMaster
 
             if (pcs.ContainsKey(addr))
             {
-                PCSRemotingInterface p = pcs[addr];
+                PCSRemotingAbstract p = pcs[addr];
                 p.Server(server_id, URL, min_delay, max_delay);
 
                 ConnectToProcess(server_id, URL);
@@ -142,7 +143,7 @@ namespace PuppetMaster
 
             if (pcs.ContainsKey(addr))
             {
-                PCSRemotingInterface p = pcs[addr];
+                PCSRemotingAbstract p = pcs[addr];
                 string[] script = File.ReadAllLines(
                     @PROJECT_PATH + CLIENT_SCRIPTS_REL_PATH + script_file);
 

@@ -1,4 +1,5 @@
-﻿using CommonTypes;
+﻿using System;
+using CommonTypes;
 using ClientNamespace;
 using ServerNamespace;
 
@@ -6,7 +7,7 @@ using System.Collections.Generic;
 
 namespace PCS
 {
-    abstract class PCSRemotingAbstract : PCSRemotingInterface
+    public abstract class PCSRemotingAbstract : MarshalByRefObject, PCSRemotingInterface
     {
         protected readonly Dictionary<string, Client> clients;
         protected readonly Dictionary<string, Server> servers;

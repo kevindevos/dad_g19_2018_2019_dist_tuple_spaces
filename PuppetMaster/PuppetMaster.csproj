@@ -65,6 +65,10 @@
       <Project>{6ADE780D-1807-438D-8E75-154CADDE2BF1}</Project>
       <Name>CommonTypes</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PCS\PCS.csproj">
+      <Project>{8b13b11c-ab20-4eba-90ce-87be348289ca}</Project>
+      <Name>PCS</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

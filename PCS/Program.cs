@@ -33,7 +33,7 @@ namespace PCS
         static void Main(string[] args)
         {
             TcpChannel channel = new TcpChannel(PORT);
-            ChannelServices.RegisterChannel(channel, true);
+            ChannelServices.RegisterChannel(channel, false);
 
             int mode = Mode();
 

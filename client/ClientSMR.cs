@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using CommonTypes;
@@ -12,7 +13,11 @@ namespace ClientNamespace {
         
         public ClientSMR(string host, int port) : this(BuildRemoteUrl(host, port, ClientObjName)) {
         }
-        
+
+
+        public ClientSMR(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls)
+        {
+        }
 
         public ClientSMR(string remoteUrl) : base(remoteUrl){
         }
