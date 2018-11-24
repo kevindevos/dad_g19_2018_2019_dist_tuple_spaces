@@ -8,6 +8,9 @@ namespace ClientNamespace
     {
         public static void Main(string[] args) {
             ClientSMR client = new ClientSMR();
+            client.runScript();
+            return;
+            
 
             Tuple tuple1 = new Tuple(new List<object>(new object[] { "hello", "world", 2 }));
             client.Write(tuple1);
