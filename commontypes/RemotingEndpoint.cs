@@ -11,6 +11,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization.Formatters;
 
 namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
@@ -65,16 +66,33 @@ namespace CommonTypes {
             IDictionary dictionary = new Hashtable();
             dictionary["name"] = "tcp" + Port;
             dictionary["port"] = Port;
-            TcpChannel = new TcpChannel(dictionary, null,null);
+            
+            /*
+             * this code is necessary to pass the tests with client/server.
+             * without this some security level error appeared when trying to call
+             */
+            BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
+            provider.TypeFilterLevel = TypeFilterLevel.Full;
+            //
+            
+            TcpChannel = new TcpChannel(dictionary, null,provider);
             ChannelServices.RegisterChannel(TcpChannel, false);
             RemotingServices.Marshal(this, ObjIdentifier, typeof(RemotingEndpoint));
+        }
+
+        public void DisposeChannel()
+        {
+            TcpChannel.StopListening(null);
+            RemotingServices.Disconnect(this);
+            ChannelServices.UnregisterChannel(TcpChannel);
+            TcpChannel = null;        
         }
 
         // check which servers are up
         private void Bootstrap()
         {
             var liveServers = new List<RemotingEndpoint>();
-            var liveServersString = "Live servers: \n";
+            var liveServersString = "[" + ObjIdentifier + "] Live servers: \n";
             foreach (var serverRemote in KnownServerRemotes)
             {
                 try
@@ -99,7 +117,7 @@ namespace CommonTypes {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
                 typeof(RemotingEndpoint),
                 url);
-
+            
             return remote;
         }
 

@@ -27,9 +27,13 @@ namespace ClientNamespace {
         
         public Client(string host, int port) : this(BuildRemoteUrl(host,port,ClientObjName)) {}
 
-        protected Client(string remoteUrl) : base(remoteUrl) {}
-        
-        protected Client(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls) {}
+        protected Client(string remoteUrl) : this(remoteUrl, null) {}
+
+        protected Client(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls)
+        {
+            if (KnownServerRemotes.Count == 0)
+                throw new Exception("Bootstrap failed. No servers are alive. Exiting...");
+        }
 
         public abstract void Write(Tuple tuple);
         public abstract Tuple Read(Tuple tuple);
