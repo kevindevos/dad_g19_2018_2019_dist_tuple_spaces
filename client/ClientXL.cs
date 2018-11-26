@@ -77,12 +77,15 @@ namespace ClientNamespace {
             int timeBetweenChecks = 250; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
                 ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
+               
                 if (responses.Count == View.Count) {
+                    // get intersection of tuples from all lists received
                     List<Tuple> matchingTuples = new List<Tuple>();
                     foreach(Response response in responses) {
                         matchingTuples = (List<Tuple>) matchingTuples.Intersect(response.Tuples); // get common tuples in all response lists
                     }
-                    // if there are any tuples common to all lists, select one randomly according to the algorithm
+                    
+                    // select one tuple at random from intersection
                     if(matchingTuples.Count != 0) {
                         selectedTuple = matchingTuples.ElementAt((new Random()).Next(0, matchingTuples.Count));
                     }
@@ -90,46 +93,38 @@ namespace ClientNamespace {
                     // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
                     for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
                         LocksTakenCountPerRequest.TryGetValue(request.SeqNum, out var numAcceptedLocks);
-                        // if majority proceed to phase 2
                         if(numAcceptedLocks > View.Count / 2) {
-                            //  PHASE 2
-                            // proceed to multicast a Remove, and only return when all acks were received!
-                            Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
-                            ClientRequestSeqNumber++;
-
-                            // return when all acks received
-                            int ackCount;
-                            do {
-                                AckReceivedCounterPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
-                                System.Threading.Thread.Sleep(timeBetweenChecks); // prevent CPU massacre
-                                // TODO possible infinite loop here? for example if after removing a tuple, one of the servers dies we die of old age
-                            } while (ackCount < View.Count);
-
-                            // at this point the tuple should have been removed from all Replicas
+                            // phase 2 - ask to remove the tuple when all acks have been received
+                            RemoveTuple(selectedTuple);
+                           
                             return selectedTuple;
-
                         }
                     }
                     // redo take and hope we get majority of locks
                     return Take(tuple);
                 }
             }
-
-
             return null;
+        }
+
+        private void RemoveTuple(Tuple selectedTuple){
+            Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
+            ClientRequestSeqNumber++;
+
+            int timeBetweenChecks = 250;
+            int ackCount;
+            do {
+                AckReceivedCounterPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
+                System.Threading.Thread.Sleep(timeBetweenChecks);
+            } while (ackCount < View.Count);
+            
         }
 
         public override Message OnReceiveMessage(Message message) {
             // if ack for read request, increment counter
             if(message.GetType() == typeof(Ack)  ) {
-                Ack ack = (Ack)message;
-                if(ack.Message.GetType() == typeof(Request)) {
-                    Request request = (Request)ack.Message;
-                    if(request.RequestType == RequestType.READ) {
-                        AckReceivedCounterPerRequest.TryRemove(request.SeqNum, out var oldCounter);
-                        AckReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
-                    }
-                }
+                UpdateAckCounter((Ack) message);
+                
             }
             // answer from read or take
             if(message.GetType() == typeof(Response)) {
@@ -140,18 +135,29 @@ namespace ClientNamespace {
             }
 
             // save the number of locks that were accepted for a specific request
-            if(message.GetType() == typeof(TakeLockStatusResponse)) {
-                TakeLockStatusResponse resp = (TakeLockStatusResponse)message;
-                if(resp.LockAccepted) {
-                    LocksTakenCountPerRequest.TryGetValue(resp.Request.SeqNum, out var oldLockCounter);
-                    LocksTakenCountPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
-                }
+            if(message.GetType() == typeof(TakeLockStatusResponse)){
+                UpdateLockCounter((TakeLockStatusResponse) message);
             }
 
             return null;
         }
 
+        private void UpdateLockCounter(TakeLockStatusResponse resp){
+            if(resp.LockAccepted) {
+                LocksTakenCountPerRequest.TryGetValue(resp.Request.SeqNum, out var oldLockCounter);
+                LocksTakenCountPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
+            }
+        }
 
+        private void UpdateAckCounter(Ack ack){
+            if(ack.Message.GetType() == typeof(Request)) {
+                Request request = (Request)ack.Message;
+                if(request.RequestType == RequestType.READ) {
+                    AckReceivedCounterPerRequest.TryRemove(request.SeqNum, out var oldCounter);
+                    AckReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
+                }
+            }
+        }
 
         private void SendMessageToView(Message message) {
             SendMessageToView(View, message);
