@@ -24,7 +24,7 @@ namespace CommonTypes {
 
         private string ObjIdentifier { get; }
 
-        public List<RemotingEndpoint> KnownServerRemotes;
+        public List<RemotingEndpoint> View;
 
         public string EndpointURL { get; }
 
@@ -46,7 +46,7 @@ namespace CommonTypes {
                 knownServerUrls = new List<string>(File.ReadAllLines(inputFile));
             }
 
-            KnownServerRemotes = GetKnownServerRemotes(knownServerUrls);
+            View = BuildView(knownServerUrls);
             Bootstrap();
         }
         
@@ -75,7 +75,7 @@ namespace CommonTypes {
         {
             var liveServers = new List<RemotingEndpoint>();
             var liveServersString = "Live servers: \n";
-            foreach (var serverRemote in KnownServerRemotes)
+            foreach (var serverRemote in View)
             {
                 try
                 {
@@ -90,28 +90,27 @@ namespace CommonTypes {
                     //do nothing
                 }
             }
-            KnownServerRemotes = liveServers;
+            View = liveServers;
             Console.WriteLine(liveServersString);
         }
 
 
         public static RemotingEndpoint GetRemoteEndpoint(string url) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
-                typeof(RemotingEndpoint),
-                url);
+                typeof(RemotingEndpoint), url);
 
             return remote;
         }
 
-        private List<RemotingEndpoint> GetKnownServerRemotes(List<string> knownServerUrls) {
-            var knownRemotes = new List<RemotingEndpoint>();
+        private List<RemotingEndpoint> BuildView(List<string> knownServerUrls) {
+            var view = new List<RemotingEndpoint>();
 
             foreach (var serverUrl in knownServerUrls)
             {
-                knownRemotes.Add(GetRemoteEndpoint(serverUrl));
+                view.Add(GetRemoteEndpoint(serverUrl));
             }
             
-            return knownRemotes;
+            return view;
         }
 
         public Message SendMessageToRemote(RemotingEndpoint remotingEndpoint, Message message) {
@@ -132,13 +131,13 @@ namespace CommonTypes {
             return SendMessageToRemote(remotingEndpoint, message);
         }
 
-        public void SendMessageToRemotesURL(List<string> remotingURLS, Message message) {
+        public void SendMessageToView(List<string> remotingURLS, Message message) {
             foreach (string ru in remotingURLS) {
                 SendMessageToRemoteURL(ru, message);
             }
         }
 
-        public void SendMessageToRemotes(List<RemotingEndpoint> servers, Message message) {
+        public void SendMessageToView(List<RemotingEndpoint> servers, Message message) {
             foreach(RemotingEndpoint re in servers) {
                 SendMessageToRemote(re, message);
             }
@@ -147,8 +146,8 @@ namespace CommonTypes {
 
         protected Message SendMessageToRandomServer(Message message) {
             var random = new Random();
-            var i = random.Next(0, KnownServerRemotes.Count);
-            return SendMessageToRemote(KnownServerRemotes[i], message);
+            var i = random.Next(0, View.Count);
+            return SendMessageToRemote(View[i], message);
         }
 
         public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
@@ -157,6 +156,10 @@ namespace CommonTypes {
 
         protected string[] SplitUrlIntoHostPortAndId(string url){
             return url.Substring(6).Split(new char[]{':', '/'});
+        }
+
+        public List<RemotingEndpoint> GetView(){
+            return View;
         }
 
         public abstract Message OnReceiveMessage(Message message);

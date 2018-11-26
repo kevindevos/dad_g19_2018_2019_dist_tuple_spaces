@@ -41,7 +41,7 @@ namespace ClientNamespace {
             int timeBetweenChecks = 200; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
                 AckReceivedCounterPerRequest.TryGetValue(request.SeqNum, out var acksReceivedSoFar);
-                if(acksReceivedSoFar >= KnownServerRemotes.Count) {
+                if(acksReceivedSoFar >= View.Count) {
                     return;
                 }
             }
@@ -77,7 +77,7 @@ namespace ClientNamespace {
             int timeBetweenChecks = 250; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
                 ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
-                if (responses.Count == KnownServerRemotes.Count) {
+                if (responses.Count == View.Count) {
                     List<Tuple> matchingTuples = new List<Tuple>();
                     foreach(Response response in responses) {
                         matchingTuples = (List<Tuple>) matchingTuples.Intersect(response.Tuples); // get common tuples in all response lists
@@ -91,7 +91,7 @@ namespace ClientNamespace {
                     for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
                         LocksTakenCountPerRequest.TryGetValue(request.SeqNum, out var numAcceptedLocks);
                         // if majority proceed to phase 2
-                        if(numAcceptedLocks > KnownServerRemotes.Count / 2) {
+                        if(numAcceptedLocks > View.Count / 2) {
                             //  PHASE 2
                             // proceed to multicast a Remove, and only return when all acks were received!
                             Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
@@ -103,7 +103,7 @@ namespace ClientNamespace {
                                 AckReceivedCounterPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
                                 System.Threading.Thread.Sleep(timeBetweenChecks); // prevent CPU massacre
                                 // TODO possible infinite loop here? for example if after removing a tuple, one of the servers dies we die of old age
-                            } while (ackCount < KnownServerRemotes.Count);
+                            } while (ackCount < View.Count);
 
                             // at this point the tuple should have been removed from all Replicas
                             return selectedTuple;
@@ -154,7 +154,7 @@ namespace ClientNamespace {
 
 
         private void SendMessageToView(Message message) {
-            SendMessageToRemotes(KnownServerRemotes, message);
+            SendMessageToView(View, message);
         }
 
         
