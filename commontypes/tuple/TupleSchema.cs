@@ -37,7 +37,7 @@ namespace CommonTypes.tuple
                     return true;
                 }
 
-                if (schemaField is Type && tupleField.GetType().Equals(schemaField))
+                if (schemaField is string && tupleField.GetType().Name.Equals(schemaField))
                     return true;
             }
             return false;
