@@ -8,17 +8,17 @@ using Tuple = CommonTypes.tuple.Tuple;
 namespace ServerNamespace.XL
 {
     // ServerXL
-    public class Replica : Server{
+    public class ServerXL : Server{
         public TupleSpace TupleSpace;
 
-        public Replica(string host, int port) : base(BuildRemoteUrl(host,port, ServerObjName))
+        public ServerXL(string host, int port) : base(BuildRemoteUrl(host,port, ServerObjName))
         {
             TupleSpace = new TupleSpace();
         }
 
-        public Replica() : this(DefaultServerHost, DefaultServerPort) { }
+        public ServerXL() : this(DefaultServerHost, DefaultServerPort) { }
 
-        private Replica(int serverPort) : this(DefaultServerHost, serverPort) { }
+        private ServerXL(int serverPort) : this(DefaultServerHost, serverPort) { }
 
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
