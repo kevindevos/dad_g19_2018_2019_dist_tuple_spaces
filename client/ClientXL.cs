@@ -12,12 +12,12 @@ using Tuple = CommonTypes.tuple.Tuple;
 namespace ClientNamespace {
     public class ClientXL : Client {
         // request seq number, counter
-        private ConcurrentDictionary<int, int> AckReceivedCounterPerRequest;
+        private ConcurrentDictionary<int, int> AckReceivedPerRequest;
 
         // request seq number, responses
         private ConcurrentDictionary<int, List<Response>> ResponsesReceivedPerRequest;
 
-        private ConcurrentDictionary<int, int> LocksTakenCountPerRequest;
+        private ConcurrentDictionary<int, int> LocksTakenPerRequest;
 
         private const int DefaultTimeoutDuration = 5;
 
@@ -28,11 +28,10 @@ namespace ClientNamespace {
         }
 
         public ClientXL(string remoteUrl) : base(remoteUrl) {
-            AckReceivedCounterPerRequest = new ConcurrentDictionary<int, int>();
+            AckReceivedPerRequest = new ConcurrentDictionary<int, int>();
         }
 
         public override void Write(Tuple tuple) {
-            // TODO remote exceptions?
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
 
             SendMessageToView(request);
@@ -40,7 +39,7 @@ namespace ClientNamespace {
 
             int timeBetweenChecks = 200; // ms
             for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
-                AckReceivedCounterPerRequest.TryGetValue(request.SeqNum, out var acksReceivedSoFar);
+                AckReceivedPerRequest.TryGetValue(request.SeqNum, out var acksReceivedSoFar);
                 if(acksReceivedSoFar >= View.Count) {
                     return;
                 }
@@ -64,9 +63,6 @@ namespace ClientNamespace {
             // failed timeout, redo read
             return Read(tuple);
         }
-        
-        
-        
 
         public override Tuple Take(Tuple tuple) {
             var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
@@ -92,7 +88,7 @@ namespace ClientNamespace {
 
                     // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
                     for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
-                        LocksTakenCountPerRequest.TryGetValue(request.SeqNum, out var numAcceptedLocks);
+                        LocksTakenPerRequest.TryGetValue(request.SeqNum, out var numAcceptedLocks);
                         if(numAcceptedLocks > View.Count / 2) {
                             // phase 2 - ask to remove the tuple when all acks have been received
                             RemoveTuple(selectedTuple);
@@ -114,24 +110,26 @@ namespace ClientNamespace {
             int timeBetweenChecks = 250;
             int ackCount;
             do {
-                AckReceivedCounterPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
+                AckReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
                 System.Threading.Thread.Sleep(timeBetweenChecks);
             } while (ackCount < View.Count);
             
         }
 
         public override Message OnReceiveMessage(Message message) {
-            // if ack for read request, increment counter
             if(message.GetType() == typeof(Ack)  ) {
                 UpdateAckCounter((Ack) message);
                 
             }
             // answer from read or take
             if(message.GetType() == typeof(Response)) {
-                Response response = (Response)message;
-                ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out var storedResponses);
-                storedResponses.Add(response);
-                ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
+                Response response = (Response) message;
+                if (IsReadOrTakeResponse(response)){
+                    ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out var storedResponses);
+                    storedResponses.Add(response);
+                    ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
+                }
+                
             }
 
             // save the number of locks that were accepted for a specific request
@@ -142,10 +140,15 @@ namespace ClientNamespace {
             return null;
         }
 
+        private bool IsReadOrTakeResponse(Response response){
+            return response.Request.RequestType == RequestType.READ ||
+                response.Request.RequestType == RequestType.TAKE;
+        }
+
         private void UpdateLockCounter(TakeLockStatusResponse resp){
             if(resp.LockAccepted) {
-                LocksTakenCountPerRequest.TryGetValue(resp.Request.SeqNum, out var oldLockCounter);
-                LocksTakenCountPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
+                LocksTakenPerRequest.TryGetValue(resp.Request.SeqNum, out var oldLockCounter);
+                LocksTakenPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
             }
         }
 
@@ -153,8 +156,8 @@ namespace ClientNamespace {
             if(ack.Message.GetType() == typeof(Request)) {
                 Request request = (Request)ack.Message;
                 if(request.RequestType == RequestType.READ) {
-                    AckReceivedCounterPerRequest.TryRemove(request.SeqNum, out var oldCounter);
-                    AckReceivedCounterPerRequest.TryAdd(request.SeqNum, ++oldCounter);
+                    AckReceivedPerRequest.TryRemove(request.SeqNum, out var oldCounter);
+                    AckReceivedPerRequest.TryAdd(request.SeqNum, ++oldCounter);
                 }
             }
         }
