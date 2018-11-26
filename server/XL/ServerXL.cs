@@ -48,8 +48,6 @@ namespace ServerNamespace.XL
                     return ack;
 
                 case RequestType.TAKE:
-                    // TODO attempt lock, if fail return reject, if not return list of possible tuples to choose from
-
                     tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Take(tupleSchema);
                     return new Response(request, resultTuples, EndpointURL);

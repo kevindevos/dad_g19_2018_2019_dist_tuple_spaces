@@ -17,8 +17,6 @@ namespace ClientNamespace {
         // request seq number, responses
         private ConcurrentDictionary<int, List<Response>> ResponsesReceivedPerRequest;
 
-        private ConcurrentDictionary<int, int> LocksTakenPerRequest;
-
         private const int DefaultTimeoutDuration = 5;
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
@@ -88,8 +86,8 @@ namespace ClientNamespace {
 
                     // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
                     for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
-                        LocksTakenPerRequest.TryGetValue(request.SeqNum, out var numAcceptedLocks);
-                        if(numAcceptedLocks > View.Count / 2) {
+                        ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var storedResponses);
+                        if(storedResponses.Count > View.Count / 2) {
                             // phase 2 - ask to remove the tuple when all acks have been received
                             RemoveTuple(selectedTuple);
                            
@@ -132,11 +130,6 @@ namespace ClientNamespace {
                 
             }
 
-            // save the number of locks that were accepted for a specific request
-            if(message.GetType() == typeof(TakeLockStatusResponse)){
-                UpdateLockCounter((TakeLockStatusResponse) message);
-            }
-
             return null;
         }
 
@@ -145,12 +138,6 @@ namespace ClientNamespace {
                 response.Request.RequestType == RequestType.TAKE;
         }
 
-        private void UpdateLockCounter(TakeLockStatusResponse resp){
-            if(resp.LockAccepted) {
-                LocksTakenPerRequest.TryGetValue(resp.Request.SeqNum, out var oldLockCounter);
-                LocksTakenPerRequest.TryAdd(resp.Request.SeqNum, ++oldLockCounter);
-            }
-        }
 
         private void UpdateAckCounter(Ack ack){
             if(ack.Message.GetType() == typeof(Request)) {
