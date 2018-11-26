@@ -25,17 +25,5 @@ namespace CommonTypes.tuple {
             List<Tuple> tuple2 = tupleSpace.Read(new TupleSchema(new Tuple(new List<object> { "*field1" })));
             Assert.IsTrue(tuple2.Contains(tuple1));
         }
-
-        [Test]
-        public void Write3()
-        {
-
-        }
-
-        [Test]
-        public void Write4()
-        {
-
-        }
     }
 }
