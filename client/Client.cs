@@ -13,29 +13,23 @@ namespace ClientNamespace {
     public delegate Message SendMessageDelegate(Message message);
 
     public abstract class Client : RemotingEndpoint {
-        protected int ClientRequestSeqNumber;
+        protected int ClientRequestSeqNumber = 0;
         // <Request.sequenceNumber, Response>
-        protected readonly Dictionary<int, Response> ReceivedResponses;
+        protected readonly Dictionary<int, Response> ReceivedResponses = new Dictionary<int, Response>();
         
         protected const string ClientObjName = "Client";
 
         // <Request.sequenceNumber, Semaphore>
-        protected readonly Dictionary<int, SemaphoreSlim> RequestSemaphore;
+        protected readonly Dictionary<int, SemaphoreSlim> RequestSemaphore = new Dictionary<int, SemaphoreSlim>();
         
-        public Client() : this(DefaultClientHost, DefaultClientPort) { }
         
-        public Client(string host, int port) : this(BuildRemoteUrl(host,port,ClientObjName)) {
-        }
+        public Client() : this(DefaultClientHost, DefaultClientPort) {}
+        
+        public Client(string host, int port) : this(BuildRemoteUrl(host,port,ClientObjName)) {}
 
-        protected Client(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls)
-        {
-        }
-
-        protected Client(string remoteUrl) : base(remoteUrl){
-            ReceivedResponses = new Dictionary<int, Response>();
-            ClientRequestSeqNumber = 0;
-            RequestSemaphore = new Dictionary<int, SemaphoreSlim>();
-        }
+        protected Client(string remoteUrl) : base(remoteUrl) {}
+        
+        protected Client(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls) {}
 
         public abstract void Write(Tuple tuple);
         public abstract Tuple Read(Tuple tuple);
@@ -49,7 +43,10 @@ namespace ClientNamespace {
 
         public void runScript(string file = "sampleClientScript.txt")
         {
-            var inputFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"Resources/" + file);
+            var inputFile =
+                Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ??
+                    throw new FileNotFoundException(), @"Resources/" + file);
                 
             var instructions = File.ReadAllLines(inputFile);
             runScript(instructions);

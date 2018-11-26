@@ -1,0 +1,3 @@
+tcp://localhost:8081/s1
+tcp://localhost:8082/s2
+tcp://localhost:8083/s3

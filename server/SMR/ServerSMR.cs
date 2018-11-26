@@ -34,6 +34,9 @@ namespace ServerNamespace
 
         public ServerSMRBehaviour Behaviour;
 
+        
+        public ServerSMR() : this(DefaultServerPort) { }
+        
         public ServerSMR(int serverPort) : this(DefaultServerHost, serverPort) { }
 
         private ServerSMR(string host, int port) : this(BuildRemoteUrl(host, port, ServerObjName)) 
@@ -49,10 +52,14 @@ namespace ServerNamespace
             LastOrderSequenceNumber = 0;
             TupleSpace = new TupleSpace();
             ReceivedAcks = new List<Ack>();
+            
+            if(KnownServerRemotes.Count == 0)
+                UpgradeToMaster();
         }
 
         public void UpgradeToMaster()
         {
+            Log("Upgrade to master.");
             Behaviour = new MasterServerSMRBehaviour(this);
             while(((MasterServerSMRBehaviour)Behaviour).Decide()); 
         }

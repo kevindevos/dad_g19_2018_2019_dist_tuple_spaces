@@ -6,13 +6,16 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes.message;
 using System.Collections;
+using System.IO;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
-        private const int NumServers = 3;
-
         protected const string DefaultServerHost = "localhost";
         protected const int DefaultServerPort = 8080;
 
@@ -21,7 +24,7 @@ namespace CommonTypes {
 
         private string ObjIdentifier { get; }
 
-        public readonly List<RemotingEndpoint> KnownServerRemotes;
+        public List<RemotingEndpoint> KnownServerRemotes;
 
         public string EndpointURL { get; }
 
@@ -31,12 +34,23 @@ namespace CommonTypes {
 
         private string Host { get; }
 
-        protected RemotingEndpoint(string remoteUrl, List<string> knownServerUrls) : this(remoteUrl)
+        protected RemotingEndpoint(string remoteUrl, List<string> knownServerUrls=null) : this(remoteUrl)
         {
-            KnownServerRemotes = GetKnownServerRemotes(knownServerUrls);
-        }
+            if (knownServerUrls is null)
+            {
+                var inputFile =
+                    Path.Combine(
+                        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ??
+                        throw new FileNotFoundException(), @"Resources/bootstrapServers.txt");                
+                
+                knownServerUrls = new List<string>(File.ReadAllLines(inputFile));
+            }
 
-        protected RemotingEndpoint(string remoteUrl){
+            KnownServerRemotes = GetKnownServerRemotes(knownServerUrls);
+            Bootstrap();
+        }
+        
+        private RemotingEndpoint(string remoteUrl){
             string[] splitUrl = SplitUrlIntoHostPortAndId(remoteUrl);
 
             if (splitUrl.Count() != 3){
@@ -45,9 +59,9 @@ namespace CommonTypes {
             
             Host = splitUrl[0];
             Port = int.Parse(splitUrl[1]);
-            ObjIdentifier = splitUrl[2]+Port;
+            ObjIdentifier = splitUrl[2];
 
-            EndpointURL = BuildRemoteUrl(Host, Port, ObjIdentifier);
+            EndpointURL = remoteUrl;
             IDictionary dictionary = new Hashtable();
             dictionary["name"] = "tcp" + Port;
             dictionary["port"] = Port;
@@ -55,8 +69,31 @@ namespace CommonTypes {
             ChannelServices.RegisterChannel(TcpChannel, false);
             RemotingServices.Marshal(this, ObjIdentifier, typeof(RemotingEndpoint));
         }
-        
-        
+
+        // check which servers are up
+        private void Bootstrap()
+        {
+            var liveServers = new List<RemotingEndpoint>();
+            var liveServersString = "Live servers: \n";
+            foreach (var serverRemote in KnownServerRemotes)
+            {
+                try
+                {
+                    serverRemote.Ping();
+                    if (serverRemote.EndpointURL == EndpointURL) continue;
+                    
+                    liveServers.Add(serverRemote);
+                    liveServersString += "\t"+ serverRemote.EndpointURL + "\n";
+                }
+                catch (Exception e)
+                {
+                    //do nothing
+                }
+            }
+            KnownServerRemotes = liveServers;
+            Console.WriteLine(liveServersString);
+        }
+
 
         public static RemotingEndpoint GetRemoteEndpoint(string url) {
             RemotingEndpoint remote = (RemotingEndpoint)Activator.GetObject(
@@ -86,7 +123,7 @@ namespace CommonTypes {
             }
             catch(Exception e) {
                 Console.WriteLine("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
-                throw new NotImplementedException();
+                throw new SocketException();
             }
         }
 
@@ -114,7 +151,7 @@ namespace CommonTypes {
             return SendMessageToRemote(KnownServerRemotes[i], message);
         }
 
-        protected static string BuildRemoteUrl(string host, int port, string objIdentifier) {
+        public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
 
@@ -125,5 +162,9 @@ namespace CommonTypes {
         public abstract Message OnReceiveMessage(Message message);
 
         public abstract Message OnSendMessage(Message message);
+
+        public void Ping()
+        {
+        }
     }
 }
