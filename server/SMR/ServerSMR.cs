@@ -53,7 +53,7 @@ namespace ServerNamespace
             TupleSpace = new TupleSpace();
             ReceivedAcks = new List<Ack>();
             
-            if(KnownServerRemotes.Count == 0)
+            if(View.Count == 0)
                 UpgradeToMaster();
         }
 

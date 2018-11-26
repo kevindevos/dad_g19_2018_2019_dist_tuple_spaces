@@ -50,11 +50,9 @@ namespace CommonTypes.tuple
             {
 
                 // get matching tuples
-                matchingTuples =
-                    GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()),
-                        tupleSchema);
+                matchingTuples = GetMatchingTuples(_tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(), new List<Tuple>()), tupleSchema);
                 var nonMatchingTuples = _tupleSpace.GetOrAdd(tupleSchema.Schema.GetSize(),
-                    new List<Tuple>()).Except(matchingTuples).ToList();
+                     new List<Tuple>()).Except(matchingTuples).ToList();
 
                 // replace oldList with nonMatchingTuples
                 _tupleSpace.AddOrUpdate(tupleSchema.Schema.GetSize(),
@@ -68,7 +66,7 @@ namespace CommonTypes.tuple
         }
 
         // remove tuples , used for take's phase 2 in Xu and Liskov
-        public List<Tuple> Remove(TupleSchema tupleSchema) {
+        public List<Tuple> Remove(Tuple tuple) {
             // TODO
             return null;
         }

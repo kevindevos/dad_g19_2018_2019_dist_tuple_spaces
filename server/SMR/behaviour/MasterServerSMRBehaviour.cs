@@ -74,7 +74,7 @@ namespace ServerNamespace.SMR.Behaviour
             Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
             Server.RequestList.Remove(request);
             Server.Log("Sending Order to all servers.");
-            Server.SendMessageToRemotes(Server.KnownServerRemotes, order);
+            Server.SendMessageToView(Server.View, order);
             Server.SavedOrders.Add(order);
 
             Server.UpdateLastExecutedOrder(order);

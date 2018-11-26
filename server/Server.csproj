@@ -51,8 +51,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="SMR\ServerSMR.cs" />
-    <Compile Include="XL\Worker.cs" />
-    <Compile Include="XL\Node.cs" />
+    <Compile Include="XL\ServerXL.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

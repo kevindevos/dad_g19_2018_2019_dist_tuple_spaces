@@ -8,28 +8,17 @@ using Tuple = CommonTypes.tuple.Tuple;
 namespace ServerNamespace.XL
 {
     // ServerXL
-    public class Node : Server
-    {
-        // Workers that carry out operations on a replica
-        public List<Worker> Workers;
+    public class ServerXL : Server{
+        public TupleSpace TupleSpace;
 
-        // set of tuple space replicas
-        public List<TupleSpace> Replicas;
-
-        // The view, the agreed set of replicas
-        public List<TupleSpace> View; // must be the same across all nodes 
-
-        public Node(string host, int port) : base(BuildRemoteUrl(host,port, ServerObjName))
+        public ServerXL(string host, int port) : base(BuildRemoteUrl(host,port, ServerObjName))
         {
-            Workers = new List<Worker>(); 
-            View = new List<TupleSpace>();
-
-            // TODO assign replicas to the workers
+            TupleSpace = new TupleSpace();
         }
 
-        public Node() : this(DefaultServerHost, DefaultServerPort) { }
+        public ServerXL() : this(DefaultServerHost, DefaultServerPort) { }
 
-        private Node(int serverPort) : this(DefaultServerHost, serverPort) { }
+        private ServerXL(int serverPort) : this(DefaultServerHost, serverPort) { }
 
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
@@ -59,15 +48,12 @@ namespace ServerNamespace.XL
                     return ack;
 
                 case RequestType.TAKE:
-                    // TODO attempt lock, if fail return reject, if not return list of possible tuples to choose from
-
                     tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Take(tupleSchema);
                     return new Response(request, resultTuples, EndpointURL);
 
                 case RequestType.REMOVE:
-                    tupleSchema = new TupleSchema(request.Tuple);
-                    Remove(tupleSchema);
+                    Remove(request.Tuple);
                     
                     // Send back an Ack of the remove
                     ack = new Ack(EndpointURL, request);
@@ -80,38 +66,24 @@ namespace ServerNamespace.XL
             }
         }
 
-       
-
         public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();
         }
 
         public override void Write(Tuple tuple) {
-            foreach(Worker worker in Workers) {
-                worker.Write(tuple);
-            }
+            TupleSpace.Write(tuple);
         }
 
-        public override List<Tuple> Read(TupleSchema tupleSchema) {
-            List<Tuple> tuples = new List<Tuple>();
-            foreach (Worker worker in Workers) {
-                tuples.AddRange(worker.Read(tupleSchema));
-            }
-            return tuples;
+        public override List<Tuple> Read(TupleSchema tupleSchema){
+            return TupleSpace.Read(tupleSchema);
         }
 
-        public override List<Tuple> Take(TupleSchema tupleSchema) {
-            List<Tuple> tuples = new List<Tuple>();
-            foreach (Worker worker in Workers) {
-                tuples.AddRange(worker.Take(tupleSchema));
-            }
-            return tuples;
+        public override List<Tuple> Take(TupleSchema tupleSchema){
+            return TupleSpace.Take(tupleSchema);
         }
 
-        private void Remove(TupleSchema tupleSchema) {
-            foreach (Worker worker in Workers) {
-                worker.Remove(tupleSchema);
-            }
+        private void Remove(Tuple tuple){
+            TupleSpace.Remove(tuple);
         }
     }
 }
