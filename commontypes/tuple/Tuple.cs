@@ -25,5 +25,28 @@ namespace CommonTypes.tuple{
             }
             return "(" + string.Join(", ", listWithNull.ToArray()) + ")";
         }
+
+        //TODO review
+        public override bool Equals(object obj)
+        {
+            if(obj != null && 
+                   obj.GetType() == GetType())
+            {
+                Tuple t;
+                t = (Tuple) obj;
+                if (t.GetSize() == GetSize())
+                {
+                    for (int i = 0; i < GetSize(); i++)
+                    {
+                        if (!Fields[i].Equals(t.Fields[i]))
+                            return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

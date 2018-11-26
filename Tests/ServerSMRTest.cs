@@ -61,7 +61,7 @@ namespace Tests
         {
             _client1.Write(_tuple1);
             var result = _client1.Read(_tuple1);
-            Assert.Equals(_tuple1, result);
+            Assert.AreEqual(_tuple1, result);
         }
     }
 }

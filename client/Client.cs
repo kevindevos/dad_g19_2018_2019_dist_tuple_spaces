@@ -31,7 +31,7 @@ namespace ClientNamespace {
 
         protected Client(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls)
         {
-            if (KnownServerRemotes.Count == 0)
+            if (View.Count == 0)
                 throw new Exception("Bootstrap failed. No servers are alive. Exiting...");
         }
 
