@@ -22,6 +22,16 @@ namespace CommonTypes.tuple.tupleobjects
             }
         }
         
+        public override bool Equals(Object obj) {
+            if (obj == null || obj.GetType() != typeof(DADTestC)) {
+                return false;
+            } else
+            {
+                DADTestC o = (DADTestC) obj;
+                return ((this.i1 == o.i1) && (this.s1.Equals (o.s1)) && (this.s2.Equals (o.s2)));
+            }
+        }
+        
         public override string ToString()
         {
             return "DADTestC(" + i1 + ", " + s1 + ", " + s2 + ")" ;

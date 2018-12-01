@@ -9,17 +9,18 @@ namespace ServerNamespace.XL
 {
     // ServerXL
     public class ServerXL : Server{
-        public TupleSpace TupleSpace;
-
-        public ServerXL(string host, int port) : base(BuildRemoteUrl(host,port, ServerObjName))
-        {
-            TupleSpace = new TupleSpace();
-        }
+        
+        public readonly TupleSpace TupleSpace = new TupleSpace();
 
         public ServerXL() : this(DefaultServerHost, DefaultServerPort) { }
 
         private ServerXL(int serverPort) : this(DefaultServerHost, serverPort) { }
 
+        public ServerXL(string host, int port) : this(BuildRemoteUrl(host,port, ServerObjName)) { }
+
+        public ServerXL(string remoteUrl) : base(remoteUrl) { }
+
+        
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
 

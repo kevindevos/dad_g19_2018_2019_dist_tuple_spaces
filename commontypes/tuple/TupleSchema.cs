@@ -31,12 +31,10 @@ namespace CommonTypes.tuple
                     return true;
                 
 
-                // TODO ( only works for ITupleObject instances ? )
-                // check for object match , and numbers match
+                // check for object match
                 if (schemaField == null || tupleField.Equals(schemaField)) {
                     return true;
                 }
-
                 if (schemaField is string && tupleField.GetType().Name.Equals(schemaField))
                     return true;
             }

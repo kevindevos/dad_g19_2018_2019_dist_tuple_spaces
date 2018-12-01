@@ -18,6 +18,16 @@ namespace CommonTypes.tuple.tupleobjects
                 return ((this.i1 == o.i1) && (this.s1.Equals (o.s1)));
             }
         }
+        
+        public override bool Equals(Object obj) {
+            if (obj == null || obj.GetType() != typeof(DADTestA)) {
+                return false;
+            } else
+            {
+                DADTestA o = (DADTestA) obj;
+                return ((this.i1 == o.i1) && (this.s1.Equals (o.s1)));
+            }
+        }
 
         public override string ToString()
         {

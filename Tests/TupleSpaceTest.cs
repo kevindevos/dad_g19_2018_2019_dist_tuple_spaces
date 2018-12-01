@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using CommonTypes.tuple;
 using CommonTypes.tuple.tupleobjects;
 using NUnit.Framework;
@@ -9,9 +10,9 @@ namespace Tests {
     public class TupleSpaceTest
     {
         private TupleSpace _tupleSpace;
-        private Tuple _tuple1;
-        private Tuple _tuple2;
-        private Tuple _tuple3;
+        public static readonly Tuple Tuple1 = new Tuple(new List<object> { "field1" });
+        private static readonly Tuple Tuple2 = new Tuple(new List<object> { new DADTestA(1, "2") });
+        private static readonly Tuple Tuple3= new Tuple(new List<object> { "field1", new DADTestB(1, "field2", 3), "field3" });
         private TupleSchema _tuple1Schema;
         private TupleSchema _tuple2Schema;
         private TupleSchema _tuple3Schema;
@@ -20,12 +21,9 @@ namespace Tests {
         public void Init()
         {
             _tupleSpace = new TupleSpace();
-            _tuple1 = new Tuple(new List<object> { "field1" });
-            _tuple2 = new Tuple(new List<object> { new DADTestA(1, "2") });
-            _tuple3 = new Tuple(new List<object> { "field1", new DADTestB(1, "field2", 3), "field3" });
-            _tuple1Schema = new TupleSchema(_tuple1);
-            _tuple2Schema = new TupleSchema(_tuple2);
-            _tuple3Schema = new TupleSchema(_tuple3);
+            _tuple1Schema = new TupleSchema(Tuple1);
+            _tuple2Schema = new TupleSchema(Tuple2);
+            _tuple3Schema = new TupleSchema(Tuple3);
             
         }
 
@@ -35,22 +33,26 @@ namespace Tests {
             
         }
        
-        /*
-         * test the write of string
-         */
-        [Test]
-        public void Write1()
+        private class TupleDataClass
         {
-            _tupleSpace.Write(_tuple1);
+            public static IEnumerable Tuples
+            {
+                get
+                {
+                    yield return new TestCaseData(Tuple1);
+                    yield return new TestCaseData(Tuple2);
+                    yield return new TestCaseData(Tuple3);
+                }
+            }  
         }
         
         /*
-         * test the write of an object
+         * test the write
          */
-        [Test]
-        public void Write2()
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        public void Write1(Tuple tuple)
         {
-            _tupleSpace.Write(_tuple2);
+            _tupleSpace.Write(tuple);
         }
         
         /*
@@ -65,40 +67,18 @@ namespace Tests {
         }
         
         /*
-         * test the read of a string using a perfect match schema
+         * test the read using a perfect match schema
          */
-        [Test]
-        public void Read1()
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        public void Read1(Tuple tuple)
         {
-            _tupleSpace.Write(_tuple1);
-            var result = _tupleSpace.Read(_tuple1Schema);
-            Assert.Contains(_tuple1, result);
+            _tupleSpace.Write(tuple);
+            var tupleSchema = new TupleSchema(tuple);
+            var result = _tupleSpace.Read(tupleSchema);
+            Assert.Contains(tuple, result);
             Assert.IsTrue(result.Count == 1);
         }
         
-        /*
-         * test the read of an object using a perfect match schema
-         */
-        [Test]
-        public void Read2()
-        {
-            _tupleSpace.Write(_tuple2);
-            var result = _tupleSpace.Read(_tuple2Schema);
-            Assert.Contains(_tuple2, result);
-            Assert.IsTrue(result.Count == 1);
-        }
-        
-        /*
-         * test the read of an string/object tuple using a perfect match schema
-         */
-        [Test]
-        public void Read3()
-        {
-            _tupleSpace.Write(_tuple3);
-            var result = _tupleSpace.Read(_tuple3Schema);
-            Assert.Contains(_tuple3, result);
-            Assert.IsTrue(result.Count == 1);
-        }
         
         /*
          * write, read
@@ -106,9 +86,9 @@ namespace Tests {
          */
         private void ReadWildcard1_0(TupleSchema tupleSchemaWildcard)
         {
-            _tupleSpace.Write(_tuple1);
+            _tupleSpace.Write(Tuple1);
             var result = _tupleSpace.Read(tupleSchemaWildcard);
-            Assert.Contains(_tuple1, result);
+            Assert.Contains(Tuple1, result);
             Assert.IsTrue(result.Count == 1);
         }
 
@@ -173,9 +153,9 @@ namespace Tests {
         {
             var tupleSchemaWildcard = new TupleSchema(new Tuple(new List<object> {"DADTestA"}));
             
-            _tupleSpace.Write(_tuple2);
+            _tupleSpace.Write(Tuple2);
             var result = _tupleSpace.Read(tupleSchemaWildcard);
-            Assert.Contains(_tuple2, result);
+            Assert.Contains(Tuple2, result);
         }
         
         /*
@@ -188,9 +168,9 @@ namespace Tests {
         {
             var tupleSchemaWildcard = new TupleSchema(new Tuple(new List<object> {null}));
             
-            _tupleSpace.Write(_tuple2);
+            _tupleSpace.Write(Tuple2);
             var result = _tupleSpace.Read(tupleSchemaWildcard);
-            Assert.Contains(_tuple2, result);
+            Assert.Contains(Tuple2, result);
         }
         
         /*
@@ -203,9 +183,9 @@ namespace Tests {
         {
             var tupleSchemaWildcard = new TupleSchema(new Tuple(new List<object> {"*", null, "fiel*"}));
             
-            _tupleSpace.Write(_tuple3);
+            _tupleSpace.Write(Tuple3);
             var result = _tupleSpace.Read(tupleSchemaWildcard);
-            Assert.Contains(_tuple3, result);
+            Assert.Contains(Tuple3, result);
         }
         
         /*
@@ -218,9 +198,9 @@ namespace Tests {
         {
             var tupleSchemaWildcard = new TupleSchema(new Tuple(new List<object> {"*1", "DADTestB", "*"}));
             
-            _tupleSpace.Write(_tuple3);
+            _tupleSpace.Write(Tuple3);
             var result = _tupleSpace.Read(tupleSchemaWildcard);
-            Assert.Contains(_tuple3, result);
+            Assert.Contains(Tuple3, result);
         }
         
         /*
@@ -233,10 +213,10 @@ namespace Tests {
         {
             var tupleSchemaWildcard = new TupleSchema(new Tuple(new List<object> {"*1"}));
             
-            _tupleSpace.Write(_tuple1);
-            _tupleSpace.Write(_tuple3);
+            _tupleSpace.Write(Tuple1);
+            _tupleSpace.Write(Tuple3);
             var result = _tupleSpace.Read(tupleSchemaWildcard);
-            Assert.Contains(_tuple1, result);
+            Assert.Contains(Tuple1, result);
             Assert.IsTrue(result.Count == 1);
         }
 
@@ -255,12 +235,13 @@ namespace Tests {
          * Write, take
          * take should return the written value
          */
-        [Test]
-        public void Take2()
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        public void Take2(Tuple tuple)
         {
-            _tupleSpace.Write(_tuple1);
-            var result = _tupleSpace.Take(_tuple1Schema);
-            Assert.Contains(_tuple1, result);
+            _tupleSpace.Write(tuple);
+            var tupleSchema = new TupleSchema(tuple);
+            var result = _tupleSpace.Take(tupleSchema);
+            Assert.Contains(tuple, result);
             Assert.IsTrue(result.Count == 1);
         }
         
@@ -269,14 +250,15 @@ namespace Tests {
          * take should return the written value
          * read should return empty
          */
-        [Test]
-        public void Take3()
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        public void Take3(Tuple tuple)
         {
-            _tupleSpace.Write(_tuple1);
-            var result = _tupleSpace.Take(_tuple1Schema);
-            Assert.Contains(_tuple1, result);
+            _tupleSpace.Write(tuple);
+            var tupleSchema = new TupleSchema(tuple);
+            var result = _tupleSpace.Take(tupleSchema);
+            Assert.Contains(tuple, result);
             Assert.IsTrue(result.Count == 1);
-            var result2 = _tupleSpace.Read(_tuple1Schema);
+            var result2 = _tupleSpace.Read(tupleSchema);
             Assert.IsEmpty(result2);
         }
         
@@ -285,16 +267,17 @@ namespace Tests {
          * take should only take 1
          * read should read 1
          */
-        [Test]
-        public void Take4()
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        public void Take4(Tuple tuple)
         {
-            _tupleSpace.Write(_tuple1);
-            _tupleSpace.Write(_tuple1);
-            var result = _tupleSpace.Take(_tuple1Schema);
-            Assert.Contains(_tuple1, result);
-            Assert.IsTrue(result.Count == 1);
-            var result2 = _tupleSpace.Read(_tuple1Schema);
-            Assert.IsTrue(result2.Count == 1);
+            _tupleSpace.Write(tuple);
+            _tupleSpace.Write(tuple);
+            var tupleSchema = new TupleSchema(tuple);
+            var result = _tupleSpace.Take(tupleSchema);
+            Assert.Contains(tuple, result);
+            Assert.AreEqual(1, result.Count);
+            var result2 = _tupleSpace.Read(tupleSchema);
+            Assert.AreEqual(1, result2.Count);
         }
         
     }
