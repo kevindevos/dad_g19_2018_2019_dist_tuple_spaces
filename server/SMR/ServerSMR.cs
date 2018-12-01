@@ -53,13 +53,15 @@ namespace ServerNamespace
             TupleSpace = new TupleSpace();
             ReceivedAcks = new List<Ack>();
             
-            if(View.Count == 0)
-                UpgradeToMaster();
+            
+            RecursiveJoinView(View);
+            getMaster();
         }
 
         public void UpgradeToMaster()
         {
             Log("Upgrade to master.");
+            MasterEndpointURL = EndpointURL;
             Behaviour = new MasterServerSMRBehaviour(this);
             while(((MasterServerSMRBehaviour)Behaviour).Decide()); 
         }
@@ -68,6 +70,30 @@ namespace ServerNamespace
         {
             Behaviour = new NormalServerSMRBehaviour(this);
         }
+
+        // ask the view for a master
+        public void getMaster()
+        {
+            String masterUrl = null;
+            
+            foreach (var server in View)
+            {
+                var message = new Elect(EndpointURL, ElectType.GET_MASTER);
+                var result = (Elect)SendMessageToRemote(server, message);
+                masterUrl = result.NewMasterURL;
+                if (masterUrl != null)
+                    break;
+            }
+
+            if (masterUrl != null)
+            {
+                MasterEndpointURL = masterUrl;
+                Log("Master is at: " + masterUrl);
+            }
+            else 
+                UpgradeToMaster();
+        }
+
 
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
@@ -81,10 +107,25 @@ namespace ServerNamespace
             }
 
             // if an Elect message, define new master as the one included in the Elect message
-            if (message.GetType() == typeof(Elect)) {
-                MasterEndpointURL = ((Elect)message).NewMasterURL;
+            if (message.GetType() == typeof(Elect))
+            {
+                return ProcessElect((Elect)message);
             }
 
+            throw new NotImplementedException();
+        }
+
+        private Message ProcessElect(Elect message)
+        {
+            switch (message.ElectType)
+            {
+                case ElectType.GET_MASTER:
+                    message.NewMasterURL = MasterEndpointURL;
+                    return message;
+                case ElectType.SET_MASTER:
+                    MasterEndpointURL = message.NewMasterURL;
+                    return message;
+            }
             throw new NotImplementedException();
         }
 

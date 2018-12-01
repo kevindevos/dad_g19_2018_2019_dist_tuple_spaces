@@ -15,10 +15,7 @@ namespace ClientNamespace {
         public ClientSMR(string host, int port) : this(BuildRemoteUrl(host, port, ClientObjName)){
         }
 
-        public ClientSMR(string remoteUrl) : this(remoteUrl, null){
-        }
-
-        public ClientSMR(string remoteUrl, List<string> knownServerUrls) : base(remoteUrl, knownServerUrls){
+        public ClientSMR(string remoteUrl, List<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
         }
 
 

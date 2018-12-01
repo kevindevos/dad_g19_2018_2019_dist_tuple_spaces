@@ -82,8 +82,7 @@ namespace ServerNamespace.SMR.Behaviour {
                 return Server.SendMessageToRemoteURL(Server.MasterEndpointURL, request);
             }
             else {
-                // TODO master is not known, problem?
-                return null;
+                throw new NotImplementedException("Master not known.");
             }
         }
     }
