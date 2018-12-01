@@ -14,7 +14,7 @@ namespace Tests
     {
         private readonly int _nServers;
 
-        private List<Server> _serverList;
+        protected List<Server> _serverList;
         
         protected Client Client1;
         protected Client Client2;
@@ -77,7 +77,7 @@ namespace Tests
         /*
          * test that a simple write doesn't fail 
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        [Test, NonParallelizable, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void Write(Tuple tuple)
         {
             Client1.Write(tuple);

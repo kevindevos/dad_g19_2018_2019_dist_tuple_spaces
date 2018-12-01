@@ -13,7 +13,7 @@ namespace Tests
     [TestFixture(2)]
     //[TestFixture(3)]
     //[TestFixture(4)]
-    [TestFixture(5)]
+    //[TestFixture(5)]
     public class ServerSMRTest : ServerTest
     {
         public ServerSMRTest(int nServers) : base(nServers)
@@ -24,15 +24,15 @@ namespace Tests
         [SetUp]
         public void Init()
         {
-            Client1 = new ClientSMR("tcp://localhost:9090/c1");
-            Client2 = new ClientSMR("tcp://localhost:9091/c2");
+            Client1 = new ClientSMR("tcp://localhost:8010/c1");
+            Client2 = new ClientSMR("tcp://localhost:8011/c2");
         }
 
         [TearDown]
         public void Dispose()
         {
-            Client1.DisposeChannel();
-            Client2.DisposeChannel();
+           Client1.DisposeChannel();
+           Client2.DisposeChannel();
         }
     }
 }

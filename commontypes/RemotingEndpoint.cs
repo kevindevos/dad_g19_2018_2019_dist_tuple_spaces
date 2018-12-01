@@ -14,8 +14,8 @@ using System.Runtime.Serialization.Formatters;
 namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
     public delegate void PingDelegate();
-    public delegate HashSet<RemotingEndpoint> JoinViewDelegate(HashSet<RemotingEndpoint> remotingEndpoints);
-    public delegate HashSet<RemotingEndpoint> GetViewDelegate();
+    public delegate HashSet<string> JoinViewDelegate(HashSet<string> remotingEndpoints);
+    public delegate HashSet<string> GetViewDelegate();
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string DefaultServerHost = "localhost";
@@ -132,18 +132,18 @@ namespace CommonTypes {
         // Recursive join every server and update view
         public void RecursiveJoinView(HashSet<RemotingEndpoint> view)
         {
-            var toJoin = new HashSet<RemotingEndpoint>(view); //copy
-            var self = new HashSet<RemotingEndpoint>() {this};
-            var unionOfReturnedView = new HashSet<RemotingEndpoint>();
-            var joined = new HashSet<RemotingEndpoint>();
+            var toJoin = new HashSet<string>(view.Select(endpoint => endpoint.EndpointURL)); //get List of URLs
+            var self = new HashSet<string>() {EndpointURL};
+            var unionOfReturnedView = new HashSet<string>();
+            var joined = new HashSet<string>();
             
             while (true)
             {
-                foreach (var serverRemote in toJoin)
+                foreach (var serverRemoteUrl in toJoin)
                 {
                     try
                     {
-                        var returnedView = DoJoinView(serverRemote, self);
+                        var returnedView = DoJoinView(serverRemoteUrl, self);
                         unionOfReturnedView.UnionWith(returnedView);
                     }
                     catch (Exception e)
@@ -155,21 +155,22 @@ namespace CommonTypes {
                 joined.UnionWith(toJoin);
                 unionOfReturnedView.ExceptWith(joined);
                 unionOfReturnedView.ExceptWith(self);
-                toJoin = unionOfReturnedView;
+                toJoin = new HashSet<string>(unionOfReturnedView);
                 if (toJoin.Count == 0)
                     break;
             }
 
-            View = joined;
+            JoinView(joined);
         }
         
         // recursive get view
         private void RecursiveGetView(HashSet<RemotingEndpoint> view)
         {
-            var toQuery = new HashSet<RemotingEndpoint>(view); //copy
-            var self = new HashSet<RemotingEndpoint>() {this};
-            var unionOfReturnedView = new HashSet<RemotingEndpoint>();
-            var queried = new HashSet<RemotingEndpoint>();
+            var toQuery = new HashSet<string>(view.Select(endpoint => endpoint.EndpointURL)); //get List of URLs
+            
+            var self = new HashSet<string>() {EndpointURL};
+            var unionOfReturnedView = new HashSet<string>();
+            var queried = new HashSet<string>();
             
             while (true)
             {
@@ -189,12 +190,12 @@ namespace CommonTypes {
                 queried.UnionWith(toQuery);
                 unionOfReturnedView.ExceptWith(queried);
                 unionOfReturnedView.ExceptWith(self);
-                toQuery = unionOfReturnedView;
+                toQuery = new HashSet<string>(unionOfReturnedView);
                 if (toQuery.Count == 0)
                     break;
             }
 
-            View = queried;
+            JoinView(queried);
         }
 
 
@@ -268,6 +269,9 @@ namespace CommonTypes {
 
         public abstract Message OnSendMessage(Message message);
 
+        
+        
+        
         private void DoPing(RemotingEndpoint remotingEndpoint)
         {
             PingDelegate pingDelegate = remotingEndpoint.Ping;
@@ -275,34 +279,51 @@ namespace CommonTypes {
             pingDelegate.EndInvoke(asyncResult);
         }
 
-        private HashSet<RemotingEndpoint> DoJoinView(RemotingEndpoint remotingEndpoint, HashSet<RemotingEndpoint> view)
+        private HashSet<string> DoJoinView(string remotingEndpointUrl, HashSet<string> view)
         {
+            RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remotingEndpointUrl);
+            
             JoinViewDelegate joinViewDelegate = remotingEndpoint.JoinView;
             var asyncResult = joinViewDelegate.BeginInvoke(view, null, null);
             return joinViewDelegate.EndInvoke(asyncResult);
         }
         
-        private HashSet<RemotingEndpoint> DoGetView(RemotingEndpoint remotingEndpoint)
+        private HashSet<string> DoGetView(string remotingEndpointUrl)
         {
+            RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remotingEndpointUrl);
+            
             GetViewDelegate getViewDelegate = remotingEndpoint.GetView;
             var asyncResult = getViewDelegate.BeginInvoke(null, null);
             return getViewDelegate.EndInvoke(asyncResult);
         }
 
+        
+        
         public void Ping()
         {
         }
 
-        public HashSet<RemotingEndpoint> JoinView(HashSet<RemotingEndpoint> view)
+        public HashSet<string> JoinView(HashSet<string> view)
         {
-            View.UnionWith(view);
-            PrintCurrentView();
-            return View;
+            var remoteUrls = GetView();
+            remoteUrls.UnionWith(view);
+            
+            HashSet<RemotingEndpoint> newRemotingEndpoints = new HashSet<RemotingEndpoint>();
+            
+            foreach (var remotingUrl in remoteUrls)
+            {
+                newRemotingEndpoints.Add(GetRemoteEndpoint(remotingUrl));
+            }
+
+            View = newRemotingEndpoints;
+
+            return remoteUrls;
         }
         
-        public HashSet<RemotingEndpoint> GetView()
+        public HashSet<string> GetView()
         {
-            return View;
+            return new HashSet<string>(View.Select(endpoint => endpoint.EndpointURL)); //get List of URLs;;
         }
+
     }
 }

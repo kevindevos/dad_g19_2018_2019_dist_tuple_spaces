@@ -24,8 +24,8 @@ namespace Tests
         [SetUp]
         public void Init()
         {
-            Client1 = new ClientXL("tcp://localhost:9090/c1");
-            Client2 = new ClientXL("tcp://localhost:9091/c2");
+            Client1 = new ClientXL("tcp://localhost:8010/c1");
+            Client2 = new ClientXL("tcp://localhost:8011/c2");
         }
 
         [TearDown]
