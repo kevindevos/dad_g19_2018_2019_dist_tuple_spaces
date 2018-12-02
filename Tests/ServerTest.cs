@@ -75,7 +75,7 @@ namespace Tests
         }
         
         /*
-         * test that a simple write doesn't fail 
+         * test a simple write 
          */
         [Test, NonParallelizable, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void Write(Tuple tuple)
@@ -94,6 +94,18 @@ namespace Tests
             Assert.AreEqual(tuple, result);
         }
         
-        
+        /*
+         * test a write and a read
+         */
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
+        public void WriteTakeRead(Tuple tuple)
+        {
+            Client1.Write(tuple);
+            Client1.Write(tuple);
+            var result = Client1.Take(tuple);
+            Assert.AreEqual(tuple, result);
+            result = Client1.Read(tuple);
+            Assert.AreEqual(tuple, result);
+        }
     }
 }
