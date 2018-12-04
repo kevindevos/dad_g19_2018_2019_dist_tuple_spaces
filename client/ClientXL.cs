@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CommonTypes;
 using CommonTypes.message;
@@ -35,15 +36,19 @@ namespace ClientNamespace {
             SendMessageToView(request);
             ClientRequestSeqNumber++;
 
-            int timeBetweenChecks = 200; // ms
-            for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
-                AckReceivedPerRequest.TryGetValue(request.SeqNum, out var acksReceivedSoFar);
-                if(acksReceivedSoFar >= View.Count) {
-                    return;
+            // Count Acks received from servers, if a timeout is reached, the message is resent
+            int acksReceived = 0;
+            int timeStep = 200; // ms
+            do{
+                // did we get all acks?
+                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
+                    if (acksReceived < View.Count){
+                        Thread.Sleep(timeStep);
+                    }
                 }
-            }
-            // timeout reached, redo write
-            Write(tuple);
+                // timeout reached resend the same request
+                SendMessageToView(request);
+            } while (acksReceived < View.Count);
         }
 
         public override Tuple Read(Tuple tuple) {
@@ -51,15 +56,20 @@ namespace ClientNamespace {
             SendMessageToView(request);
             ClientRequestSeqNumber++;
 
-            int timeBetweenChecks = 200; // ms
-            for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
-                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
-                if (responses.Count >= 1) {
-                    return responses.First().Tuples.First();
+            // If no response is received after timeout, message is resent 
+            int timeStep = 200; // ms
+            List<Response> responses = null;
+            do{
+                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
+                    ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                    if (responses != null && responses.Count >= 1){
+                        return responses.First().Tuples.First();
+                    }
                 }
-            }
-            // failed timeout, redo read
-            return Read(tuple);
+                // resend same request
+                SendMessageToView(request);
+            } while (responses.Count < 1);
+
         }
 
         public override Tuple Take(Tuple tuple) {
@@ -68,8 +78,8 @@ namespace ClientNamespace {
             SendMessageToView(request);
             ClientRequestSeqNumber++;
 
-            int timeBetweenChecks = 250; // ms
-            for (int i = 0; i < DefaultTimeoutDuration; i += timeBetweenChecks) {
+            int timeStep = 250; // ms
+            for (int i = 0; i < DefaultTimeoutDuration; i += timeStep) {
                 ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
                
                 if (responses.Count == View.Count) {
@@ -85,7 +95,7 @@ namespace ClientNamespace {
                     }
 
                     // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
-                    for(int j = 0; j < DefaultTimeoutDuration; j += timeBetweenChecks) {
+                    for(int j = 0; j < DefaultTimeoutDuration; j += timeStep) {
                         ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var storedResponses);
                         if(storedResponses.Count > View.Count / 2) {
                             // phase 2 - ask to remove the tuple when all acks have been received
@@ -105,11 +115,11 @@ namespace ClientNamespace {
             Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
             ClientRequestSeqNumber++;
 
-            int timeBetweenChecks = 250;
+            int timeStep = 250;
             int ackCount;
             do {
                 AckReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
-                System.Threading.Thread.Sleep(timeBetweenChecks);
+                System.Threading.Thread.Sleep(timeStep);
             } while (ackCount < View.Count);
             
         }
