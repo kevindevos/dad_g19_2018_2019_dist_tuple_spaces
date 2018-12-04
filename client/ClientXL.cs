@@ -65,11 +65,13 @@ namespace ClientNamespace {
                     if (responses != null && responses.Count >= 1){
                         return responses.First().Tuples.First();
                     }
+                    Thread.Sleep(timeStep);
                 }
                 // resend same request
                 SendMessageToView(request);
             } while (responses.Count < 1);
 
+            return null;
         }
 
         public override Tuple Take(Tuple tuple) {
