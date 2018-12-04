@@ -75,9 +75,9 @@ namespace ClientNamespace {
         }
 
         public override Tuple Take(Tuple tuple) {
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
+            var takeRequest = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
             Tuple selectedTuple = null;
-            SendMessageToView(request);
+            SendMessageToView(takeRequest);
             ClientRequestSeqNumber++;
 
             int timeStep = 250; // ms
@@ -89,7 +89,7 @@ namespace ClientNamespace {
             // and the intersection is non null
             do{
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                    ResponsesReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out responses);
                     if (responses.Count == View.Count){
                         intersection = responses.First().Tuples; // start point for intersection
                         foreach(Response response in responses) {
@@ -100,9 +100,14 @@ namespace ClientNamespace {
                         Thread.Sleep(timeStep);
                     }
                 }
+                
+                // ask servers to release their locks since at this point the take request has been rejected 
+                // because we didn't get all the responses within timeout period
+                Message RequestForLockRelease = new LockRelease(EndpointURL, takeRequest.SeqNum);
+                SendMessageToView(RequestForLockRelease);
 
                 // resend the same request
-                SendMessageToView(request);
+                SendMessageToView(takeRequest);
             } while (responses.Count < View.Count && intersection.Count == 0);
 
             // Choose random tuple from intersection
@@ -112,7 +117,7 @@ namespace ClientNamespace {
             // Issue a multicast remove for the selectedTuple
             Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
             SendMessageToView(requestForRemove);
-            ClientRequestSeqNumber++; // TODO possible problem, should we increment seq number for removes? simpler if we do, but not logical since it's not a real operation 
+            ClientRequestSeqNumber++; 
 
             int ackCount = 0;
             do {

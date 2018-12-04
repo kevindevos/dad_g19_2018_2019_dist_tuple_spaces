@@ -65,12 +65,6 @@ namespace CommonTypes.tuple
 
         }
 
-        // remove tuples , used for take's phase 2 in Xu and Liskov
-        public List<Tuple> Remove(Tuple tuple) {
-            // TODO
-            return null;
-        }
-
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
         {
             return listOfTuples.FindAll(tupleSchema.Match);
@@ -79,9 +73,6 @@ namespace CommonTypes.tuple
         private Tuple GetMatchingTuple(List<Tuple> listOfTuples, TupleSchema tupleSchema) {
             return listOfTuples.FindAll(tupleSchema.Match).First();
         }
-
-
-
 
         // TODO can we guarantee that this returns deterministically always the same value?
         private Tuple GetFirstMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)

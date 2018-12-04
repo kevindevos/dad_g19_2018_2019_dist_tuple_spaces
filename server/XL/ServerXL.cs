@@ -2,6 +2,7 @@ using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Tuple = CommonTypes.tuple.Tuple;
 
@@ -11,6 +12,10 @@ namespace ServerNamespace.XL
     public class ServerXL : Server{
         
         public readonly TupleSpace TupleSpace = new TupleSpace();
+        
+        // contains the tuples when a take is performed for a request with a specific sequence number
+        // acts as a "lock" because these tuples would be removed from the tuple space and kept here temporarily
+        private ConcurrentDictionary<int, List<Tuple>> LockedTuples;
 
         public ServerXL() : this(DefaultServerHost, DefaultServerPort) { }
 
@@ -28,7 +33,29 @@ namespace ServerNamespace.XL
                 return PerformRequest((Request)message);
             }
 
+            if (message.GetType() == typeof(LockRelease)){
+                LockRelease lockRelease = (LockRelease) message;
+                ReleaseLockedTuples(lockRelease.TakeRequestSeqNum);
+            }
+
             throw new NotImplementedException();
+        }
+
+        /**
+         * Remove locked tuples from LockedTuples List, and add them back to the tuple space
+         * acts as a release for the "lock" of a take request
+         */
+        private void ReleaseLockedTuples(int takeRequestSeqNum){
+            // remove from LockedTuples
+            bool isRemoved = LockedTuples.TryRemove(takeRequestSeqNum, out List<Tuple> tuples);
+            
+            // add back to TupleSpace
+            if (isRemoved){
+                foreach (Tuple tuple in tuples){
+                    TupleSpace.Write(tuple);
+                }
+            }
+            
         }
 
         public Message PerformRequest(Request request) {
@@ -51,10 +78,15 @@ namespace ServerNamespace.XL
                 case RequestType.TAKE:
                     tupleSchema = new TupleSchema(request.Tuple);
                     resultTuples = Take(tupleSchema);
+                    
+                    // "lock" the tuples taken from the tuple space
+                    LockedTuples.TryAdd(request.SeqNum, resultTuples);
+                    
                     return new Response(request, resultTuples, EndpointURL);
 
                 case RequestType.REMOVE:
-                    Remove(request.Tuple);
+                    // remove from LockedTuples without adding back to tuple space
+                    LockedTuples.TryRemove(request.SeqNum, out List<Tuple> tuples);
                     
                     // Send back an Ack of the remove
                     ack = new Ack(EndpointURL, request);
@@ -83,8 +115,5 @@ namespace ServerNamespace.XL
             return TupleSpace.Take(tupleSchema);
         }
 
-        private void Remove(Tuple tuple){
-            TupleSpace.Remove(tuple);
-        }
     }
 }
