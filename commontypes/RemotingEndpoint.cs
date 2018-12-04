@@ -15,7 +15,7 @@ namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
     public delegate void PingDelegate();
     public delegate HashSet<string> JoinViewDelegate(HashSet<string> remotingEndpoints);
-    public delegate HashSet<string> GetViewDelegate();
+    public delegate View GetViewDelegate();
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string DefaultServerHost = "localhost";
@@ -26,7 +26,7 @@ namespace CommonTypes {
 
         private string ObjIdentifier { get; }
 
-        public HashSet<RemotingEndpoint> View;
+        public View View;
 
         public string EndpointURL { get; }
 
@@ -36,7 +36,7 @@ namespace CommonTypes {
 
         private string Host { get; }
 
-        protected RemotingEndpoint(string remoteUrl, List<string> knownServerUrls=null) : this(remoteUrl)
+        protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
             if (knownServerUrls is null)
             {
@@ -48,7 +48,7 @@ namespace CommonTypes {
                 knownServerUrls = new List<string>(File.ReadAllLines(inputFile));
             }
 
-            View = BuildView(knownServerUrls);
+            View = new View(knownServerUrls, 0);
             
             Bootstrap();
         }
@@ -93,46 +93,46 @@ namespace CommonTypes {
         // check which servers are up from the seeds
         private void Bootstrap()
         {
-            var liveServers = new HashSet<RemotingEndpoint>();
-            foreach (var serverRemote in View)
+            var liveServers = new HashSet<string>();
+            foreach (var remotingEndpointUrl in View.Nodes)
             {
                 try
                 {
-                    DoPing(serverRemote);
-                    if (serverRemote.EndpointURL == EndpointURL) continue;
+                    DoPing(remotingEndpointUrl);
+                    if (remotingEndpointUrl == EndpointURL) continue;
                     
-                    liveServers.Add(serverRemote);
+                    liveServers.Add(remotingEndpointUrl);
                 }
                 catch (Exception e)
                 {
                     //do nothing
                 }
             }
-            View = liveServers;
+            View = new View(liveServers, 0);
             
             // RecursiveJoin(View); //server only
-            RecursiveGetView(View);
+            RecursiveGetView(View.Nodes);
             PrintCurrentView();
         }
 
         private void PrintCurrentView()
         {
             Console.WriteLine("\n[" + ObjIdentifier + "] Current view:");
-            foreach (var serverRemote in View)
+            foreach (var serverRemote in View.Nodes)
             {
-                Console.WriteLine("\t"+ serverRemote.EndpointURL);
+                Console.WriteLine("\t"+ serverRemote);
             }
 
-            if (View.Count == 0)
+            if (View.Nodes.Count == 0)
             {
                 Console.WriteLine("\t<empty>");
             }
         }
 
         // Recursive join every server and update view
-        public void RecursiveJoinView(HashSet<RemotingEndpoint> view)
+        public void RecursiveJoinView(IEnumerable<string> view)
         {
-            var toJoin = new HashSet<string>(view.Select(endpoint => endpoint.EndpointURL)); //get List of URLs
+            var toJoin = view;
             var self = new HashSet<string>() {EndpointURL};
             var unionOfReturnedView = new HashSet<string>();
             var joined = new HashSet<string>();
@@ -156,7 +156,7 @@ namespace CommonTypes {
                 unionOfReturnedView.ExceptWith(joined);
                 unionOfReturnedView.ExceptWith(self);
                 toJoin = new HashSet<string>(unionOfReturnedView);
-                if (toJoin.Count == 0)
+                if (!toJoin.Any())
                     break;
             }
 
@@ -164,9 +164,9 @@ namespace CommonTypes {
         }
         
         // recursive get view
-        private void RecursiveGetView(HashSet<RemotingEndpoint> view)
+        private void RecursiveGetView(HashSet<string> view)
         {
-            var toQuery = new HashSet<string>(view.Select(endpoint => endpoint.EndpointURL)); //get List of URLs
+            var toQuery = view;
             
             var self = new HashSet<string>() {EndpointURL};
             var unionOfReturnedView = new HashSet<string>();
@@ -179,7 +179,7 @@ namespace CommonTypes {
                     try
                     {
                         var returnedView = DoGetView(serverRemote);
-                        unionOfReturnedView.UnionWith(returnedView);
+                        unionOfReturnedView.UnionWith(returnedView.Nodes);
                     }
                     catch (Exception e)
                     {
@@ -237,13 +237,13 @@ namespace CommonTypes {
             return SendMessageToRemote(remotingEndpoint, message);
         }
 
-        public void SendMessageToView(List<string> remotingURLS, Message message) {
+        public void SendMessageToView(IEnumerable<string> remotingURLS, Message message) {
             foreach (string ru in remotingURLS) {
                 SendMessageToRemoteURL(ru, message);
             }
         }
 
-        public void SendMessageToView(HashSet<RemotingEndpoint> servers, Message message) {
+        public void SendMessageToView(IEnumerable<RemotingEndpoint> servers, Message message) {
             foreach(RemotingEndpoint re in servers) {
                 SendMessageToRemote(re, message);
             }
@@ -252,8 +252,8 @@ namespace CommonTypes {
 
         protected Message SendMessageToRandomServer(Message message) {
             var random = new Random();
-            var i = random.Next(0, View.Count);
-            return SendMessageToRemote(new List<RemotingEndpoint>(View)[i], message);
+            var i = random.Next(0, View.Nodes.Count);
+            return SendMessageToRemoteURL(new List<string>(View.Nodes)[i], message);
         }
 
         public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
@@ -272,8 +272,10 @@ namespace CommonTypes {
         
         
         
-        private void DoPing(RemotingEndpoint remotingEndpoint)
+        private void DoPing(string remotingEndpointUrl)
         {
+            var remotingEndpoint = GetRemoteEndpoint(remotingEndpointUrl);
+            
             PingDelegate pingDelegate = remotingEndpoint.Ping;
             var asyncResult = pingDelegate.BeginInvoke(null, null);
             pingDelegate.EndInvoke(asyncResult);
@@ -288,7 +290,7 @@ namespace CommonTypes {
             return joinViewDelegate.EndInvoke(asyncResult);
         }
         
-        private HashSet<string> DoGetView(string remotingEndpointUrl)
+        private View DoGetView(string remotingEndpointUrl)
         {
             RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(remotingEndpointUrl);
             
@@ -303,26 +305,19 @@ namespace CommonTypes {
         {
         }
 
-        public HashSet<string> JoinView(HashSet<string> view)
+        public HashSet<string> JoinView(IEnumerable<string> newEndpointUrl)
         {
-            var remoteUrls = GetView();
-            remoteUrls.UnionWith(view);
+            var remoteUrls = View.Nodes;
+            remoteUrls.UnionWith(newEndpointUrl);
             
-            HashSet<RemotingEndpoint> newRemotingEndpoints = new HashSet<RemotingEndpoint>();
-            
-            foreach (var remotingUrl in remoteUrls)
-            {
-                newRemotingEndpoints.Add(GetRemoteEndpoint(remotingUrl));
-            }
-
-            View = newRemotingEndpoints;
+            View = new View(remoteUrls, View.Version+1);
 
             return remoteUrls;
         }
         
-        public HashSet<string> GetView()
+        public View GetView()
         {
-            return new HashSet<string>(View.Select(endpoint => endpoint.EndpointURL)); //get List of URLs;;
+            return View;
         }
 
     }

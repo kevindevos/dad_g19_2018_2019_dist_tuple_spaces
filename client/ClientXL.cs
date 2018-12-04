@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -45,7 +45,7 @@ namespace ClientNamespace {
                 // did we get all acks?
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     AcksReceivedPerRequest.TryGetValue(request.SeqNum, out acksReceived);
-                    if (acksReceived == View.Count){
+                    if (acksReceived == View.Nodes.Count){
                         AcksReceivedPerRequest.TryRemove(request.SeqNum, out _);
                         return;
                     }
@@ -53,7 +53,7 @@ namespace ClientNamespace {
                 }
                 // timeout reached resend the same request
                 SendMessageToView(request);
-            } while (acksReceived < View.Count);
+            } while (acksReceived < View.Nodes.Count);
             
         }
 
@@ -97,7 +97,7 @@ namespace ClientNamespace {
                     ResponsesReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out responses);
            
                     // If we got all answers make take progress
-                    if (responses != null && responses.Count == View.Count){
+                    if (responses != null && responses.Count == View.Nodes.Count){
                         ResponsesReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
                      
                         // build the intersection 
@@ -120,7 +120,7 @@ namespace ClientNamespace {
                         do {
                             for (int j = 0; j < DefaultTimeoutDuration; j += timeStep){
                                 AcksReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out ackCount);
-                                if (ackCount == View.Count){
+                                if (ackCount == View.Nodes.Count){
                                     AcksReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
                                     return selectedTuple;
                                 }
@@ -128,7 +128,7 @@ namespace ClientNamespace {
                             }
                             // Resend remove
                             SendMessageToView(takeRemove);
-                        } while (ackCount < View.Count);
+                        } while (ackCount < View.Nodes.Count);
 
                         return null;
                     }
@@ -184,7 +184,7 @@ namespace ClientNamespace {
         }
 
         private void SendMessageToView(Message message) {
-            SendMessageToView(View, message);
+            SendMessageToView(View.Nodes , message);
         }
 
         public override Message OnSendMessage(Message message) {
