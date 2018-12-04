@@ -81,51 +81,56 @@ namespace ClientNamespace {
             ClientRequestSeqNumber++;
 
             int timeStep = 250; // ms
-            for (int i = 0; i < DefaultTimeoutDuration; i += timeStep) {
-                ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
-               
-                if (responses.Count == View.Count) {
-                    // get intersection of tuples from all lists received
-                    List<Tuple> matchingTuples = new List<Tuple>();
-                    foreach(Response response in responses) {
-                        matchingTuples = (List<Tuple>) matchingTuples.Intersect(response.Tuples); // get common tuples in all response lists
-                    }
-                    
-                    // select one tuple at random from intersection
-                    if(matchingTuples.Count != 0) {
-                        selectedTuple = matchingTuples.ElementAt((new Random()).Next(0, matchingTuples.Count));
-                    }
-
-                    // count the number of locks that were taken, if majority we can proceed to phase 2, if minority or timeout expired, redo take completely
-                    for(int j = 0; j < DefaultTimeoutDuration; j += timeStep) {
-                        ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var storedResponses);
-                        if(storedResponses.Count > View.Count / 2) {
-                            // phase 2 - ask to remove the tuple when all acks have been received
-                            RemoveTuple(selectedTuple);
-                           
-                            return selectedTuple;
+            List<Response> responses = null;
+            List<Tuple> intersection = new List<Tuple>();
+            
+            // PHASE 1
+            // Send/Resend the request until all sites have accepted the request and responded with their set of tuples 
+            // and the intersection is non null
+            do{
+                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
+                    ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                    if (responses.Count == View.Count){
+                        intersection = responses.First().Tuples; // start point for intersection
+                        foreach(Response response in responses) {
+                            intersection = (List<Tuple>) intersection.Intersect(response.Tuples); // get common tuples in all response lists
                         }
                     }
-                    // redo take and hope we get majority of locks
-                    return Take(tuple);
+                    else{
+                        Thread.Sleep(timeStep);
+                    }
                 }
-            }
-            return null;
-        }
 
-        private void RemoveTuple(Tuple selectedTuple){
-            Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
-            ClientRequestSeqNumber++;
+                // resend the same request
+                SendMessageToView(request);
+            } while (responses.Count < View.Count && intersection.Count == 0);
 
-            int timeStep = 250;
-            int ackCount;
-            do {
-                AckReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
-                System.Threading.Thread.Sleep(timeStep);
-            } while (ackCount < View.Count);
+            // Choose random tuple from intersection
+            selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
             
+            // PHASE 2
+            // Issue a multicast remove for the selectedTuple
+            Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
+            SendMessageToView(requestForRemove);
+            ClientRequestSeqNumber++; // TODO possible problem, should we increment seq number for removes? simpler if we do, but not logical since it's not a real operation 
+
+            int ackCount = 0;
+            do {
+                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
+                    AckReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
+                    if (ackCount < View.Count){
+                        Thread.Sleep(timeStep);
+                    }
+                }
+                // Resend remove
+                SendMessageToView(requestForRemove);
+            } while (ackCount < View.Count);
+
+            return selectedTuple;
         }
 
+        
+        
         public override Message OnReceiveMessage(Message message) {
             if(message.GetType() == typeof(Ack)  ) {
                 UpdateAckCounter((Ack) message);
