@@ -59,8 +59,7 @@ namespace ServerNamespace.XL
          */
         private Message ProcessTakeRemove(Message message){
             TakeRemove takeRemove = (TakeRemove) message;
-            List<Tuple> lockedTuples;
-            LockedTuples.TryRemove(takeRemove.TakeRequestSeqNumber, out lockedTuples);
+            LockedTuples.TryRemove(takeRemove.TakeRequestSeqNumber, out List<Tuple> lockedTuples);
 
             // remove the selected tuple specified in the request
             if (lockedTuples != null && takeRemove.SelectedTuple != null){

@@ -45,6 +45,7 @@ namespace ClientNamespace {
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     AcksReceivedPerRequest.TryGetValue(request.SeqNum, out acksReceived);
                     if (acksReceived == View.Count){
+                        AcksReceivedPerRequest.TryRemove(request.SeqNum, out _);
                         return;
                     }
                     Thread.Sleep(timeStep);
@@ -66,6 +67,7 @@ namespace ClientNamespace {
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
                     if (responses != null && responses.Count >= 1 && responses.First().Tuples.Count > 0){
+                        ResponsesReceivedPerRequest.TryRemove(request.SeqNum, out _);
                         return responses.First().Tuples.First();
                     }
                     Thread.Sleep(timeStep);
@@ -91,7 +93,8 @@ namespace ClientNamespace {
             do{
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     ResponsesReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out responses);
-                    if (responses.Count == View.Count){
+                    if (responses != null && responses.Count == View.Count){
+                        ResponsesReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
                         intersection = responses.First().Tuples; // start point for intersection
                         foreach(Response response in responses) {
                             intersection = intersection.Intersect(response.Tuples).ToList(); // get common tuples in all response lists
@@ -109,7 +112,7 @@ namespace ClientNamespace {
 
                 // resend the same request
                 SendMessageToView(takeRequest);
-            } while (responses.Count < View.Count && intersection.Count == 0);
+            } while (responses == null || (responses.Count < View.Count && intersection.Count == 0));
 
             // Choose random tuple from intersection
             Tuple selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
@@ -125,6 +128,7 @@ namespace ClientNamespace {
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     AcksReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out ackCount);
                     if (ackCount == View.Count){
+                        AcksReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
                         return selectedTuple;
                     }
                     Thread.Sleep(timeStep);
@@ -169,8 +173,6 @@ namespace ClientNamespace {
         private void SendMessageToView(Message message) {
             SendMessageToView(View, message);
         }
-
-        
 
         public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();

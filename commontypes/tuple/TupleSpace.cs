@@ -22,10 +22,7 @@ namespace CommonTypes.tuple
         {
             lock (_tupleSpaceLocks.GetOrAdd(tuple.GetSize(), new object()))
             {
-                _tupleSpace.AddOrUpdate(tuple.GetSize(),
-                                   valueToAdd => new List<Tuple> { tuple },
-                                   (key, oldValue) => new List<Tuple>(oldValue) { tuple }
-                                  );
+                _tupleSpace.TryAdd(tuple.GetSize(), new List<Tuple> { tuple });
             }
         }
 
