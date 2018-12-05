@@ -30,7 +30,7 @@ namespace CommonTypes.tuple{
         public override bool Equals(object obj)
         {
             if(obj != null && 
-                   obj.GetType() == GetType())
+               obj.GetType() == GetType())
             {
                 Tuple t;
                 t = (Tuple) obj;
