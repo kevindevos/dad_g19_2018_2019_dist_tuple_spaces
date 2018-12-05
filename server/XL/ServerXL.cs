@@ -23,22 +23,59 @@ namespace ServerNamespace.XL
 
         public ServerXL(string host, int port) : this(BuildRemoteUrl(host,port, ServerObjName)) { }
 
-        public ServerXL(string remoteUrl) : base(remoteUrl) { }
+        public ServerXL(string remoteUrl) : base(remoteUrl){
+            LockedTuples = new ConcurrentDictionary<int, List<Tuple>>();
+        }
 
         
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
 
-            if (message.GetType() == typeof(Request)) {
-                return PerformRequest((Request)message);
+            if (message.GetType().IsSubclassOf(typeof(Request))) {
+                return ProcessRequest((Request) message);
             }
 
             if (message.GetType() == typeof(LockRelease)){
-                LockRelease lockRelease = (LockRelease) message;
-                ReleaseLockedTuples(lockRelease.TakeRequestSeqNum);
+                ProcessLockRelease((LockRelease) message);
+                return null;
+            }
+
+            if (message.GetType() == typeof(TakeRemove)){
+                return ProcessTakeRemove(message);
             }
 
             throw new NotImplementedException();
+        }
+
+        /**
+         * Move from LockedTuples to the tuplespace the "locked" tuples by the take request
+         */
+        private void ProcessLockRelease(LockRelease lockRelease){
+            ReleaseLockedTuples(lockRelease.TakeRequestSeqNum);
+        }
+
+        /**
+         * Remove the selected tuple and add the remaining locked tuples back to the tuplespace
+         */
+        private Message ProcessTakeRemove(Message message){
+            TakeRemove takeRemove = (TakeRemove) message;
+            List<Tuple> lockedTuples;
+            LockedTuples.TryRemove(takeRemove.TakeRequestSeqNumber, out lockedTuples);
+
+            // remove the selected tuple specified in the request
+            if (lockedTuples != null && takeRemove.SelectedTuple != null){
+                lockedTuples.Remove(takeRemove.SelectedTuple);
+
+                // add back the remaining tuples to the tuple space
+                foreach (Tuple tuple in lockedTuples){
+                    TupleSpace.Write(tuple);
+                }
+            }
+
+            // Send back an Ack of the remove
+            Ack ack = new Ack(EndpointURL, takeRemove);
+            SendMessageToRemoteURL(takeRemove.SrcRemoteURL, ack);
+            return ack;
         }
 
         /**
@@ -55,69 +92,54 @@ namespace ServerNamespace.XL
                     TupleSpace.Write(tuple);
                 }
             }
-            
         }
 
-        public Message PerformRequest(Request request) {
+        public Message ProcessRequest(Request request) {
             var tupleSchema = new TupleSchema(request.Tuple);
 
-            switch (request.RequestType) {
-                case RequestType.READ:
-                    var resultTuples = Read(tupleSchema);
-                    
-                    Response response = new Response(request, resultTuples, EndpointURL);
+            if (request.GetType() == typeof(ReadRequest)){
+                List<Tuple> tuples = TupleSpace.Read(tupleSchema);
+
+                // only send back result if there is something to send
+                if (tuples.Count > 0){
+                    Response response = new Response(request, tuples, EndpointURL);
                     SendMessageToRemoteURL(request.SrcRemoteURL, response);
-                    
                     return response;
+                }
 
-                case RequestType.WRITE:
-                    Write(request.Tuple);
+                return null;
+            }
+            
+            if (request.GetType() == typeof(WriteRequest)){
+                TupleSpace.Write(request.Tuple);
 
-                    // Send back an Ack of the write
-                    Ack ack = new Ack(EndpointURL, request);
-                    SendMessageToRemoteURL(request.SrcRemoteURL, ack);
-                    return ack;
-
-                case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.Tuple);
-                    resultTuples = Take(tupleSchema);
+                // Send back an Ack of the write
+                Ack ack = new Ack(EndpointURL, request);
+                SendMessageToRemoteURL(request.SrcRemoteURL, ack);
+                return ack;
+            }
+            
+            if (request.GetType() == typeof(TakeRequest)){
+                tupleSchema = new TupleSchema(request.Tuple);
+                List<Tuple> resultTuples = TupleSpace.Take(tupleSchema);
+                Response response = null;
                     
+                // only send back result if there is something to send
+                if (resultTuples.Count > 0){
                     // "lock" the tuples taken from the tuple space
                     LockedTuples.TryAdd(request.SeqNum, resultTuples);
                     response = new Response(request, resultTuples, EndpointURL);
                     SendMessageToRemoteURL(request.SrcRemoteURL, response);
+                }
 
-                    return response;
-
-                case RequestType.REMOVE:
-                    // remove from LockedTuples without adding back to tuple space
-                    LockedTuples.TryRemove(request.SeqNum, out List<Tuple> tuples);
-                    
-                    // Send back an Ack of the remove
-                    ack = new Ack(EndpointURL, request);
-                    SendMessageToRemoteURL(request.SrcRemoteURL, request);
-                    return ack;
-
-
-                default:
-                    throw new ArgumentOutOfRangeException();
+                return response;
             }
+
+            throw new NotImplementedException();
         }
 
         public override Message OnSendMessage(Message message) {
             throw new NotImplementedException();
-        }
-
-        public override void Write(Tuple tuple) {
-            TupleSpace.Write(tuple);
-        }
-
-        public override List<Tuple> Read(TupleSchema tupleSchema){
-            return TupleSpace.Read(tupleSchema);
-        }
-
-        public override List<Tuple> Take(TupleSchema tupleSchema){
-            return TupleSpace.Take(tupleSchema);
         }
 
     }

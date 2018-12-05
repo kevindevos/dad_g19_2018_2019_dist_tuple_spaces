@@ -48,6 +48,10 @@
   <ItemGroup>
     <Compile Include="message\AskOrder.cs" />
     <Compile Include="message\LockRelease.cs" />
+    <Compile Include="message\ReadRequest.cs" />
+    <Compile Include="message\TakeRemove.cs" />
+    <Compile Include="message\TakeRequest.cs" />
+    <Compile Include="message\WriteRequest.cs" />
     <Compile Include="PCSRemotingInterface.cs" />
     <Compile Include="message\Elect.cs" />
     <Compile Include="message\Ack.cs" />

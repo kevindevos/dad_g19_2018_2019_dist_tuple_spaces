@@ -97,8 +97,13 @@ namespace ServerNamespace
 
         public override Message OnReceiveMessage(Message message) {
             Log("Received message: " + message);
+            
+            // if an Elect message, define new master as the one included in the Elect message
+            if (message.GetType() == typeof(Elect)) {
+                return ProcessElect((Elect)message);
+            }
 
-            if (message.GetType() == typeof(Request)) {
+            if (message.GetType().IsSubclassOf(typeof(Request))) {
                 return Behaviour.ProcessRequest((Request)message);
             }
 
@@ -106,11 +111,7 @@ namespace ServerNamespace
                 return Behaviour.ProcessOrder((Order)message);
             }
 
-            // if an Elect message, define new master as the one included in the Elect message
-            if (message.GetType() == typeof(Elect))
-            {
-                return ProcessElect((Elect)message);
-            }
+            
 
             throw new NotImplementedException();
         }
@@ -129,8 +130,7 @@ namespace ServerNamespace
             throw new NotImplementedException();
         }
 
-        // ITupleOperations Methods
-        public override void Write(Tuple tuple) {
+        public void Write(Tuple tuple) {
             TupleSpace.Write(tuple);
             Log("Wrote : " + tuple);
         }
@@ -141,7 +141,7 @@ namespace ServerNamespace
             }
         }
 
-        public override List<Tuple> Read(TupleSchema tupleSchema) {
+        public List<Tuple> Read(TupleSchema tupleSchema) {
             var listTuple = TupleSpace.Read(tupleSchema);
             if (listTuple.Count > 0) {
                 Log("Read (first tuple): " + listTuple.First());
@@ -149,7 +149,7 @@ namespace ServerNamespace
             return listTuple;
         }
 
-        public override List<Tuple> Take(TupleSchema tupleSchema) {
+        public List<Tuple> Take(TupleSchema tupleSchema) {
             List<Tuple> tuples = TupleSpace.Take(tupleSchema);
             if (tuples.Count > 0) {
                 List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);
@@ -160,26 +160,26 @@ namespace ServerNamespace
 
             return tuples;
         }
-        public Response PerformRequest(Request request) {
+        public Response ProcessRequest(Request request) {
             var tupleSchema = new TupleSchema(request.Tuple);
 
-            switch (request.RequestType) {
-                case RequestType.READ:
-                    var resultTuples = Read(tupleSchema);
-                    return new Response(request, resultTuples, EndpointURL);
-
-                case RequestType.WRITE:
-                    Write(request.Tuple);
-                    return null;
-
-                case RequestType.TAKE:
-                    tupleSchema = new TupleSchema(request.Tuple);
-                    resultTuples = Take(tupleSchema);
-                    return new Response(request, resultTuples, EndpointURL);
-
-                default:
-                    throw new ArgumentOutOfRangeException();
+            if (request.GetType() == typeof(ReadRequest)){
+                var resultTuples = Read(tupleSchema);
+                return new Response(request, resultTuples, EndpointURL);
             }
+            
+            if (request.GetType() == typeof(WriteRequest)){
+                Write(request.Tuple);
+                return null;
+            }
+            
+            if (request.GetType() == typeof(TakeRequest)){
+                tupleSchema = new TupleSchema(request.Tuple);
+                List<Tuple> resultTuples = Take(tupleSchema);
+                return new Response(request, resultTuples, EndpointURL);
+            }
+            
+            throw new ArgumentOutOfRangeException();
         }
 
         public override Message OnSendMessage(Message message) {

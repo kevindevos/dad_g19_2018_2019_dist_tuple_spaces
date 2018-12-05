@@ -32,8 +32,8 @@ namespace ClientNamespace {
             }
 
             // if it receives at least one response for a blocking request then unblock ( can only send one and then block, so it will always unblock properly? )
-            if (response.Request.RequestType.Equals(RequestType.READ) ||
-                response.Request.RequestType.Equals(RequestType.TAKE)) {
+            if (response.Request.GetType() == typeof(ReadRequest) ||
+                response.Request.GetType() == typeof(TakeRequest)) {
                 if (RequestSemaphore.TryGetValue(response.Request.SeqNum, out var semaphore)) {
                     semaphore.Release();
                     return null;
@@ -47,7 +47,7 @@ namespace ClientNamespace {
         
         public override void Write(Tuple tuple) {
             // TODO remote exceptions?
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
+            var request = new WriteRequest(ClientRequestSeqNumber, EndpointURL, tuple);
 
             Log("[SEQ:" + ClientRequestSeqNumber + "] Write: " + tuple.ToString());
             SendMessageToRandomServer(request);
@@ -55,13 +55,13 @@ namespace ClientNamespace {
         }
 
         public override Tuple Read(Tuple tuple) {
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
+            var request = new ReadRequest(ClientRequestSeqNumber, EndpointURL, tuple);
             Log("[SEQ:" + ClientRequestSeqNumber + "] Read: " + tuple.ToString());
             return SendBlockingRequest(request);
         }
 
         public override Tuple Take(Tuple tuple) {
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
+            var request = new TakeRequest(ClientRequestSeqNumber, EndpointURL, tuple);
             Log("[SEQ:"+ClientRequestSeqNumber+"] Take: " + tuple.ToString());
             return SendBlockingRequest(request);
         }

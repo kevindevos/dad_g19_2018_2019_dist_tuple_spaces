@@ -77,7 +77,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(15000)]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
         public void WriteRead(Tuple tuple)
         {
             Client1.Write(tuple);
@@ -88,7 +88,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(15000)]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
         public void WriteTakeRead(Tuple tuple)
         {
             Client1.Write(tuple);
@@ -98,5 +98,7 @@ namespace Tests
             result = Client1.Read(tuple);
             Assert.AreEqual(tuple, result);
         }
+        
+      
     }
 }

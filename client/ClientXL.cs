@@ -32,7 +32,7 @@ namespace ClientNamespace {
         }
 
         public override void Write(Tuple tuple) {
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.WRITE, tuple);
+            var request = new WriteRequest(ClientRequestSeqNumber, EndpointURL, tuple);
 
             SendMessageToView(request);
             ClientRequestSeqNumber++;
@@ -56,7 +56,7 @@ namespace ClientNamespace {
         }
 
         public override Tuple Read(Tuple tuple) {
-            var request = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.READ, tuple);
+            var request = new ReadRequest(ClientRequestSeqNumber, EndpointURL, tuple);
             SendMessageToView(request);
             ClientRequestSeqNumber++;
 
@@ -65,7 +65,7 @@ namespace ClientNamespace {
             while (true){
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
-                    if (responses != null && responses.Count >= 1){
+                    if (responses != null && responses.Count >= 1 && responses.First().Tuples.Count > 0){
                         return responses.First().Tuples.First();
                     }
                     Thread.Sleep(timeStep);
@@ -77,8 +77,7 @@ namespace ClientNamespace {
         }
 
         public override Tuple Take(Tuple tuple) {
-            var takeRequest = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.TAKE, tuple);
-            Tuple selectedTuple = null;
+            var takeRequest = new TakeRequest(ClientRequestSeqNumber, EndpointURL, tuple);
             SendMessageToView(takeRequest);
             ClientRequestSeqNumber++;
 
@@ -95,7 +94,7 @@ namespace ClientNamespace {
                     if (responses.Count == View.Count){
                         intersection = responses.First().Tuples; // start point for intersection
                         foreach(Response response in responses) {
-                            intersection = (List<Tuple>) intersection.Intersect(response.Tuples); // get common tuples in all response lists
+                            intersection = intersection.Intersect(response.Tuples).ToList(); // get common tuples in all response lists
                         }
                     }
                     else{
@@ -105,32 +104,33 @@ namespace ClientNamespace {
                 
                 // ask servers to release their locks since at this point the take request has been rejected 
                 // because we didn't get all the responses within timeout period
-                Message RequestForLockRelease = new LockRelease(EndpointURL, takeRequest.SeqNum);
-                SendMessageToView(RequestForLockRelease);
+                Message lockRelease = new LockRelease(EndpointURL, takeRequest.SeqNum);
+                SendMessageToView(lockRelease);
 
                 // resend the same request
                 SendMessageToView(takeRequest);
             } while (responses.Count < View.Count && intersection.Count == 0);
 
             // Choose random tuple from intersection
-            selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
+            Tuple selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
             
             // PHASE 2
             // Issue a multicast remove for the selectedTuple
-            Request requestForRemove = new Request(ClientRequestSeqNumber, EndpointURL, RequestType.REMOVE, selectedTuple);
-            SendMessageToView(requestForRemove);
+            Message takeRemove = new TakeRemove(EndpointURL, selectedTuple, takeRequest.SeqNum);
+            SendMessageToView(takeRemove);
             ClientRequestSeqNumber++; 
 
             int ackCount = 0;
             do {
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    AcksReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
-                    if (ackCount < View.Count){
-                        Thread.Sleep(timeStep);
+                    AcksReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out ackCount);
+                    if (ackCount == View.Count){
+                        return selectedTuple;
                     }
+                    Thread.Sleep(timeStep);
                 }
                 // Resend remove
-                SendMessageToView(requestForRemove);
+                SendMessageToView(takeRemove);
             } while (ackCount < View.Count);
 
             return selectedTuple;
@@ -159,7 +159,7 @@ namespace ClientNamespace {
         }
 
         private void UpdateAckCounter(Ack ack){
-            if(ack.Message.GetType() == typeof(Request)) {
+            if(ack.Message.GetType().IsSubclassOf(typeof(Request))) {
                 Request request = (Request)ack.Message;
                 AcksReceivedPerRequest.TryRemove(request.SeqNum, out var oldCounter);
                 AcksReceivedPerRequest.TryAdd(request.SeqNum, ++oldCounter);

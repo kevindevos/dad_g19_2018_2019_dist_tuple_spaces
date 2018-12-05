@@ -8,7 +8,7 @@ using CommonTypes.tuple;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace {
-    public abstract class Server : RemotingEndpoint, ITupleOperations {
+    public abstract class Server : RemotingEndpoint {
         public delegate Message SendMessageDelegate(Message message);
 
         protected const string ServerObjName = "Server";
@@ -47,9 +47,6 @@ namespace ServerNamespace {
             Console.WriteLine("[SERVER:"+EndpointURL +"]   " + text);
         }
 
-        public abstract void Write(Tuple tuple);
-        public abstract List<Tuple> Read(TupleSchema tupleSchema);
-        public abstract List<Tuple> Take(TupleSchema tupleSchema);
     }
 
 }
