@@ -13,12 +13,12 @@ using Tuple = CommonTypes.tuple.Tuple;
 namespace ClientNamespace {
     public class ClientXL : Client {
         // request seq number, counter
-        private ConcurrentDictionary<int, int> AckReceivedPerRequest;
+        private ConcurrentDictionary<int, int> AcksReceivedPerRequest;
 
         // request seq number, responses
         private ConcurrentDictionary<int, List<Response>> ResponsesReceivedPerRequest;
 
-        private const int DefaultTimeoutDuration = 5;
+        private const int DefaultTimeoutDuration = 5000; // ms
 
         public ClientXL() : this(DefaultClientHost, DefaultClientPort) {
         }
@@ -27,7 +27,8 @@ namespace ClientNamespace {
         }
 
         public ClientXL(string remoteUrl) : base(remoteUrl) {
-            AckReceivedPerRequest = new ConcurrentDictionary<int, int>();
+            AcksReceivedPerRequest = new ConcurrentDictionary<int, int>();
+            ResponsesReceivedPerRequest = new ConcurrentDictionary<int, List<Response>>();
         }
 
         public override void Write(Tuple tuple) {
@@ -42,13 +43,16 @@ namespace ClientNamespace {
             do{
                 // did we get all acks?
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    if (acksReceived < View.Count){
-                        Thread.Sleep(timeStep);
+                    AcksReceivedPerRequest.TryGetValue(request.SeqNum, out acksReceived);
+                    if (acksReceived == View.Count){
+                        return;
                     }
+                    Thread.Sleep(timeStep);
                 }
                 // timeout reached resend the same request
                 SendMessageToView(request);
             } while (acksReceived < View.Count);
+            
         }
 
         public override Tuple Read(Tuple tuple) {
@@ -58,20 +62,18 @@ namespace ClientNamespace {
 
             // If no response is received after timeout, message is resent 
             int timeStep = 200; // ms
-            List<Response> responses = null;
-            do{
+            while (true){
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out responses);
+                    ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
                     if (responses != null && responses.Count >= 1){
                         return responses.First().Tuples.First();
                     }
                     Thread.Sleep(timeStep);
                 }
+
                 // resend same request
                 SendMessageToView(request);
-            } while (responses.Count < 1);
-
-            return null;
+            }
         }
 
         public override Tuple Take(Tuple tuple) {
@@ -122,7 +124,7 @@ namespace ClientNamespace {
             int ackCount = 0;
             do {
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    AckReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
+                    AcksReceivedPerRequest.TryGetValue(requestForRemove.SeqNum, out ackCount);
                     if (ackCount < View.Count){
                         Thread.Sleep(timeStep);
                     }
@@ -141,33 +143,26 @@ namespace ClientNamespace {
                 UpdateAckCounter((Ack) message);
                 
             }
-            // answer from read or take
             if(message.GetType() == typeof(Response)) {
                 Response response = (Response) message;
-                if (IsReadOrTakeResponse(response)){
-                    ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out var storedResponses);
-                    storedResponses.Add(response);
-                    ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
+                ResponsesReceivedPerRequest.TryRemove(response.Request.SeqNum, out var storedResponses);
+                
+                if (storedResponses == null){
+                    storedResponses = new List<Response>();
                 }
                 
+                storedResponses.Add(response);
+                ResponsesReceivedPerRequest.TryAdd(response.Request.SeqNum, storedResponses);
             }
 
             return null;
         }
 
-        private bool IsReadOrTakeResponse(Response response){
-            return response.Request.RequestType == RequestType.READ ||
-                response.Request.RequestType == RequestType.TAKE;
-        }
-
-
         private void UpdateAckCounter(Ack ack){
             if(ack.Message.GetType() == typeof(Request)) {
                 Request request = (Request)ack.Message;
-                if(request.RequestType == RequestType.READ) {
-                    AckReceivedPerRequest.TryRemove(request.SeqNum, out var oldCounter);
-                    AckReceivedPerRequest.TryAdd(request.SeqNum, ++oldCounter);
-                }
+                AcksReceivedPerRequest.TryRemove(request.SeqNum, out var oldCounter);
+                AcksReceivedPerRequest.TryAdd(request.SeqNum, ++oldCounter);
             }
         }
 

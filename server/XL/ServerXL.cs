@@ -64,7 +64,10 @@ namespace ServerNamespace.XL
             switch (request.RequestType) {
                 case RequestType.READ:
                     var resultTuples = Read(tupleSchema);
+                    
                     Response response = new Response(request, resultTuples, EndpointURL);
+                    SendMessageToRemoteURL(request.SrcRemoteURL, response);
+                    
                     return response;
 
                 case RequestType.WRITE:
@@ -72,7 +75,7 @@ namespace ServerNamespace.XL
 
                     // Send back an Ack of the write
                     Ack ack = new Ack(EndpointURL, request);
-                    SendMessageToRemoteURL(request.SrcRemoteURL, request);
+                    SendMessageToRemoteURL(request.SrcRemoteURL, ack);
                     return ack;
 
                 case RequestType.TAKE:
@@ -81,8 +84,10 @@ namespace ServerNamespace.XL
                     
                     // "lock" the tuples taken from the tuple space
                     LockedTuples.TryAdd(request.SeqNum, resultTuples);
-                    
-                    return new Response(request, resultTuples, EndpointURL);
+                    response = new Response(request, resultTuples, EndpointURL);
+                    SendMessageToRemoteURL(request.SrcRemoteURL, response);
+
+                    return response;
 
                 case RequestType.REMOVE:
                     // remove from LockedTuples without adding back to tuple space

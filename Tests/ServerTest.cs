@@ -12,7 +12,7 @@ namespace Tests
     [TestFixture, NonParallelizable]
     public abstract class ServerTest
     {
-        private readonly int _nServers;
+        protected readonly int _nServers;
 
         protected List<Server> _serverList;
         
@@ -41,16 +41,7 @@ namespace Tests
             Tuple2Schema = new TupleSchema(Tuple2);
             Tuple3Schema = new TupleSchema(Tuple3);
         }
-        
-        [SetUp]
-        public void SetUp()
-        {
-            for (var i = 1; i <= _nServers; i++)
-            {
-                _serverList.Add(new ServerSMR(RemotingEndpoint.BuildRemoteUrl("localhost", 8080+i, "s"+i)));    
-            }
-        }
-        
+   
         [TearDown]
         public void TearDown()
         {
@@ -86,7 +77,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(15000)]
         public void WriteRead(Tuple tuple)
         {
             Client1.Write(tuple);
@@ -97,7 +88,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(15000)]
         public void WriteTakeRead(Tuple tuple)
         {
             Client1.Write(tuple);
