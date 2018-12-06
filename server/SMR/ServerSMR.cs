@@ -182,9 +182,6 @@ namespace ServerNamespace
             throw new ArgumentOutOfRangeException();
         }
 
-        public override Message OnSendMessage(Message message) {
-            throw new NotImplementedException();
-        }
 
         public override void Log(string text) {
             string serverType = Behaviour.GetType() == typeof(MasterServerSMRBehaviour) ? "MASTER" : "NORMAL";

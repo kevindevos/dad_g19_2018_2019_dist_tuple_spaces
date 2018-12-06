@@ -137,9 +137,5 @@ namespace ServerNamespace.XL
             throw new NotImplementedException();
         }
 
-        public override Message OnSendMessage(Message message) {
-            throw new NotImplementedException();
-        }
-
     }
 }

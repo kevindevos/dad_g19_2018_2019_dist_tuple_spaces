@@ -123,7 +123,7 @@ namespace CommonTypes {
                 Console.WriteLine("\t"+ serverRemote);
             }
 
-            if (View.Nodes.Count == 0)
+            if (View.Size() == 0)
             {
                 Console.WriteLine("\t<empty>");
             }
@@ -249,13 +249,6 @@ namespace CommonTypes {
             }
         }
         
-
-        protected Message SendMessageToRandomServer(Message message) {
-            var random = new Random();
-            var i = random.Next(0, View.Nodes.Count);
-            return SendMessageToRemoteURL(new List<string>(View.Nodes)[i], message);
-        }
-
         public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
         }
@@ -266,8 +259,6 @@ namespace CommonTypes {
 
 
         public abstract Message OnReceiveMessage(Message message);
-
-        public abstract Message OnSendMessage(Message message);
 
         
         
