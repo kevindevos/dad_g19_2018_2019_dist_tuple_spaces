@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -87,7 +88,7 @@ namespace ClientNamespace {
             int timeStep = 250; // ms
             List<Response> responses = null;
             List<Tuple> intersection = new List<Tuple>();
-            Tuple selectedTuple = null;
+            Tuple selectedTuple = new Tuple(new List<object>());
             
             // PHASE 1
             // Send/Resend the request until all sites have accepted the request and responded with their set of tuples 
@@ -103,12 +104,15 @@ namespace ClientNamespace {
                         // build the intersection 
                         intersection = responses.First().Tuples; 
                         foreach(Response response in responses){
-                            IEnumerable<Tuple> enumerableIntersection = intersection.Intersect(response.Tuples).ToList();
+                            IEnumerable<Tuple> enumerable = intersection.Intersect(response.Tuples);
+                            intersection = new List<Tuple>(enumerable);
                         }
                         
                         
                         // Choose random tuple from intersection
-                        selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
+                        if (intersection.Count > 0){
+                            selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
+                        }
             
                         // PHASE 2
                         // Issue a multicast remove for the selectedTuple
