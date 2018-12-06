@@ -40,5 +40,42 @@ namespace Tests
            Client1.DisposeChannel();
            Client2.DisposeChannel();
         }
+        
+        // Two test
+        // 1. Kill the master
+        // 2. Kill the non-master
+        [Test]
+        [Ignore("")]
+        public void FailureTest1([Values(1)] int serverIndex)
+        {
+            if (_nServers < 2)
+            {
+                Assert.Ignore("Only test for >=2 servers.");
+                return;
+            }
+
+            _serverList[serverIndex].DisposeChannel();
+            Client1.Write(Tuple1);
+            var result = Client1.Read(Tuple1);
+            Assert.AreEqual(Tuple1, result);
+        }
+        
+        [Test]
+        [Ignore("")]
+        public void FailureTest2([Values(0)] int serverIndex)
+        {
+            if (_nServers < 2)
+            {
+                Assert.Ignore("Only test for >=2 servers.");
+                return;
+            }
+
+            _serverList[serverIndex].DisposeChannel();
+            _serverList.RemoveAt(serverIndex);
+            //_serverList[0].SetView(new View(_serverList.ConvertAll(input => input.EndpointURL), 1));
+            Client1.Write(Tuple1);
+            var result = Client1.Read(Tuple1);
+            Assert.AreEqual(Tuple1, result);
+        }
     }
 }
