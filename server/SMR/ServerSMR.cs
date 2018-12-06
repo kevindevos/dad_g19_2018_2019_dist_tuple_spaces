@@ -54,7 +54,7 @@ namespace ServerNamespace
             ReceivedAcks = new List<Ack>();
             
             
-            RecursiveJoinView(View);
+            RecursiveJoinView(View.Nodes);
             getMaster();
         }
 
@@ -76,10 +76,10 @@ namespace ServerNamespace
         {
             String masterUrl = null;
             
-            foreach (var server in View)
+            foreach (var server in View.Nodes)
             {
                 var message = new Elect(EndpointURL, ElectType.GET_MASTER);
-                var result = (Elect)SendMessageToRemote(server, message);
+                var result = (Elect)SendMessageToRemoteURL(server, message);
                 masterUrl = result.NewMasterURL;
                 if (masterUrl != null)
                     break;
@@ -182,9 +182,6 @@ namespace ServerNamespace
             throw new ArgumentOutOfRangeException();
         }
 
-        public override Message OnSendMessage(Message message) {
-            throw new NotImplementedException();
-        }
 
         public override void Log(string text) {
             string serverType = Behaviour.GetType() == typeof(MasterServerSMRBehaviour) ? "MASTER" : "NORMAL";

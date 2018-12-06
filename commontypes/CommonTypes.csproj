@@ -68,6 +68,7 @@
     <Compile Include="tuple\TupleSchema.cs" />
     <Compile Include="tuple\TupleSpace.cs" />
     <Compile Include="tuple\ITupleOperations.cs" />
+      <Compile Include="View.cs"/>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

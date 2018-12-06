@@ -88,8 +88,25 @@ namespace ClientNamespace {
             RequestSemaphore.Remove(requestSeqNum);
         }
 
-        public override Message OnSendMessage(Message message) {
-            throw new NotImplementedException();
+
+        private void SendMessageToRandomServer(Message message) {
+            while (true)
+            {
+                var random = new Random();
+                var i = random.Next(0, View.Size());
+                try
+                {
+                    
+                    
+                    SendMessageToRemoteURL(View.Nodes.ToArray()[i], message);
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
         }
     }
 }

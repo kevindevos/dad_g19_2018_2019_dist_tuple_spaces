@@ -77,7 +77,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
+        [Test, NonParallelizable, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void WriteRead(Tuple tuple)
         {
             Client1.Write(tuple);
@@ -88,7 +88,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples)), Timeout(5000)]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void WriteTakeRead(Tuple tuple)
         {
             Client1.Write(tuple);
