@@ -143,7 +143,7 @@ namespace ClientNamespace {
 
                 // resend the same request
                 SendMessageToView(takeRequest);
-            } while (responses == null || (responses.Count < View.Count && intersection.Count == 0));
+            } while (responses == null || (responses.Count < View.Nodes.Count && intersection.Count == 0));
 
             return null;
 
