@@ -264,8 +264,8 @@ namespace Tests {
         
         /*
          * Write, write, take, read
-         * take should only take 1
-         * read should read 1
+         * take should take all
+         * read should read zero
          */
         [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void Take4(Tuple tuple)
@@ -275,9 +275,10 @@ namespace Tests {
             var tupleSchema = new TupleSchema(tuple);
             var result = _tupleSpace.Take(tupleSchema);
             Assert.Contains(tuple, result);
-            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(tuple, result.ToArray()[0]);
+            Assert.AreEqual(tuple, result.ToArray()[1]);
             var result2 = _tupleSpace.Read(tupleSchema);
-            Assert.AreEqual(1, result2.Count);
+            Assert.IsEmpty(result2);
         }
         
     }
