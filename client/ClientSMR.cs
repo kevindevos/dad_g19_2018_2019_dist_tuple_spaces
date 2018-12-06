@@ -101,17 +101,15 @@ namespace ClientNamespace {
                     var i = random.Next(0, View.Size());
                     randomServer = View.Nodes.ToArray()[i];
                 }
+
                 try
                 {
-                    var asyncResult = NewSendMessageToRemoteURL(randomServer, message);
-                    asyncResult.AsyncWaitHandle.WaitOne(5000); //TODO change to constant
-                    
-                    if(asyncResult.IsCompleted)
-                        return;
+                    SingleCastMessage(randomServer, message);
+                    break;
                 }
                 catch (Exception e)
                 {
-                    // try another random server, until it receives an ok
+                    // ignored
                 }
             }
         }

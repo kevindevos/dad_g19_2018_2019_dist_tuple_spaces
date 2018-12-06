@@ -46,6 +46,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+      <Compile Include="CallbackState.cs"/>
     <Compile Include="message\AskOrder.cs" />
     <Compile Include="message\LockRelease.cs" />
     <Compile Include="message\ReadRequest.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="message\Ack.cs" />
     <Compile Include="RemotingEndpoint.cs" />
     <Compile Include="message\Response.cs" />
+      <Compile Include="ReplyResult.cs"/>
     <Compile Include="tuple\tupleobjects\DADTestA.cs" />
     <Compile Include="tuple\tupleobjects\DADTestB.cs" />
     <Compile Include="tuple\tupleobjects\DADTestC.cs" />

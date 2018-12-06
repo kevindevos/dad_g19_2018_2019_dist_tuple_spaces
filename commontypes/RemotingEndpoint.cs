@@ -11,6 +11,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization.Formatters;
+using System.Threading;
 using NUnit.Framework;
 
 namespace CommonTypes {
@@ -22,21 +23,18 @@ namespace CommonTypes {
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string DefaultServerHost = "localhost";
         protected const int DefaultServerPort = 8080;
-
         protected const string DefaultClientHost = "localhost";
         protected const int DefaultClientPort = 8070;
 
-        private string ObjIdentifier { get; }
-
         public View View;
-
+        private TcpChannel TcpChannel{ get; set; }
+        private string Host { get; }
+        private int Port { get; set; }
+        private string ObjIdentifier { get; }
         public string EndpointURL { get; }
 
-        private TcpChannel TcpChannel{ get; set; }
-
-        protected int Port { private get; set; }
-
-        private string Host { get; }
+        public Dictionary<Message, ReplyResult> ReplyResultQueue;
+        public Dictionary<Message, object> WaitLocks;
 
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
@@ -62,6 +60,7 @@ namespace CommonTypes {
                 throw new Exception("Invalid remote Url passed to constructor.");
             }
             
+            ReplyResultQueue = new Dictionary<Message, ReplyResult>();
             Host = splitUrl[0];
             Port = int.Parse(splitUrl[1]);
             ObjIdentifier = splitUrl[2];
@@ -345,6 +344,166 @@ namespace CommonTypes {
         public View GetView()
         {
             return View;
+        }
+
+
+        protected void MulticastMessageWaitAll(IEnumerable<string> view, Message message)
+        {
+            MulticastMessage(view, message, WaitAllCallback);
+        }
+        protected void MulticastMessageWaitAny(IEnumerable<string> view, Message message)
+        {
+            MulticastMessage(view, message, WaitAnyCallback);
+        }
+
+        protected void SingleCastMessage(string remoteUrl, Message message)
+        {
+            var replyResult = new ReplyResult();
+            lock (ReplyResultQueue)
+            {
+                ReplyResultQueue.Add(message, replyResult);
+            }
+            
+            try
+            {
+                lock (ReplyResultQueue)
+                {
+                    replyResult.AddRemoteUrl(remoteUrl);
+                }
+                MulticastSingleUrl(remoteUrl, message, WaitAnyCallback);
+            }
+            catch (Exception e)
+            {
+                // if connection failed, it means it's dead. moving on...
+                lock (ReplyResultQueue){
+                    replyResult.RemoveRemoteUrl(remoteUrl); //TODO is this necessary, or does the try do some rollback?
+                }
+                throw;
+            }
+            
+        }
+        
+        private void MulticastMessage(IEnumerable<string> view, Message message, AsyncCallback asyncCallback)
+        {
+            var replyResult = new ReplyResult();
+            lock (ReplyResultQueue)
+            {
+                ReplyResultQueue.Add(message, replyResult);
+            }
+            
+            foreach (var remoteUrl in view)
+            {
+                try
+                {
+                    lock (ReplyResultQueue)
+                    {
+                        replyResult.AddRemoteUrl(remoteUrl);
+                    }
+                    MulticastSingleUrl(remoteUrl, message, asyncCallback);
+                }
+                catch (Exception e)
+                {
+                    // if connection failed, it means it's dead. moving on...
+                    lock (ReplyResultQueue){
+                        replyResult.RemoveRemoteUrl(remoteUrl); //TODO is this necessary, or does the try do some rollback?
+                    }
+                }
+            }
+        }
+
+        public void MulticastSingleUrl(string remoteURL, Message message, AsyncCallback asyncCallback) {
+            var remotingEndpoint = GetRemoteEndpoint(remoteURL);
+            
+            try {
+                RemoteAsyncDelegate remoteDel = remotingEndpoint.OnReceiveMessage;
+                CallbackState state = new CallbackState(message, remoteURL);
+                remoteDel.BeginInvoke(message, asyncCallback, state);
+            }
+            catch(Exception e) {
+                Console.WriteLine("Server at " + remoteURL + " is unreachable.");
+                throw;
+            }
+        }
+        
+        
+        
+        // Callbacks
+        //
+        protected void WaitAllCallback(IAsyncResult asyncResult)
+        {
+            AsyncResult ar = (AsyncResult)asyncResult;
+            RemoteAsyncDelegate remoteDel = (RemoteAsyncDelegate)ar.AsyncDelegate;
+            Message responseMessage = remoteDel.EndInvoke(asyncResult);
+            CallbackState state = (CallbackState)ar.AsyncState;
+            
+            Message originalMessage = state.OriginalMessage;
+            string remoteUrl = state.RemoteUrl;
+
+            lock (ReplyResultQueue)
+            {
+                ReplyResultQueue.TryGetValue(originalMessage, out var replyResult);
+                if (replyResult == null) return;
+                
+                // save the result
+                replyResult.AddResult(remoteUrl, responseMessage);
+                
+                // if ZERO waiting replies, notify the caller (the one who initiated the multi-cast)
+                if (replyResult.NWaitingReply() == 0)
+                {
+                    PulseMessage(originalMessage);
+                }
+            }
+        }
+        public void WaitAnyCallback(IAsyncResult asyncResult)
+        {
+            AsyncResult ar = (AsyncResult)asyncResult;
+            RemoteAsyncDelegate remoteDel = (RemoteAsyncDelegate)ar.AsyncDelegate;
+            Message responseMessage = remoteDel.EndInvoke(asyncResult);
+            CallbackState state = (CallbackState)ar.AsyncState;
+            
+            Message originalMessage = state.OriginalMessage;
+            string remoteUrl = state.RemoteUrl;
+
+            lock (ReplyResultQueue)
+            {
+                ReplyResultQueue.TryGetValue(originalMessage, out var replyResult);
+                if (replyResult == null) return;
+                
+                // save the result
+                replyResult.AddResult(remoteUrl, responseMessage);
+                
+                // if ANY result, notify the caller (the one who initiated the multi-cast)
+                if (replyResult.NResults() > 0)
+                {
+                    PulseMessage(originalMessage);
+                }
+            }
+        }
+        
+        private void PulseMessage(Message originalMessage)
+        {
+            WaitLocks.TryGetValue(originalMessage, out var messageLock);
+            if (messageLock != null)
+            {
+                // this lock is necessary to do the pulse
+                lock (messageLock)
+                {
+                    Monitor.Pulse(messageLock);
+                }
+            }
+        }
+        
+        private void WaitMessage(Message originalMessage)
+        {
+            WaitLocks.TryGetValue(originalMessage, out var messageLock);
+            if (messageLock != null)
+            {
+                // this lock is necessary to do the pulse
+                lock (messageLock)
+                {
+                    Monitor.Wait(messageLock);
+                }
+            }
         }
 
     }
