@@ -1,15 +1,18 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using ClientNamespace;
 using CommonTypes;
 using CommonTypes.tuple;
 using CommonTypes.tuple.tupleobjects;
 using NUnit.Framework;
 using ServerNamespace;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace Tests
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     public abstract class ServerTest
     {
         protected readonly int _nServers;
@@ -68,7 +71,7 @@ namespace Tests
         /*
          * test a simple write 
          */
-        [Test, NonParallelizable, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void Write(Tuple tuple)
         {
             Client1.Write(tuple);
@@ -77,7 +80,7 @@ namespace Tests
         /*
          * test a write and a read
          */
-        [Test, NonParallelizable, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void WriteRead(Tuple tuple)
         {
             Client1.Write(tuple);

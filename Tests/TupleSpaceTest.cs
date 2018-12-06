@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Tests {
     
-    [TestFixture]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class TupleSpaceTest
     {
         private TupleSpace _tupleSpace;

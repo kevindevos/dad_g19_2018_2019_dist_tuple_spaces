@@ -16,19 +16,15 @@ namespace Tests
     //[TestFixture(5)]
     public class ServerSMRTest : ServerTest
     {
-        public ServerSMRTest(int nServers) : base(nServers)
-        {
-            
-        }
-
+        public ServerSMRTest(int nServers) : base(nServers) {}
 
         [SetUp]
         public void Init()
         {
             for (var i = 1; i <= _nServers; i++)
             {
-                string url = RemotingEndpoint.BuildRemoteUrl("localhost", 8080 + i, "s" + i);
-                ServerSMR smr = new ServerSMR(url);
+                var url = RemotingEndpoint.BuildRemoteUrl("localhost", 8080 + i, "s" + i);
+                var smr = new ServerSMR(url);
                 _serverList.Add(smr);    
             }
             
@@ -46,8 +42,7 @@ namespace Tests
         // Two test
         // 1. Kill the master
         // 2. Kill the non-master
-        [Test]
-        [Ignore("")]
+        [Test, Ignore(""), Timeout(5000)]
         public void FailureTest1([Values(1)] int serverIndex)
         {
             if (_nServers < 2)
@@ -62,8 +57,7 @@ namespace Tests
             Assert.AreEqual(Tuple1, result);
         }
         
-        [Test]
-        [Ignore("")]
+        [Test, Ignore(""), Timeout(5000)]
         public void FailureTest2([Values(0)] int serverIndex)
         {
             if (_nServers < 2)

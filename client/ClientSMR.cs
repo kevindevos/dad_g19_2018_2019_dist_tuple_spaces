@@ -89,22 +89,29 @@ namespace ClientNamespace {
         }
 
 
+        // tries to send a message to a random server
+        // if, 5 seconds, exception or viewChange? try another server
         private void SendMessageToRandomServer(Message message) {
             while (true)
             {
+                var randomServer = "";
                 var random = new Random();
-                var i = random.Next(0, View.Size());
+                lock (View)
+                {
+                    var i = random.Next(0, View.Size());
+                    randomServer = View.Nodes.ToArray()[i];
+                }
                 try
                 {
+                    var asyncResult = NewSendMessageToRemoteURL(randomServer, message);
+                    asyncResult.AsyncWaitHandle.WaitOne(5000); //TODO change to constant
                     
-                    
-                    SendMessageToRemoteURL(View.Nodes.ToArray()[i], message);
-                    return;
+                    if(asyncResult.IsCompleted)
+                        return;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
-                    throw;
+                    // try another random server, until it receives an ok
                 }
             }
         }

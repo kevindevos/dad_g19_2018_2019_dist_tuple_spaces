@@ -47,42 +47,39 @@ namespace ServerNamespace.SMR.Behaviour {
             SendMessageToMaster(askOrder);
         }
 
-        public override Message ProcessRequest(Request request) {
+        public override void ProcessRequest(Request request) {
             Server.SaveRequest(request);
-            Server.Log("Sending request to Master");
-
-            Message response = SendMessageToMaster(request);
-
-            // check periodically for answer
-            int timeBetweenChecks = 50; // ms
-            for(int i = 0; i < DefaultRequestToMasterAckTimeoutDuration; i+=timeBetweenChecks) {
-                if(response != null && response.GetType() != typeof(Ack)) {
-                    Server.Log("Waiting " + timeBetweenChecks + " ms");
-                    System.Threading.Thread.Sleep(i);
-                }
-                else {
-                    Server.Log("Received an Ack");
-                    return null;
-                }
-            }
-            TriggerReelection();
-            return null;
-        }
-
-        private void TriggerReelection() {
-            // TODO
-            throw new NotImplementedException();
+            SendMessageToMaster(request);
         }
 
         public override void ProcessAskOrder(AskOrder askOrder) {
         }
 
-        private Message SendMessageToMaster(Message request) {
-            if(Server.MasterEndpointURL != null) {
-                return Server.SendMessageToRemoteURL(Server.MasterEndpointURL, request);
-            }
-            else {
-                throw new NotImplementedException("Master not known.");
+        private void SendMessageToMaster(Message request)
+        {
+            while (true)
+            {
+                var masterUrl = "";
+                lock (Server.View)
+                {
+                    masterUrl = Server.View.Nodes.OrderBy(s => s).First();
+                }
+                Server.Log("Sending message to master (" + masterUrl + ")");
+
+                try
+                {
+                    var asyncResult = Server.NewSendMessageToRemoteURL(masterUrl, request);
+                    asyncResult.AsyncWaitHandle.WaitOne(5000); //TODO change to constant
+                    
+                    if(asyncResult.IsCompleted)
+                        break;
+                    
+                    Server.Log("Couldn't deliver message to master (" + masterUrl + ")");
+                }
+                catch (Exception e)
+                {
+                    // try again, until it receives an ok
+                }
             }
         }
     }

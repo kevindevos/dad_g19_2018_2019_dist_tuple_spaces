@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading;
 using CommonTypes;
 using CommonTypes.message;
 
@@ -10,15 +11,9 @@ namespace ServerNamespace.SMR.Behaviour
         {
         }
 
-        public override Message ProcessRequest(Request request) {
+        public override void ProcessRequest(Request request) {
             Server.SaveRequest(request);
             while(Decide(request.SrcRemoteURL));
-
-            // create an ack that will be sent back to confirm the request was received
-            Server.Log("Sending back an Ack");
-            Ack ack = new Ack(Server.EndpointURL, request);
-
-            return ack;
         }
 
         public override Message ProcessOrder(Order order) {
@@ -74,13 +69,20 @@ namespace ServerNamespace.SMR.Behaviour
             Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
             Server.RequestList.Remove(request);
             Server.Log("Sending Order to all servers.");
-            Server.SendMessageToView(Server.View.Nodes, order);
+            
+            var results = Server.NewSendMessageToView(Server.View.Nodes, order);
+            var waitHandles = results.Select(result => result.AsyncWaitHandle);
+            if(waitHandles.Count() != 0)
+                WaitHandle.WaitAll(waitHandles.ToArray());
+            
             Server.SavedOrders.Add(order);
 
             Server.UpdateLastExecutedOrder(order);
             Server.UpdateLastExecutedRequest(order.Request);
 
+            // Process request locally
             Response response = Server.ProcessRequest(order.Request);  
+            
             // if read or take answer to client
             if(order.Request.GetType() == typeof(ReadRequest) || order.Request.GetType() == typeof(TakeRequest)) {
                 Server.Log("Sending back message to client with response: " + response);

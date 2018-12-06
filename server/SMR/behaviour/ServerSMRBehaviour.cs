@@ -18,7 +18,7 @@ namespace ServerNamespace.SMR.Behaviour {
 
         public abstract Message ProcessOrder(Order order);
         public abstract void ProcessAskOrder(AskOrder askOrder);
-        public abstract Message ProcessRequest(Request request);
+        public abstract void ProcessRequest(Request request);
 
         // check if the sequence number of this request is just 1 higher than the previous ( else there is a missing request )
         protected bool CanExecuteRequest(Request request) {

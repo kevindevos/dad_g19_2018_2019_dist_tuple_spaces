@@ -55,7 +55,7 @@ namespace ServerNamespace
             
             
             RecursiveJoinView(View.Nodes);
-            getMaster();
+            GetMaster();
         }
 
         public void UpgradeToMaster()
@@ -72,7 +72,7 @@ namespace ServerNamespace
         }
 
         // ask the view for a master
-        public void getMaster()
+        private void GetMaster()
         {
             String masterUrl = null;
             
@@ -104,7 +104,8 @@ namespace ServerNamespace
             }
 
             if (message.GetType().IsSubclassOf(typeof(Request))) {
-                return Behaviour.ProcessRequest((Request)message);
+                Behaviour.ProcessRequest((Request)message);
+                return message; //TODO
             }
 
             if (message.GetType() == typeof(Order)) {

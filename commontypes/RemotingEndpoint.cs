@@ -9,7 +9,9 @@ using System.Collections;
 using System.IO;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization.Formatters;
+using NUnit.Framework;
 
 namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
@@ -237,17 +239,51 @@ namespace CommonTypes {
             return SendMessageToRemote(remotingEndpoint, message);
         }
 
-        public void SendMessageToView(IEnumerable<string> remotingURLS, Message message) {
-            foreach (string ru in remotingURLS) {
+        // send and ignore result
+        // can throw exception
+        public IAsyncResult NewSendMessageToRemoteURL(string remoteURL, Message message) {
+            var remotingEndpoint = GetRemoteEndpoint(remoteURL);
+            
+            try {
+                RemoteAsyncDelegate remoteDel = remotingEndpoint.OnReceiveMessage;
+                return remoteDel.BeginInvoke(message, delegate(IAsyncResult ar)
+                {
+                    var result = (AsyncResult) ar;
+                    var caller = (RemoteAsyncDelegate) result.AsyncDelegate;
+                    caller.EndInvoke(ar);
+                }, null);
+            }
+            catch(Exception e) {
+                Console.WriteLine("Server at " + remoteURL + " is unreachable.");
+                throw;
+            }
+        }
+
+        public List<IAsyncResult> NewSendMessageToView(IEnumerable<string> remotingUrls, Message message) {
+            var asyncResults = new List<IAsyncResult>();
+            
+            foreach (var remoteURL in remotingUrls) {
+                try
+                {
+                    var ar = NewSendMessageToRemoteURL(remoteURL, message);
+                    asyncResults.Add(ar);
+                }
+                catch (Exception e)
+                {
+                    // ignore failed server, continue sending message to the others
+                }
+            }
+            return asyncResults;
+
+        }
+        
+        
+        public void SendMessageToView(IEnumerable<string> remotingUrls, Message message) {
+            foreach (var ru in remotingUrls) {
                 SendMessageToRemoteURL(ru, message);
             }
         }
 
-        public void SendMessageToView(IEnumerable<RemotingEndpoint> servers, Message message) {
-            foreach(RemotingEndpoint re in servers) {
-                SendMessageToRemote(re, message);
-            }
-        }
         
         public static string BuildRemoteUrl(string host, int port, string objIdentifier) {
             return "tcp://" + host + ":" + port + "/" + objIdentifier;
