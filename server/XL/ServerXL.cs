@@ -19,19 +19,18 @@ namespace ServerNamespace.XL
         private ConcurrentDictionary<int, List<Tuple>> LockedTuples;
 
         public ServerXL() : this(DefaultServerHost, DefaultServerPort) { }
-
         private ServerXL(int serverPort) : this(DefaultServerHost, serverPort) { }
-
         public ServerXL(string host, int port) : this(BuildRemoteUrl(host,port, ServerObjName)) { }
-
-        public ServerXL(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
+        public ServerXL(string remoteUrl, IEnumerable<string> knownServerUrls = null, int minDelay=0, int maxDelay=0) :
+            base(remoteUrl, knownServerUrls, minDelay, maxDelay)
+        {
             LockedTuples = new ConcurrentDictionary<int, List<Tuple>>();
         }
 
-        
-        public override Message OnReceiveMessage(Message message) {
-            FreezeLock.Wait();
-            FreezeLock.Release();
+        public override Message OnReceiveMessage(Message message) 
+        {
+            FreezeCheck();
+            DelayCheck();
             
             Log("Received message: " + message);
 
