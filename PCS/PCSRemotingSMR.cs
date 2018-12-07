@@ -13,11 +13,18 @@ namespace PCS
             Client client = null;
             lock (servers)
             {
-                client = new ClientSMR(URL, serverUrls);
-                clients.Add(client_id, client);
+                try
+                {
+                    client = new ClientSMR(URL, serverUrls);
+                    clients.Add(client_id, client);
+                    Console.WriteLine("Added client {0} [{1}] with script {2}", client_id, URL, script);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
             
-            Console.WriteLine("Added client {0} [{1}] with script {2}", client_id, URL, script);
             client?.runScript(script);
         }
 

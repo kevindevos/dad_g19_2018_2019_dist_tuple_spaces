@@ -2,6 +2,8 @@
 Wait 500
 Client c1 tcp://localhost:60001/C client_script_1.txt
 Status
+Wait 2000
 Freeze s1
+Wait 5000
 Unfreeze s1
-Crash s1
+Wait 2000

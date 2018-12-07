@@ -95,7 +95,11 @@ namespace ServerNamespace
 
 
         public override Message OnReceiveMessage(Message message) {
-            Log("Received message: " + message);
+            FreezeLock.Wait();
+            FreezeLock.Release();
+            
+            Log("Received message from : " + message.SrcRemoteURL);
+            
             
             // if an Elect message, define new master as the one included in the Elect message
             if (message.GetType() == typeof(Elect)) {
@@ -130,18 +134,18 @@ namespace ServerNamespace
             throw new NotImplementedException();
         }
 
-        public void Write(Tuple tuple) {
+        private void Write(Tuple tuple) {
             TupleSpace.Write(tuple);
             Log("Wrote : " + tuple);
         }
 
-        public void Write(List<Tuple> tuples) {
+        private void Write(List<Tuple> tuples) {
             foreach (Tuple tuple in tuples) {
                 Write(tuple);
             }
         }
 
-        public List<Tuple> Read(TupleSchema tupleSchema) {
+        private List<Tuple> Read(TupleSchema tupleSchema) {
             var listTuple = TupleSpace.Read(tupleSchema);
             if (listTuple.Count > 0) {
                 Log("Read (first tuple): " + listTuple.First());
@@ -149,7 +153,7 @@ namespace ServerNamespace
             return listTuple;
         }
 
-        public List<Tuple> Take(TupleSchema tupleSchema) {
+        private List<Tuple> Take(TupleSchema tupleSchema) {
             List<Tuple> tuples = TupleSpace.Take(tupleSchema);
             if (tuples.Count > 0) {
                 List<Tuple> tuplesWriteBack = new List<Tuple>(tuples);

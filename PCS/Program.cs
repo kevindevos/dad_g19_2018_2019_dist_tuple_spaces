@@ -17,7 +17,7 @@ namespace PCS
             Console.WriteLine("===== Welcome to PCS =====");
             Console.WriteLine("Choose a tuple space implementation:");
             Console.WriteLine("1. SMR");
-            Console.WriteLine("2. XML");
+            Console.WriteLine("2. XL");
 
             while (value != 1 && value != 2)
             {

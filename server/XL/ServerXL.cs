@@ -28,6 +28,9 @@ namespace ServerNamespace.XL
 
         
         public override Message OnReceiveMessage(Message message) {
+            FreezeLock.Wait();
+            FreezeLock.Release();
+            
             Log("Received message: " + message);
 
             if (message.GetType().IsSubclassOf(typeof(Request))) {

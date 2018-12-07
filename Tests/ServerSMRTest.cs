@@ -21,7 +21,7 @@ namespace Tests
         {
             for (var i = 1; i <= _nServers; i++)
             {
-                var url = RemotingEndpoint.BuildRemoteUrl("localhost", 8050 + i, "s" + i);
+                var url = RemotingEndpoint.BuildRemoteUrl("localhost", 8080 + i, "s" + i);
                 var smr = new ServerSMR(url, _serverList.Select(server => server.EndpointURL).ToList());
                 _serverList.Add(smr);    
             }

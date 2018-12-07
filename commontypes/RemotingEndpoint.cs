@@ -35,7 +35,7 @@ namespace CommonTypes {
 
         protected readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
         private readonly Dictionary<Message, object> _waitLocks;
-        private readonly object _freezeLock;
+        protected readonly SemaphoreSlim FreezeLock = new SemaphoreSlim(1,1);
         
 
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
@@ -124,16 +124,17 @@ namespace CommonTypes {
 
         private void PrintCurrentView()
         {
-            Console.WriteLine("\n[" + ObjIdentifier + "] Current view:");
+            var toPrint = "Current view:\n";
             foreach (var serverRemote in View.Nodes)
             {
-                Console.WriteLine("\t"+ serverRemote);
+                toPrint += "\t"+ serverRemote + "\n";
             }
 
             if (View.Size() == 0)
             {
-                Console.WriteLine("\t<empty>");
+                toPrint+="\t<empty>";
             }
+            Log(toPrint);
         }
 
         // Recursive join every server and update view
@@ -234,7 +235,7 @@ namespace CommonTypes {
                 return remoteDel.EndInvoke(ar);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
+                Log("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
                 throw new SocketException();
             }
         }
@@ -259,7 +260,7 @@ namespace CommonTypes {
                 }, null);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remoteURL + " is unreachable.");
+                Log("Server at " + remoteURL + " is unreachable.");
                 throw;
             }
         }
@@ -426,7 +427,7 @@ namespace CommonTypes {
                 remoteDel.BeginInvoke(message, asyncCallback, state);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remoteURL + " is unreachable.");
+                Log("Server at " + remoteURL + " is unreachable.");
                 throw;
             }
         }
@@ -519,19 +520,21 @@ namespace CommonTypes {
         public void Crash()
         {
             DisposeChannel();
+            Log("Crash");
         }
 
         public void Freeze()
         {
-            Monitor.TryEnter(_freezeLock, 10000);
+            FreezeLock.Wait();
         }
         
         public void Unfreeze()
         {
-            lock (_freezeLock)
-            {
-                Monitor.PulseAll(_freezeLock);
-            }
+            FreezeLock.Release();
+        }
+        
+        private void Log(string text) {
+            Console.WriteLine("["+ObjIdentifier+"]: " + text);
         }
 
     }
