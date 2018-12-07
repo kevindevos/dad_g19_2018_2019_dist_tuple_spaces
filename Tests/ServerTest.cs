@@ -17,7 +17,6 @@ namespace Tests
     {
         protected readonly int _nServers;
 
-        public delegate Tuple ClientTestReadDelegate(CommonTypes.tuple.Tuple tuple);
         protected List<Server> _serverList;
         
         protected Client Client1;

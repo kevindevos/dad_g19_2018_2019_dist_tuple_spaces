@@ -484,7 +484,7 @@ namespace CommonTypes {
         }
         
         // Wait and Pulse
-        private void PulseMessage(Message originalMessage)
+        protected void PulseMessage(Message originalMessage)
         {
             _waitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
