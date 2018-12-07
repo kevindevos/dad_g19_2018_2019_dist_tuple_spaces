@@ -7,5 +7,6 @@ namespace CommonTypes
     {
         void Server(string server_id, string URL, int min_delay, int max_delay, IEnumerable<string> serverUrls);
         void Client(string client_id, string URL, string[] script, IEnumerable<string> serverUrls);
+        string Status();
     }
 }

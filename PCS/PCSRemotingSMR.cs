@@ -32,8 +32,16 @@ namespace PCS
         {
             lock (this)
             {
-                Server server = new ServerSMR(URL, serverUrls, min_delay, max_delay);
-                servers.Add(server_id, server);                
+                try
+                {
+                    Server server = new ServerSMR(URL, serverUrls, min_delay, max_delay);
+                    servers.Add(server_id, server);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Failed to add server {0} [{1}]", server_id, URL);
+                    return;
+                }
             }
             
             Console.WriteLine("Added server {0} [{1}] with a delay between [{2},{3}]", server_id, URL, min_delay,

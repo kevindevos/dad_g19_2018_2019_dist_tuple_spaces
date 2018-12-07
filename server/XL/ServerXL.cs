@@ -11,9 +11,7 @@ namespace ServerNamespace.XL
 {
     // ServerXL
     public class ServerXL : Server{
-        
-        public readonly TupleSpace TupleSpace = new TupleSpace();
-        
+               
         // contains the tuples when a take is performed for a request with a specific sequence number
         // acts as a "lock" because these tuples would be removed from the tuple space and kept here temporarily
         private ConcurrentDictionary<int, List<Tuple>> LockedTuples;

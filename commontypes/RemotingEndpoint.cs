@@ -384,13 +384,10 @@ namespace CommonTypes {
             return View;
         }
         
-        // TODO 
-        // Heartbeat
         protected void CheckBeats()
         {
             while (true)
             {
-                string report = "==========\n";
                 List<string> alive = new List<string>();
                 List<string> dead = new List<string>();
                 
@@ -398,8 +395,6 @@ namespace CommonTypes {
 
                 foreach (var server in Heartbeats.Keys.ToArray())
                 {
-                    report += $"  {server} -> {Heartbeats[server]}\n";
-
                     if (Heartbeats[server])
                     {
                         alive.Add(server);
@@ -421,9 +416,6 @@ namespace CommonTypes {
                 {
                     SetView(alive);
                 }
-                
-                report += "==========\n";
-                Console.WriteLine(report);
             }
         }
 
@@ -459,7 +451,7 @@ namespace CommonTypes {
 
         public void Beat(string node)
         {
-            Heartbeats[node] = true;
+            Heartbeats.AddOrUpdate(node, s => true, (s, b) => true);
         }
 
         public void MulticastMessageWaitAll(IEnumerable<string> view, Message message)

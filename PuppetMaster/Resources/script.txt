@@ -1,4 +1,6 @@
-﻿Server s1 tcp://localhost:50001/S 10 1000
+﻿Server s1 tcp://localhost:50001/S1 10 1000
+Server s2 tcp://localhost:50002/S2 10 1000
+Server s3 tcp://localhost:50003/S3 10 1000
 Wait 500
 Client c1 tcp://localhost:60001/C client_script_1.txt
 Status

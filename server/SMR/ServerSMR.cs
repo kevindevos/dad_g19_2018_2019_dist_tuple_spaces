@@ -24,8 +24,6 @@ namespace ServerNamespace
         
         public string MasterEndpointURL { get; set; }
 
-        // Tuple space
-        private TupleSpace TupleSpace { get; }
         public ServerSMRBehaviour Behaviour;
 
         public ServerSMR() : this(DefaultServerPort) { }
@@ -40,7 +38,6 @@ namespace ServerNamespace
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
             SavedOrders = new List<Order>();
             LastOrderSequenceNumber = 0;
-            TupleSpace = new TupleSpace();
             ReceivedAcks = new List<Ack>();
 
             RecursiveJoinView(View.Nodes);

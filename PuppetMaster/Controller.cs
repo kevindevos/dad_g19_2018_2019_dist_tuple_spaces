@@ -163,28 +163,24 @@ namespace PuppetMaster
 
         private void Status()
         {
-            Console.WriteLine("[DEBUG] Getting status");
-            // TODO
-            // foreach(RemotingEndpoint p in processes.Values)
-            //     p.Status();
+            Console.WriteLine("[DEBUG] Status");
+            Console.WriteLine("[DEBUG] PCS: {0}", pcs.Keys.Count);
+            
+            foreach (var remoteUrl in pcs.Keys.ToArray())
+            {
+                PCSRemotingAbstract remote = pcs[remoteUrl];
+                AsyncCallStatus(remote.Status);
+            }
         }
 
         private void Crash(string processname)
         {
             Console.WriteLine("[DEBUG] Crashing {0}", processname);
 
-            if (processes.ContainsKey(processname))
+            foreach (var remoteUrl in pcs.Keys.ToArray())
             {
-                processes.TryGetValue(processname, out var remoteUrl);
-                if (remoteUrl == null) return;
-
-                var remotingEndpoint = RemotingEndpoint.GetRemoteEndpoint(remoteUrl);
-                remotingEndpoint.Crash();
-            }
-
-            else
-            {
-                throw new ProcessNotFoundException(processname);
+                PCSRemotingAbstract remote = pcs[remoteUrl];
+                AsyncCallCrash(remote.Crash, processname);
             }
         }
 
@@ -240,7 +236,18 @@ namespace PuppetMaster
             processes.Add(processname, URL);
         }
 
-        
+        private void AsyncCallStatus(StatusDelegate caller)
+        {
+            Console.WriteLine("Beginning invocation of Status");
+            caller.BeginInvoke(asyncResult =>
+            {
+                AsyncResult ar = (AsyncResult)asyncResult;
+                StatusDelegate remoteDel = (StatusDelegate)ar.AsyncDelegate;
+
+                string response = remoteDel.EndInvoke(asyncResult);
+                Console.Write(response);
+            }, null);
+        }
         
         private void AsyncCallVoid(VoidDelegate caller)
         {
@@ -251,6 +258,17 @@ namespace PuppetMaster
                 remoteDel.EndInvoke(asyncResult);
             }, null);
         }
+        
+        private void AsyncCallCrash(CrashDelegate caller, string processname)
+        {
+            caller.BeginInvoke(processname, asyncResult =>
+            {
+                AsyncResult ar = (AsyncResult)asyncResult;
+                CrashDelegate remoteDel = (CrashDelegate)ar.AsyncDelegate;
+                remoteDel.EndInvoke(asyncResult);
+            }, null);
+        }
+        
         private void AsyncCallClient(ClientDelegate caller, string clientId, string URL, string[] script,
             IEnumerable<string> serverUrls)
         {
@@ -261,6 +279,7 @@ namespace PuppetMaster
                 remoteDel.EndInvoke(asyncResult);
             }, null);
         }
+        
         private void AsyncCallServer(ServerDelegate caller, string server_id, string URL, int min_delay, int max_delay,
             IEnumerable<string> serverUrls)
         {
@@ -274,6 +293,8 @@ namespace PuppetMaster
     }
 
     internal delegate void VoidDelegate();
+    internal delegate string StatusDelegate();
+    internal delegate void CrashDelegate(string processname);
     internal delegate void ClientDelegate(string clientId, string URL, string[] script, IEnumerable<string> serverUrls);
     internal delegate void ServerDelegate(string server_id, string URL, int min_delay, int max_delay,
         IEnumerable<string> serverUrls);

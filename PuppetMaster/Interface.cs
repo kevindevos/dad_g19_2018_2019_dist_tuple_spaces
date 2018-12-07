@@ -99,6 +99,8 @@ namespace PuppetMaster
 
                 if (value == 2)
                 {
+                    HelpMenu();
+                    
                     while (action != 'e')
                     {
                         Console.Write("$ ");

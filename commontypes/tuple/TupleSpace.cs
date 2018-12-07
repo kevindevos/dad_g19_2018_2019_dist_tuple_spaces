@@ -64,6 +64,18 @@ namespace CommonTypes.tuple
 
         }
 
+        public Dictionary<int, List<Tuple>> GetCopy()
+        {
+            Dictionary<int, List<Tuple>> copy;
+            
+            lock (_tupleSpace)
+            {
+                copy = new Dictionary<int, List<Tuple>>(_tupleSpace);                
+            }
+
+            return copy;
+        }
+
         private List<Tuple> GetMatchingTuples(List<Tuple> listOfTuples, TupleSchema tupleSchema)
         {
             return listOfTuples.FindAll(tupleSchema.Match);

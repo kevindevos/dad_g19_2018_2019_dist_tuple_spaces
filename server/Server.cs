@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using CommonTypes;
 using CommonTypes.message;
+using CommonTypes.tuple;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace {
     public abstract class Server : RemotingEndpoint {
@@ -19,6 +22,9 @@ namespace ServerNamespace {
         
         // a list of pending requests for some reason
         public List<Request> PendingRequestList { get; }
+        
+        // Tuple space
+        protected TupleSpace TupleSpace { get; } = new TupleSpace();
 
         protected Server() : this(DefaultServerHost, DefaultServerPort){}
         private Server(int serverPort) : this(DefaultServerHost, serverPort){}
@@ -66,7 +72,39 @@ namespace ServerNamespace {
             Console.WriteLine("[SERVER:"+EndpointURL +"]   " + text);
         }
 
-        
+        public string Status()
+        {
+            string response = "";
+            HashSet<string> nodes;
+            long version;
+            Dictionary<int, List<Tuple>> tupleSpace = TupleSpace.GetCopy();
+            
+            lock (View)
+            {
+                nodes = new HashSet<string>(View.Nodes);
+                version = View.Version;
+            }
+
+            response += $"[VIEW version={version}]\n";
+            foreach (var node in nodes)
+            {
+                response += $"  {node}\n";
+            }
+            
+            response += $"[TUPLE SPACE]\n";
+            foreach (var size in tupleSpace.Keys.ToArray())
+            {
+                response += $"  [size={size}]\n";
+
+                foreach (var tuple in tupleSpace[size])
+                {
+                    response += $"    {tuple.ToString()}\n";
+                }
+            }
+            
+            response += "===============\n";
+            return response;
+        }
     }
 
 }
