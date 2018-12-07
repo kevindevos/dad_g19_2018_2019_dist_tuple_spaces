@@ -24,7 +24,7 @@ namespace CommonTypes {
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         
-        // verification period is 3x this
+        // verification period is 5x this
         public static readonly int HEARTBEAT_PERIOD = 1000;
         
         protected const string DefaultServerHost = "localhost";
