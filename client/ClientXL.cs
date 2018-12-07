@@ -22,7 +22,7 @@ namespace ClientNamespace {
         public ClientXL(string host, int port) : this(BuildRemoteUrl(host, port, ClientObjName)) {
         }
 
-        public ClientXL(string remoteUrl) : base(remoteUrl) {
+        public ClientXL(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls) {
             AcksReceivedPerRequest = new ConcurrentDictionary<int, int>();
             ResponsesReceivedPerRequest = new ConcurrentDictionary<int, List<Response>>();
         }
@@ -39,118 +39,61 @@ namespace ClientNamespace {
         {
             Message resultMessage = null;
             var request = new ReadRequest(ClientRequestSeqNumber, EndpointURL, tuple);
-
             MulticastMessageWaitAny(View.Nodes, request);
 
-            while (resultMessage == null)
+            // wait until it gets a any message 
+            WaitMessage(request, View.Nodes);
+
+            lock (ReplyResultQueue)
             {
-                // wait until it gets a any message 
-                WaitMessage(request, View.Nodes);
-
-                lock (ReplyResultQueue)
-                {
-                    ReplyResultQueue.TryGetValue(request, out var replyResult);
-                    resultMessage = replyResult?.GetAnyResult();
-                    
-                    if (resultMessage == null)
-                    {
-                        var waitingForReply = replyResult?.GetWaitingForReply();
-                        var sendAgain = View.Nodes.Except(waitingForReply);
-                        MulticastMessageWaitAny(sendAgain, request);
-                    }
-                }
-
+                ReplyResultQueue.TryGetValue(request, out var replyResult);
+                resultMessage = replyResult?.GetAnyResult();
             }
 
             ClientRequestSeqNumber++;
             Response response = (Response) resultMessage;
+            
             return response.Tuples.First();
-
-            // If no response is received after timeout, message is resent 
-            /*int timeStep = 200; // ms
-            while (true){
-                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
-                    if (responses != null && responses.Count >= 1 && responses.First().Tuples.Count > 0){
-                        ResponsesReceivedPerRequest.TryRemove(request.SeqNum, out _);
-                        return responses.First().Tuples.First();
-                    }
-                    Thread.Sleep(timeStep);
-                }
-
-                // resend same request
-                SendMessageToView(request);
-            }*/
         }
 
         public override Tuple Take(Tuple tuple) {
-            var takeRequest = new TakeRequest(ClientRequestSeqNumber, EndpointURL, tuple);
-            SendMessageToView(takeRequest);
-            ClientRequestSeqNumber++;
-
             int timeStep = 250; // ms
-            List<Response> responses = null;
+            List<Message> messages = null;
+            Message resultMessage = null;
             List<Tuple> intersection = new List<Tuple>();
             Tuple selectedTuple = new Tuple(new List<object>());
             
             // PHASE 1
-            // Send/Resend the request until all sites have accepted the request and responded with their set of tuples 
-            // and the intersection is non null
-            do{
-                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    ResponsesReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out responses);
-           
-                    // If we got all answers make take progress
-                    if (responses != null && responses.Count == View.Size()){
-                        ResponsesReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
-                     
-                        // build the intersection 
-                        intersection = responses.First().Tuples; 
-                        foreach(Response response in responses){
-                            intersection = new List<Tuple>(intersection.Intersect(response.Tuples));
-                        }
-                        
-                        
-                        // Choose random tuple from intersection
-                        if (intersection.Count > 0){
-                            selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
-                            
-                            // PHASE 2
-                            // Issue a multicast remove for the selectedTuple
-                            Message takeRemove = new TakeRemove(EndpointURL, selectedTuple, takeRequest.SeqNum);
-                            SendMessageToView(takeRemove);
-                        
-                            // wait for all acks
-                            int ackCount = 0;
-                            do {
-                                for (int j = 0; j < DefaultTimeoutDuration; j += timeStep){
-                                    AcksReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out ackCount);
-                                    if (ackCount == View.Size()){
-                                        AcksReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
-                                        return selectedTuple;
-                                    }
-                                    Thread.Sleep(timeStep);
-                                }
-                                // Resend remove
-                                SendMessageToView(takeRemove);
-                            } while (ackCount < View.Size());
-                        }
-                    }
-                    
-                    Thread.Sleep(timeStep);
-                }
-                
-                // ask servers to release their locks since at this point the take request has been rejected 
-                // because we didn't get all the responses within timeout period
-                Message lockRelease = new LockRelease(EndpointURL, takeRequest.SeqNum);
-                SendMessageToView(lockRelease);
+            var takeRequest = new TakeRequest(ClientRequestSeqNumber, EndpointURL, tuple);
+            
+            // wait for all responses
+            MulticastMessageWaitAll(View.Nodes, takeRequest);
+            WaitMessage(takeRequest, View.Nodes);
+            ClientRequestSeqNumber++;
+            
+            lock (ReplyResultQueue)
+            {
+                ReplyResultQueue.TryGetValue(takeRequest, out var replyResult);
+                messages = new List<Message>(replyResult?.GetAllResults());
+            }
+          
+            // get the intersection
+            Response response;
+            intersection = ((Response) messages.First()).Tuples;
+            foreach (Message msg in messages){
+                response = (Response) msg;
+                intersection = new List<Tuple>(intersection.Intersect(response.Tuples));
+            }
+            
+            // choose random tuple from intersection
+            selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
+            
+            // phase 2, issue a take remove and wait for all acks
+            Message takeRemove = new TakeRemove(EndpointURL, selectedTuple, takeRequest.SeqNum);
+            MulticastMessageWaitAll(View.Nodes, takeRemove);
+            WaitMessage(takeRemove, View.Nodes);
 
-                // resend the same request
-                SendMessageToView(takeRequest);
-            } while (responses == null || (responses.Count < View.Size() && intersection.Count == 0));
-
-            return null;
-
+            return selectedTuple;
         }
 
         public override Message OnReceiveMessage(Message message) {

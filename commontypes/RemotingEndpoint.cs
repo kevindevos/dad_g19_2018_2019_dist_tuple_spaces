@@ -34,9 +34,10 @@ namespace CommonTypes {
         public string EndpointURL { get; }
 
         public readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
-        public readonly Dictionary<Message, object> WaitLocks;
         private readonly Dictionary<string, bool> Heartbeats;
-
+        private readonly Dictionary<Message, object> _waitLocks;
+        protected readonly SemaphoreSlim FreezeLock = new SemaphoreSlim(1,1);
+        
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
             if (knownServerUrls is null)
@@ -63,7 +64,7 @@ namespace CommonTypes {
             }
             
             ReplyResultQueue = new ConcurrentDictionary<Message, ReplyResult>();
-            WaitLocks = new Dictionary<Message, object>();
+            _waitLocks = new Dictionary<Message, object>();
             
             Host = splitUrl[0];
             Port = int.Parse(splitUrl[1]);
@@ -89,6 +90,8 @@ namespace CommonTypes {
 
         public void DisposeChannel()
         {
+            if (TcpChannel == null) return;
+            
             TcpChannel.StopListening(null);
             RemotingServices.Disconnect(this);
             ChannelServices.UnregisterChannel(TcpChannel);
@@ -122,16 +125,17 @@ namespace CommonTypes {
 
         private void PrintCurrentView()
         {
-            Console.WriteLine("\n[" + ObjIdentifier + "] Current view:");
+            var toPrint = "Current view:\n";
             foreach (var serverRemote in View.Nodes)
             {
-                Console.WriteLine("\t"+ serverRemote);
+                toPrint += "\t"+ serverRemote + "\n";
             }
 
             if (View.Size() == 0)
             {
-                Console.WriteLine("\t<empty>");
+                toPrint+="\t<empty>";
             }
+            Log(toPrint);
         }
 
         // Recursive join every server and update view
@@ -232,7 +236,7 @@ namespace CommonTypes {
                 return remoteDel.EndInvoke(ar);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
+                Log("Server at " + remotingEndpoint.EndpointURL + " is unreachable. (For more detail: " + e.Message + ")");
                 throw new SocketException();
             }
         }
@@ -257,7 +261,7 @@ namespace CommonTypes {
                 }, null);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remoteURL + " is unreachable.");
+                Log("Server at " + remoteURL + " is unreachable.");
                 throw;
             }
         }
@@ -296,10 +300,7 @@ namespace CommonTypes {
             return url.Substring(6).Split(new char[]{':', '/'});
         }
 
-
         public abstract Message OnReceiveMessage(Message message);
-
-        
         
         
         private void DoPing(string remotingEndpointUrl)
@@ -328,7 +329,6 @@ namespace CommonTypes {
             var asyncResult = getViewDelegate.BeginInvoke(null, null);
             return getViewDelegate.EndInvoke(asyncResult);
         }
-
         
         
         public void Ping()
@@ -359,7 +359,36 @@ namespace CommonTypes {
         // Heartbeat
         private void CheckBeats()
         {
+            List<string> dead;
             
+            while (true)
+            {
+                dead = new List<string>();
+                
+                Thread.Sleep(2000);
+                Console.WriteLine("Checking beats...");
+
+                lock (Heartbeats)
+                {
+                    foreach (var server in Heartbeats.Keys.ToArray())
+                    {
+                        Console.WriteLine("  {0} -> {1}", server, Heartbeats[server]);
+
+                        if (!Heartbeats[server])
+                        {
+                            Console.WriteLine("MAN DOWN -> {0}", server);
+                            dead.Add(server);
+                        }
+
+                        Heartbeats[server] = false;
+                    }
+
+                    // setView to new view
+                    // Heartbeats.Remove(server);
+                    
+                }
+
+            }
         }
 
         // TODO 
@@ -436,7 +465,7 @@ namespace CommonTypes {
             }
         }
 
-        public void MulticastSingleUrl(string remoteURL, Message message, AsyncCallback asyncCallback) {
+        private void MulticastSingleUrl(string remoteURL, Message message, AsyncCallback asyncCallback) {
             var remotingEndpoint = GetRemoteEndpoint(remoteURL);
             
             try {
@@ -445,7 +474,7 @@ namespace CommonTypes {
                 remoteDel.BeginInvoke(message, asyncCallback, state);
             }
             catch(Exception e) {
-                Console.WriteLine("Server at " + remoteURL + " is unreachable.");
+                Log("Server at " + remoteURL + " is unreachable.");
                 throw;
             }
         }
@@ -454,7 +483,7 @@ namespace CommonTypes {
         
         // Callbacks
         //
-        protected void WaitAllCallback(IAsyncResult asyncResult)
+        private void WaitAllCallback(IAsyncResult asyncResult)
         {
             AsyncResult ar = (AsyncResult)asyncResult;
             RemoteAsyncDelegate remoteDel = (RemoteAsyncDelegate)ar.AsyncDelegate;
@@ -479,7 +508,8 @@ namespace CommonTypes {
                 }
             }
         }
-        public void WaitAnyCallback(IAsyncResult asyncResult)
+
+        private void WaitAnyCallback(IAsyncResult asyncResult)
         {
             AsyncResult ar = (AsyncResult)asyncResult;
             RemoteAsyncDelegate remoteDel = (RemoteAsyncDelegate)ar.AsyncDelegate;
@@ -508,7 +538,7 @@ namespace CommonTypes {
         // Wait and Pulse
         protected void PulseMessage(Message originalMessage)
         {
-            WaitLocks.TryGetValue(originalMessage, out var messageLock);
+            _waitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
             {
                 // this lock is necessary to do the pulse
@@ -522,16 +552,36 @@ namespace CommonTypes {
         {
             if (viewNodes != null && !viewNodes.Any()) return;
             
-            WaitLocks.Add(originalMessage, new object());
-            WaitLocks.TryGetValue(originalMessage, out var messageLock);
+            _waitLocks.Add(originalMessage, new object());
+            _waitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
             {
-                // this lock is necessary to do the pulse
+                // this lock is necessary to do the wait
                 lock (messageLock)
                 {
-                    Monitor.Wait(messageLock, timeout);
+                    Monitor.Wait(messageLock, timeout);    
                 }
             }
+        }
+
+        public void Crash()
+        {
+            DisposeChannel();
+            Log("Crash");
+        }
+
+        public void Freeze()
+        {
+            FreezeLock.Wait();
+        }
+        
+        public void Unfreeze()
+        {
+            FreezeLock.Release();
+        }
+        
+        private void Log(string text) {
+            Console.WriteLine("["+ObjIdentifier+"]: " + text);
         }
 
     }

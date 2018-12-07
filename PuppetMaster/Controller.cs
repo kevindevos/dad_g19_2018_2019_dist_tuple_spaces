@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Remoting.Messaging;
 using System.Threading;
 using CommonTypes;
+using CommonTypes.message;
 using PCS;
 using PuppetMaster.Exceptions;
 
@@ -17,7 +20,7 @@ namespace PuppetMaster
             .Parent.FullName;
 
         private readonly Dictionary<string, PCSRemotingAbstract> pcs;
-        private readonly Dictionary<string, RemotingEndpoint> processes;
+        private readonly Dictionary<string, string> processes;
         private readonly TcpChannel channel;
 
         private readonly int PCS_PORT = 10000;
@@ -25,7 +28,7 @@ namespace PuppetMaster
         public Controller(string[] addrs)
         {
             pcs = new Dictionary<string, PCSRemotingAbstract>();
-            processes = new Dictionary<string, RemotingEndpoint>();
+            processes = new Dictionary<string, string>();
 
             channel = new TcpChannel();
             ChannelServices.RegisterChannel(channel, false);
@@ -124,7 +127,8 @@ namespace PuppetMaster
             if (pcs.ContainsKey(addr))
             {
                 PCSRemotingAbstract p = pcs[addr];
-                p.Server(server_id, URL, min_delay, max_delay);
+                IEnumerable<string> serverUrls = processes.Values.ToList();
+                AsyncCallServer(p.Server, server_id, URL, min_delay, max_delay, serverUrls);
 
                 ConnectToProcess(server_id, URL);
             }
@@ -146,8 +150,9 @@ namespace PuppetMaster
                 PCSRemotingAbstract p = pcs[addr];
                 string[] script = File.ReadAllLines(
                     @PROJECT_PATH + CLIENT_SCRIPTS_REL_PATH + script_file);
-
-                p.Client(client_id, URL, script);
+                
+                IEnumerable<string> serverUrls = processes.Values.ToList();
+                AsyncCallClient(p.Client, client_id, URL, script, serverUrls);
             }
 
             else
@@ -170,7 +175,11 @@ namespace PuppetMaster
 
             if (processes.ContainsKey(processname))
             {
-                // TODO
+                processes.TryGetValue(processname, out var remoteUrl);
+                if (remoteUrl == null) return;
+
+                var remotingEndpoint = RemotingEndpoint.GetRemoteEndpoint(remoteUrl);
+                remotingEndpoint.Crash();
             }
 
             else
@@ -185,7 +194,11 @@ namespace PuppetMaster
 
             if (processes.ContainsKey(processname))
             {
-                // TODO
+                processes.TryGetValue(processname, out var remoteUrl);
+                if (remoteUrl == null) return;
+                
+                var remotingEndpoint = RemotingEndpoint.GetRemoteEndpoint(remoteUrl);
+                AsyncCallVoid(remotingEndpoint.Freeze);
             }
 
             else
@@ -200,7 +213,11 @@ namespace PuppetMaster
 
             if (processes.ContainsKey(processname))
             {
-                // TODO
+                processes.TryGetValue(processname, out var remoteUrl);
+                if (remoteUrl == null) return;
+                
+                var remotingEndpoint = RemotingEndpoint.GetRemoteEndpoint(remoteUrl);
+                AsyncCallVoid(remotingEndpoint.Unfreeze);
             }
 
             else
@@ -217,10 +234,47 @@ namespace PuppetMaster
 
         private void ConnectToProcess(string processname, string URL)
         {
-            RemotingEndpoint obj = (RemotingEndpoint)Activator.GetObject(
-                typeof(RemotingEndpoint), URL);
+            /*RemotingEndpoint obj = (RemotingEndpoint)Activator.GetObject(
+                typeof(RemotingEndpoint), URL);*/
 
-            processes.Add(processname, obj);
+            processes.Add(processname, URL);
+        }
+
+        
+        
+        private void AsyncCallVoid(VoidDelegate caller)
+        {
+            caller.BeginInvoke(asyncResult =>
+            {
+                AsyncResult ar = (AsyncResult)asyncResult;
+                VoidDelegate remoteDel = (VoidDelegate)ar.AsyncDelegate;
+                remoteDel.EndInvoke(asyncResult);
+            }, null);
+        }
+        private void AsyncCallClient(ClientDelegate caller, string clientId, string URL, string[] script,
+            IEnumerable<string> serverUrls)
+        {
+            caller.BeginInvoke(clientId, URL, script, serverUrls, asyncResult =>
+            {
+                AsyncResult ar = (AsyncResult)asyncResult;
+                ClientDelegate remoteDel = (ClientDelegate)ar.AsyncDelegate;
+                remoteDel.EndInvoke(asyncResult);
+            }, null);
+        }
+        private void AsyncCallServer(ServerDelegate caller, string server_id, string URL, int min_delay, int max_delay,
+            IEnumerable<string> serverUrls)
+        {
+            caller.BeginInvoke(server_id, URL, min_delay,max_delay, serverUrls, asyncResult =>
+            {
+                AsyncResult ar = (AsyncResult)asyncResult;
+                ServerDelegate remoteDel = (ServerDelegate)ar.AsyncDelegate;
+                remoteDel.EndInvoke(asyncResult);
+            }, null);
         }
     }
+
+    internal delegate void VoidDelegate();
+    internal delegate void ClientDelegate(string clientId, string URL, string[] script, IEnumerable<string> serverUrls);
+    internal delegate void ServerDelegate(string server_id, string URL, int min_delay, int max_delay,
+        IEnumerable<string> serverUrls);
 }

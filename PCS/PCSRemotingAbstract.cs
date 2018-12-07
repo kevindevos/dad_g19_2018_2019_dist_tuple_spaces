@@ -17,7 +17,12 @@ namespace PCS
             servers = new Dictionary<string, Server>();
         }
 
-        public abstract void Client(string client_id, string URL, string[] script);
-        public abstract void Server(string server_id, string URL, int min_delay, int max_delay);
+        public abstract void Client(string client_id, string URL, string[] script, IEnumerable<string> serverUrls);
+        public abstract void Server(string server_id, string URL, int min_delay, int max_delay, IEnumerable<string> serverUrls);
+
+        
+        private void Log(string text) {
+            Console.WriteLine("[PCS]: " + text);
+        }
     }
 }

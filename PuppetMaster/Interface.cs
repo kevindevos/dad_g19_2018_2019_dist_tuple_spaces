@@ -29,28 +29,79 @@ namespace PuppetMaster
             string[] script;
             char action = '\0';
 
-            Console.WriteLine("1. Read configuration script");
-            Console.WriteLine("2. Manually input commands");
-
-            while (value != 1 && value != 2)
+            while (true)
             {
-                Console.Write("\n[1|2] ");
-                response = Console.ReadLine();
-                Int32.TryParse(response, out value);
-            }
+                Console.WriteLine("1. Read configuration script");
+                Console.WriteLine("2. Manually input commands");
+                Console.WriteLine("3. To exit");
 
-            if (value == 1)
-            {
-                script = ReadScript();
-                HelpMenu(true);
-
-                foreach(string command in script)
+                while (value != 1 && value != 2 && value != 3)
                 {
-                    Console.WriteLine("-> {0}", command);
+                    Console.Write("\n[1|2|3] ");
+                    response = Console.ReadLine();
+                    Int32.TryParse(response, out value);
+                }
 
-                    while (action != 'r' && action != 'n')
+                if (value == 1)
+                {
+                    script = ReadScript();
+                    HelpMenu(true);
+
+                    foreach (string command in script)
                     {
-                        Console.Write("\n$ ");
+                        Console.WriteLine("-> {0}", command);
+
+                        while (action != 'r' && action != 'n')
+                        {
+                            Console.Write("\n$ ");
+                            input = Console.ReadLine();
+
+                            if (input.Length == 1)
+                                action = input[0];
+
+                            else
+                            {
+                                try
+                                {
+                                    controller.ParseCommand(input);
+                                }
+
+                                catch (InvalidCommandException ice)
+                                {
+                                    Console.WriteLine("[ERROR] Invalid command '{0}'", ice.command);
+                                }
+                            }
+
+                            if (action == 'h')
+                                HelpMenu(true);
+
+                            else if (action == 'e')
+                                break;
+                        }
+
+                        if (action == 'n')
+                            action = '\0';
+
+                        else if (action == 'e')
+                            break;
+
+                        try
+                        {
+                            controller.ParseCommand(command);
+                        }
+
+                        catch (InvalidCommandException ice)
+                        {
+                            Console.WriteLine("[ERROR] Invalid command '{0}'", ice.command);
+                        }
+                    }
+                }
+
+                if (value == 2)
+                {
+                    while (action != 'e')
+                    {
+                        Console.Write("$ ");
                         input = Console.ReadLine();
 
                         if (input.Length == 1)
@@ -70,61 +121,20 @@ namespace PuppetMaster
                         }
 
                         if (action == 'h')
-                            HelpMenu(true);
-
-                        else if (action == 'e')
-                            break;
-                    }
-
-                    if (action == 'n')
-                        action = '\0';
-
-                    else if (action == 'e')
-                        break;
-
-                    try
-                    {
-                        controller.ParseCommand(command);
-                    }
-
-                    catch (InvalidCommandException ice)
-                    {
-                        Console.WriteLine("[ERROR] Invalid command '{0}'", ice.command);
+                            HelpMenu();
                     }
                 }
-            }
 
-            else
-            {
-                while (action != 'e')
+                if (value == 3)
                 {
-                    Console.Write("$ ");
-                    input = Console.ReadLine();
-
-                    if (input.Length == 1)
-                        action = input[0];
-
-                    else
-                    {
-                        try
-                        {
-                            controller.ParseCommand(input);
-                        }
-
-                        catch (InvalidCommandException ice)
-                        {
-                            Console.WriteLine("[ERROR] Invalid command '{0}'", ice.command);
-                        }
-                    }
-
-                    if (action == 'h')
-                        HelpMenu();
+                    Console.WriteLine("Exiting...");
+                    Console.Write("[enter] to close");
+                    Console.ReadLine();
+                    break;
                 }
-            }
 
-            Console.WriteLine("Exiting...");
-            Console.Write("[enter] to close");
-            Console.ReadLine();
+                value = -1;
+            }
         }
 
         private string[] ReadScript()

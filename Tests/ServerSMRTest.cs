@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using ClientNamespace;
 using CommonTypes;
 using NUnit.Framework;
@@ -20,12 +22,13 @@ namespace Tests
             for (var i = 1; i <= _nServers; i++)
             {
                 var url = RemotingEndpoint.BuildRemoteUrl("localhost", 8080 + i, "s" + i);
-                var smr = new ServerSMR(url);
+                var smr = new ServerSMR(url, _serverList.Select(server => server.EndpointURL).ToList());
                 _serverList.Add(smr);    
             }
-            
-            Client1 = new ClientSMR("tcp://localhost:8010/c1");
-            Client2 = new ClientSMR("tcp://localhost:8011/c2");
+
+            var serverUrls = _serverList.Select(server => server.EndpointURL).ToList();
+            Client1 = new ClientSMR("tcp://localhost:8010/c1", serverUrls );
+            Client2 = new ClientSMR("tcp://localhost:8011/c2", serverUrls );
         }
 
         [TearDown]
