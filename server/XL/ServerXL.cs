@@ -96,28 +96,25 @@ namespace ServerNamespace.XL
         public Message ProcessRequest(Request request) {
             var tupleSchema = new TupleSchema(request.Tuple);
 
+            if (request.GetType() == typeof(WriteRequest)){
+                TupleSpace.Write(request.Tuple);
+
+                // Send back an Ack of the write
+                return new Ack(EndpointURL, request);
+            }
+
             if (request.GetType() == typeof(ReadRequest)){
                 List<Tuple> tuples = TupleSpace.Read(tupleSchema);
 
                 // only send back result if there is something to send
                 if (tuples.Count > 0){
                     Response response = new Response(request, tuples, EndpointURL);
-                    SendMessageToRemoteURL(request.SrcRemoteURL, response);
                     return response;
                 }
 
                 return null;
             }
-            
-            if (request.GetType() == typeof(WriteRequest)){
-                TupleSpace.Write(request.Tuple);
 
-                // Send back an Ack of the write
-                Ack ack = new Ack(EndpointURL, request);
-                SendMessageToRemoteURL(request.SrcRemoteURL, ack);
-                return ack;
-            }
-            
             if (request.GetType() == typeof(TakeRequest)){
                 tupleSchema = new TupleSchema(request.Tuple);
                 List<Tuple> resultTuples = TupleSpace.Take(tupleSchema);

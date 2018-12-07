@@ -161,19 +161,19 @@ namespace ServerNamespace
 
             return tuples;
         }
-        public Response ProcessRequest(Request request) {
+        public Message ProcessRequest(Request request) {
             var tupleSchema = new TupleSchema(request.Tuple);
+
+            if (request.GetType() == typeof(WriteRequest)){
+                Write(request.Tuple);
+                return new Response(request, new List<Tuple>(), EndpointURL); 
+            }
 
             if (request.GetType() == typeof(ReadRequest)){
                 var resultTuples = Read(tupleSchema);
                 return new Response(request, resultTuples, EndpointURL);
             }
-            
-            if (request.GetType() == typeof(WriteRequest)){
-                Write(request.Tuple);
-                return null;
-            }
-            
+
             if (request.GetType() == typeof(TakeRequest)){
                 tupleSchema = new TupleSchema(request.Tuple);
                 List<Tuple> resultTuples = Take(tupleSchema);

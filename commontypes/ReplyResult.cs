@@ -36,8 +36,11 @@ namespace CommonTypes
         // called inside the callback to save the result  
         public void AddResult(string remoteUrl, Message result)
         {
+            // ignore if not on the waitingForReply List
+            if (!_waitingForReply.Contains(remoteUrl)) return;
+            
             _waitingForReply.Remove(remoteUrl);
-            _replies.AddOrUpdate(remoteUrl,result,(s, message) => message);
+            _replies.AddOrUpdate(remoteUrl, result, (s, message) => message);
         }
 
         // called to check if any result have been delivered
@@ -54,12 +57,17 @@ namespace CommonTypes
 
         public Message GetAnyResult()
         {
-            return _replies.Values.First();
+            return _replies.Values.Any(message => message != null) ? _replies.Values.First() : null;
         }
         
         public IEnumerable<Message> GetAllResults()
         {
-            return _replies.Values;
+            return _replies.Values.Any() ? _replies.Values : null;
+        }
+
+        public IEnumerable<string> GetWaitingForReply()
+        {
+            return _waitingForReply;
         }
     }
 }

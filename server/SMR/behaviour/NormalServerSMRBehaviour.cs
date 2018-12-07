@@ -68,16 +68,13 @@ namespace ServerNamespace.SMR.Behaviour {
 
                 try
                 {
-                    var asyncResult = Server.NewSendMessageToRemoteURL(masterUrl, request);
-                    asyncResult.AsyncWaitHandle.WaitOne(5000); //TODO change to constant
-                    
-                    if(asyncResult.IsCompleted)
-                        break;
-                    
-                    Server.Log("Couldn't deliver message to master (" + masterUrl + ")");
+                    Server.SingleCastMessage(masterUrl, request);
+                    Server.WaitMessage(request);
+                    break;
                 }
                 catch (Exception e)
                 {
+                    Server.Log("Couldn't deliver message to master (" + masterUrl + ")");
                     // try again, until it receives an ok
                 }
             }

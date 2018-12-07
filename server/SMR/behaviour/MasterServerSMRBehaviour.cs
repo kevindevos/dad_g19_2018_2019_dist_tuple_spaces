@@ -70,10 +70,8 @@ namespace ServerNamespace.SMR.Behaviour
             Server.RequestList.Remove(request);
             Server.Log("Sending Order to all servers.");
             
-            var results = Server.NewSendMessageToView(Server.View.Nodes, order);
-            var waitHandles = results.Select(result => result.AsyncWaitHandle);
-            if(waitHandles.Count() != 0)
-                WaitHandle.WaitAll(waitHandles.ToArray());
+            Server.MulticastMessageWaitAll(Server.View.Nodes, order);
+            Server.WaitMessage(order, Server.View.Nodes);
             
             Server.SavedOrders.Add(order);
 
@@ -81,12 +79,13 @@ namespace ServerNamespace.SMR.Behaviour
             Server.UpdateLastExecutedRequest(order.Request);
 
             // Process request locally
-            Response response = Server.ProcessRequest(order.Request);  
+            Message response = Server.ProcessRequest(order.Request);  
             
             // if read or take answer to client
             if(order.Request.GetType() == typeof(ReadRequest) || order.Request.GetType() == typeof(TakeRequest)) {
                 Server.Log("Sending back message to client with response: " + response);
-                Server.SendMessageToRemoteURL(request.SrcRemoteURL, response);
+                Server.SingleCastMessage(request.SrcRemoteURL, response);
+                Server.WaitMessage(response);
             }
             
         }

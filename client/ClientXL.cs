@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,35 +36,44 @@ namespace ClientNamespace {
         public override void Write(Tuple tuple) {
             var request = new WriteRequest(ClientRequestSeqNumber, EndpointURL, tuple);
 
-            SendMessageToView(request);
+            MulticastMessageWaitAll(View.Nodes, request);
+            WaitMessage(request, View.Nodes);
             ClientRequestSeqNumber++;
-
-            // Count Acks received from servers, if a timeout is reached, the message is resent
-            int acksReceived = 0;
-            int timeStep = 200; // ms
-            do{
-                // did we get all acks?
-                for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
-                    AcksReceivedPerRequest.TryGetValue(request.SeqNum, out acksReceived);
-                    if (acksReceived == View.Size()){
-                        AcksReceivedPerRequest.TryRemove(request.SeqNum, out _);
-                        return;
-                    }
-                    Thread.Sleep(timeStep);
-                }
-                // timeout reached resend the same request
-                SendMessageToView(request);
-            } while (acksReceived < View.Size());
-            
         }
 
-        public override Tuple Read(Tuple tuple) {
+        public override Tuple Read(Tuple tuple)
+        {
+            Message resultMessage = null;
             var request = new ReadRequest(ClientRequestSeqNumber, EndpointURL, tuple);
-            SendMessageToView(request);
+
+            MulticastMessageWaitAny(View.Nodes, request);
+
+            while (resultMessage == null)
+            {
+                // wait until it gets a any message 
+                WaitMessage(request, View.Nodes);
+
+                lock (ReplyResultQueue)
+                {
+                    ReplyResultQueue.TryGetValue(request, out var replyResult);
+                    resultMessage = replyResult?.GetAnyResult();
+                    
+                    if (resultMessage == null)
+                    {
+                        var waitingForReply = replyResult?.GetWaitingForReply();
+                        var sendAgain = View.Nodes.Except(waitingForReply);
+                        MulticastMessageWaitAny(sendAgain, request);
+                    }
+                }
+
+            }
+
             ClientRequestSeqNumber++;
+            Response response = (Response) resultMessage;
+            return response.Tuples.First();
 
             // If no response is received after timeout, message is resent 
-            int timeStep = 200; // ms
+            /*int timeStep = 200; // ms
             while (true){
                 for (int i = 0; i < DefaultTimeoutDuration; i += timeStep){
                     ResponsesReceivedPerRequest.TryGetValue(request.SeqNum, out var responses);
@@ -76,7 +86,7 @@ namespace ClientNamespace {
 
                 // resend same request
                 SendMessageToView(request);
-            }
+            }*/
         }
 
         public override Tuple Take(Tuple tuple) {

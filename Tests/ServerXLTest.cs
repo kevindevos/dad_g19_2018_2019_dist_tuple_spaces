@@ -11,10 +11,9 @@ namespace Tests
 {
     [TestFixture(1)]
     [TestFixture(2)]
-    //[TestFixture(3)]
-    //[TestFixture(4)]
-    //[TestFixture(5)]
-    //[Ignore("Ignore XL test for now")]
+/*    [TestFixture(3)]
+    [TestFixture(4)]
+    [TestFixture(5)]*/
     public class ServerXLTest : ServerTest
     {
         public ServerXLTest(int nServers) : base(nServers)

@@ -6,6 +6,7 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using CommonTypes.message;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net.Sockets;
 using System.Reflection;
@@ -33,8 +34,8 @@ namespace CommonTypes {
         private string ObjIdentifier { get; }
         public string EndpointURL { get; }
 
-        public Dictionary<Message, ReplyResult> ReplyResultQueue;
-        public Dictionary<Message, object> WaitLocks;
+        public readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
+        public readonly Dictionary<Message, object> WaitLocks;
 
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
@@ -60,7 +61,9 @@ namespace CommonTypes {
                 throw new Exception("Invalid remote Url passed to constructor.");
             }
             
-            ReplyResultQueue = new Dictionary<Message, ReplyResult>();
+            ReplyResultQueue = new ConcurrentDictionary<Message, ReplyResult>();
+            WaitLocks = new Dictionary<Message, object>();
+            
             Host = splitUrl[0];
             Port = int.Parse(splitUrl[1]);
             ObjIdentifier = splitUrl[2];
@@ -347,21 +350,21 @@ namespace CommonTypes {
         }
 
 
-        protected void MulticastMessageWaitAll(IEnumerable<string> view, Message message)
+        public void MulticastMessageWaitAll(IEnumerable<string> view, Message message)
         {
             MulticastMessage(view, message, WaitAllCallback);
         }
-        protected void MulticastMessageWaitAny(IEnumerable<string> view, Message message)
+        public void MulticastMessageWaitAny(IEnumerable<string> view, Message message)
         {
             MulticastMessage(view, message, WaitAnyCallback);
         }
 
-        protected void SingleCastMessage(string remoteUrl, Message message)
+        public void SingleCastMessage(string remoteUrl, Message message)
         {
             var replyResult = new ReplyResult();
             lock (ReplyResultQueue)
             {
-                ReplyResultQueue.Add(message, replyResult);
+                ReplyResultQueue.TryAdd(message, replyResult);
             }
             
             try
@@ -388,7 +391,7 @@ namespace CommonTypes {
             var replyResult = new ReplyResult();
             lock (ReplyResultQueue)
             {
-                ReplyResultQueue.Add(message, replyResult);
+                ReplyResultQueue.TryAdd(message, replyResult);
             }
             
             foreach (var remoteUrl in view)
@@ -480,7 +483,8 @@ namespace CommonTypes {
             }
         }
         
-        private void PulseMessage(Message originalMessage)
+        // Wait and Pulse
+        protected void PulseMessage(Message originalMessage)
         {
             WaitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
@@ -492,16 +496,18 @@ namespace CommonTypes {
                 }
             }
         }
-        
-        private void WaitMessage(Message originalMessage)
+        public void WaitMessage(Message originalMessage, IEnumerable<string> viewNodes = null, int timeout=Timeout.Infinite)
         {
+            if (viewNodes != null && !viewNodes.Any()) return;
+            
+            WaitLocks.Add(originalMessage, new object());
             WaitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
             {
                 // this lock is necessary to do the pulse
                 lock (messageLock)
                 {
-                    Monitor.Wait(messageLock);
+                    Monitor.Wait(messageLock, timeout);
                 }
             }
         }

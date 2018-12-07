@@ -105,6 +105,7 @@ namespace ClientNamespace {
                 try
                 {
                     SingleCastMessage(randomServer, message);
+                    WaitMessage(message);
                     break;
                 }
                 catch (Exception e)
