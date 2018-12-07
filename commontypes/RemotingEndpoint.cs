@@ -19,6 +19,7 @@ namespace CommonTypes {
     public delegate void PingDelegate();
     public delegate HashSet<string> JoinViewDelegate(HashSet<string> remotingEndpoints);
     public delegate View GetViewDelegate();
+    public delegate void BeatDelegate(string endpointUrl);
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
         protected const string DefaultServerHost = "localhost";
@@ -38,6 +39,9 @@ namespace CommonTypes {
         private readonly Dictionary<Message, object> _waitLocks;
         protected readonly SemaphoreSlim FreezeLock = new SemaphoreSlim(1,1);
         
+        private Thread HeartbeatCheckerThread;
+        private Thread BeatThread;
+        
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
             if (knownServerUrls is null)
@@ -52,6 +56,12 @@ namespace CommonTypes {
 
             View = new View(knownServerUrls, 0);
             Heartbeats = new Dictionary<string, bool>();
+            
+            HeartbeatCheckerThread = new Thread(CheckBeats);
+            HeartbeatCheckerThread.Start();
+            
+            BeatThread = new Thread(DoBeat);
+            BeatThread.Start();
             
             Bootstrap();
         }
@@ -334,17 +344,43 @@ namespace CommonTypes {
         public void Ping()
         {
         }
+        
+        public HashSet<string> SetView(IEnumerable<string> newEndpointUrl)
+        {
+            HashSet<string> remoteUrls;
+
+            lock (View)
+            {
+                remoteUrls = View.Set(newEndpointUrl);   
+            }
+
+            lock (Heartbeats)
+            {
+                foreach (var node in newEndpointUrl)
+                {
+                    Heartbeats.Add(node, true);    
+                }   
+            }
+            
+            return remoteUrls;
+        }
 
         public HashSet<string> JoinView(IEnumerable<string> newEndpointUrl)
         {
-            var remoteUrls = View.Nodes;
-            remoteUrls.UnionWith(newEndpointUrl);
-            
-            View = new View(remoteUrls, View.Version+1);
+            HashSet<string> remoteUrls;
 
-            foreach (var node in newEndpointUrl)
+            lock (View)
             {
-                Heartbeats.Add(node, true);    
+                remoteUrls = View.Join(newEndpointUrl);   
+            }
+
+            lock (Heartbeats)
+            {
+                Heartbeats.Clear();
+                foreach (var node in remoteUrls)
+                {
+                    Heartbeats.Add(node, true);    
+                }   
             }
             
             return remoteUrls;
@@ -359,39 +395,71 @@ namespace CommonTypes {
         // Heartbeat
         private void CheckBeats()
         {
-            List<string> dead;
-            
             while (true)
             {
-                dead = new List<string>();
+                string report = "==========\n";
+                List<string> dead = new List<string>();
                 
-                Thread.Sleep(2000);
-                Console.WriteLine("Checking beats...");
+                // TODO control sleep time
+                Thread.Sleep(4000);
 
                 lock (Heartbeats)
                 {
                     foreach (var server in Heartbeats.Keys.ToArray())
                     {
-                        Console.WriteLine("  {0} -> {1}", server, Heartbeats[server]);
+                        report += $"  {server} -> {Heartbeats[server]}\n";
 
                         if (!Heartbeats[server])
                         {
-                            Console.WriteLine("MAN DOWN -> {0}", server);
                             dead.Add(server);
                         }
 
                         Heartbeats[server] = false;
                     }
-
-                    // setView to new view
-                    // Heartbeats.Remove(server);
                     
+                    foreach (var node in dead)
+                    {
+                        Heartbeats.Remove(node);
+                    }
                 }
+                
+                lock (View)
+                {
+                    SetView(dead);
+                }
+
+                report += "==========";
+                Console.WriteLine(report);
 
             }
         }
 
-        // TODO 
+        private void DoBeat()
+        {
+            while (true)
+            {
+                try
+                {
+                    // TODO control sleep time
+                    Thread.Sleep(2000);
+                
+                    Console.WriteLine("TUM TUM");
+                
+                    foreach (var node in View.Nodes)
+                    {
+                        RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(node);
+                        BeatDelegate beatDelegate = remotingEndpoint.Beat;
+            
+                        var asyncResult = beatDelegate.BeginInvoke(EndpointURL, null, null);
+                        beatDelegate.EndInvoke(asyncResult);
+                    }   
+                } catch(RemotingException)
+                {
+                    DoBeat();
+                } 
+            }
+        }
+
         public void Beat(string node)
         {
             lock (Heartbeats)
