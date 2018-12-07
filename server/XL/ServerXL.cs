@@ -22,7 +22,7 @@ namespace ServerNamespace.XL
 
         public ServerXL(string host, int port) : this(BuildRemoteUrl(host,port, ServerObjName)) { }
 
-        public ServerXL(string remoteUrl) : base(remoteUrl){
+        public ServerXL(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
             LockedTuples = new ConcurrentDictionary<int, List<Tuple>>();
         }
 

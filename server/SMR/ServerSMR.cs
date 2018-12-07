@@ -43,7 +43,7 @@ namespace ServerNamespace
             
         }
 
-        public ServerSMR(string remoteUrl) : base(remoteUrl){
+        public ServerSMR(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
             Behaviour = new NormalServerSMRBehaviour(this);
             LastExecutedRequests = new ConcurrentDictionary<string, Request>();
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();

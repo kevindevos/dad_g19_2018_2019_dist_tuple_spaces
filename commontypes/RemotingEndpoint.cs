@@ -33,8 +33,10 @@ namespace CommonTypes {
         private string ObjIdentifier { get; }
         public string EndpointURL { get; }
 
-        public readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
-        public readonly Dictionary<Message, object> WaitLocks;
+        protected readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
+        private readonly Dictionary<Message, object> _waitLocks;
+        private readonly object _freezeLock;
+        
 
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
@@ -61,7 +63,7 @@ namespace CommonTypes {
             }
             
             ReplyResultQueue = new ConcurrentDictionary<Message, ReplyResult>();
-            WaitLocks = new Dictionary<Message, object>();
+            _waitLocks = new Dictionary<Message, object>();
             
             Host = splitUrl[0];
             Port = int.Parse(splitUrl[1]);
@@ -87,6 +89,8 @@ namespace CommonTypes {
 
         public void DisposeChannel()
         {
+            if (TcpChannel == null) return;
+            
             TcpChannel.StopListening(null);
             RemotingServices.Disconnect(this);
             ChannelServices.UnregisterChannel(TcpChannel);
@@ -413,7 +417,7 @@ namespace CommonTypes {
             }
         }
 
-        public void MulticastSingleUrl(string remoteURL, Message message, AsyncCallback asyncCallback) {
+        private void MulticastSingleUrl(string remoteURL, Message message, AsyncCallback asyncCallback) {
             var remotingEndpoint = GetRemoteEndpoint(remoteURL);
             
             try {
@@ -431,7 +435,7 @@ namespace CommonTypes {
         
         // Callbacks
         //
-        protected void WaitAllCallback(IAsyncResult asyncResult)
+        private void WaitAllCallback(IAsyncResult asyncResult)
         {
             AsyncResult ar = (AsyncResult)asyncResult;
             RemoteAsyncDelegate remoteDel = (RemoteAsyncDelegate)ar.AsyncDelegate;
@@ -456,7 +460,8 @@ namespace CommonTypes {
                 }
             }
         }
-        public void WaitAnyCallback(IAsyncResult asyncResult)
+
+        private void WaitAnyCallback(IAsyncResult asyncResult)
         {
             AsyncResult ar = (AsyncResult)asyncResult;
             RemoteAsyncDelegate remoteDel = (RemoteAsyncDelegate)ar.AsyncDelegate;
@@ -483,9 +488,9 @@ namespace CommonTypes {
         }
         
         // Wait and Pulse
-        protected void PulseMessage(Message originalMessage)
+        private void PulseMessage(Message originalMessage)
         {
-            WaitLocks.TryGetValue(originalMessage, out var messageLock);
+            _waitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
             {
                 // this lock is necessary to do the pulse
@@ -499,15 +504,33 @@ namespace CommonTypes {
         {
             if (viewNodes != null && !viewNodes.Any()) return;
             
-            WaitLocks.Add(originalMessage, new object());
-            WaitLocks.TryGetValue(originalMessage, out var messageLock);
+            _waitLocks.Add(originalMessage, new object());
+            _waitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
             {
-                // this lock is necessary to do the pulse
+                // this lock is necessary to do the wait
                 lock (messageLock)
                 {
                     Monitor.Wait(messageLock, timeout);
                 }
+            }
+        }
+
+        public void Crash()
+        {
+            DisposeChannel();
+        }
+
+        public void Freeze()
+        {
+            Monitor.TryEnter(_freezeLock, 10000);
+        }
+        
+        public void Unfreeze()
+        {
+            lock (_freezeLock)
+            {
+                Monitor.PulseAll(_freezeLock);
             }
         }
 
