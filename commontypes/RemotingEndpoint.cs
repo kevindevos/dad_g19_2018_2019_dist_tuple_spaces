@@ -35,6 +35,7 @@ namespace CommonTypes {
 
         public readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
         public readonly Dictionary<Message, object> WaitLocks;
+        private readonly Dictionary<string, bool> Heartbeats;
 
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
@@ -49,6 +50,7 @@ namespace CommonTypes {
             }
 
             View = new View(knownServerUrls, 0);
+            Heartbeats = new Dictionary<string, bool>();
             
             Bootstrap();
         }
@@ -340,12 +342,33 @@ namespace CommonTypes {
             
             View = new View(remoteUrls, View.Version+1);
 
+            foreach (var node in newEndpointUrl)
+            {
+                Heartbeats.Add(node, true);    
+            }
+            
             return remoteUrls;
         }
         
         public View GetView()
         {
             return View;
+        }
+        
+        // TODO 
+        // Heartbeat
+        private void CheckBeats()
+        {
+            
+        }
+
+        // TODO 
+        public void Beat(string node)
+        {
+            lock (Heartbeats)
+            {
+                Heartbeats[node] = true;
+            }
         }
 
 
