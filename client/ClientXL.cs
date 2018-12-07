@@ -107,37 +107,34 @@ namespace ClientNamespace {
                         // build the intersection 
                         intersection = responses.First().Tuples; 
                         foreach(Response response in responses){
-                            IEnumerable<Tuple> enumerable = intersection.Intersect(response.Tuples);
-                            intersection = new List<Tuple>(enumerable);
+                            intersection = new List<Tuple>(intersection.Intersect(response.Tuples));
                         }
                         
                         
                         // Choose random tuple from intersection
                         if (intersection.Count > 0){
                             selectedTuple = intersection.ElementAt((new Random()).Next(0, intersection.Count));
-                        }
-            
-                        // PHASE 2
-                        // Issue a multicast remove for the selectedTuple
-                        Message takeRemove = new TakeRemove(EndpointURL, selectedTuple, takeRequest.SeqNum);
-                        SendMessageToView(takeRemove);
-                        
-                        // wait for all acks
-                        int ackCount = 0;
-                        do {
-                            for (int j = 0; j < DefaultTimeoutDuration; j += timeStep){
-                                AcksReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out ackCount);
-                                if (ackCount == View.Size()){
-                                    AcksReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
-                                    return selectedTuple;
-                                }
-                                Thread.Sleep(timeStep);
-                            }
-                            // Resend remove
+                            
+                            // PHASE 2
+                            // Issue a multicast remove for the selectedTuple
+                            Message takeRemove = new TakeRemove(EndpointURL, selectedTuple, takeRequest.SeqNum);
                             SendMessageToView(takeRemove);
-                        } while (ackCount < View.Size());
-
-                        return null;
+                        
+                            // wait for all acks
+                            int ackCount = 0;
+                            do {
+                                for (int j = 0; j < DefaultTimeoutDuration; j += timeStep){
+                                    AcksReceivedPerRequest.TryGetValue(takeRequest.SeqNum, out ackCount);
+                                    if (ackCount == View.Size()){
+                                        AcksReceivedPerRequest.TryRemove(takeRequest.SeqNum, out _);
+                                        return selectedTuple;
+                                    }
+                                    Thread.Sleep(timeStep);
+                                }
+                                // Resend remove
+                                SendMessageToView(takeRemove);
+                            } while (ackCount < View.Size());
+                        }
                     }
                     
                     Thread.Sleep(timeStep);
