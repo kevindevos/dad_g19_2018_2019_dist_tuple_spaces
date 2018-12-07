@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using CommonTypes.message;
 using CommonTypes.tuple;
 using Tuple = CommonTypes.tuple.Tuple;
@@ -100,6 +102,12 @@ namespace ServerNamespace.XL
 
             if (request.GetType() == typeof(WriteRequest)){
                 TupleSpace.Write(request.Tuple);
+                
+                // notify a blocked thread that tried to read/take this tuple before
+                Request readOrTakeRequest = GetAndRemoveSinglePendingRequest(request.Tuple);
+                if (readOrTakeRequest != null){
+                    PulseMessage(readOrTakeRequest);
+                }
 
                 // Send back an Ack of the write
                 return new Ack(EndpointURL, request);
@@ -108,27 +116,35 @@ namespace ServerNamespace.XL
             if (request.GetType() == typeof(ReadRequest)){
                 List<Tuple> tuples = TupleSpace.Read(tupleSchema);
 
-                // only send back result if there is something to send
-                if (tuples.Count > 0){
-                    Response response = new Response(request, tuples, EndpointURL);
-                    return response;
+                while (!tuples.Any()){
+                    lock (PendingRequestList){
+                        PendingRequestList.Add(request);
+                    }
+                    WaitMessage(request, View.Nodes);
+                    tuples = TupleSpace.Read(tupleSchema);
                 }
 
-                return null;
+                Response response = new Response(request, tuples, EndpointURL);
+                return response;
             }
 
             if (request.GetType() == typeof(TakeRequest)){
                 tupleSchema = new TupleSchema(request.Tuple);
                 List<Tuple> resultTuples = TupleSpace.Take(tupleSchema);
                 Response response = null;
-                    
-                // only send back result if there is something to send
-                if (resultTuples.Count > 0){
-                    // "lock" the tuples taken from the tuple space
-                    LockedTuples.TryAdd(request.SeqNum, resultTuples);
-                    response = new Response(request, resultTuples, EndpointURL);
-                    SendMessageToRemoteURL(request.SrcRemoteURL, response);
+                
+                while (!resultTuples.Any()){
+                    lock (PendingRequestList){
+                        PendingRequestList.Add(request);
+                    }
+                    WaitMessage(request, View.Nodes);
+                    resultTuples = TupleSpace.Take(tupleSchema);
                 }
+                    
+                // "lock" the tuples taken from the tuple space
+                LockedTuples.TryAdd(request.SeqNum, resultTuples);
+                response = new Response(request, resultTuples, EndpointURL);
+                SendMessageToRemoteURL(request.SrcRemoteURL, response);
 
                 return response;
             }
@@ -136,5 +152,19 @@ namespace ServerNamespace.XL
             throw new NotImplementedException();
         }
 
+        /**
+         * Searches the pending list of read and take requests for any request that tried to read/take this tuple
+         */
+        private Request GetAndRemoveSinglePendingRequest(Tuple tuple){
+            lock (PendingRequestList){
+                foreach (Request req in PendingRequestList){
+                    if (req.GetType() == typeof(ReadRequest) || req.GetType() == typeof(TakeRequest) && req.Tuple.Equals(tuple)){
+                        return req;
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }

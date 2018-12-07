@@ -64,7 +64,9 @@ namespace ServerNamespace.SMR.Behaviour
 
         private void OrderRequestForExecution(Request request) {
             Order order = new Order(request, Server.LastOrderSequenceNumber++, Server.EndpointURL);
-            Server.RequestList.Remove(request);
+            lock (Server.RequestList){
+                Server.RequestList.Remove(request);
+            }
             Server.Log("Sending Order to all servers.");
             
             Server.MulticastMessageWaitAll(Server.View.Nodes, order);

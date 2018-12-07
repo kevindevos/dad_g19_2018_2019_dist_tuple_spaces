@@ -204,5 +204,9 @@ namespace ServerNamespace
             LastExecutedRequests.TryAdd(request.SrcRemoteURL, request);
         }
 
+        private void WaitForWrite(Request readOrTakeRequest){
+            throw new NotImplementedException();
+        }
+
     }
 }

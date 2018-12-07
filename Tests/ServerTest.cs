@@ -1,10 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using ClientNamespace;
+using CommonTypes.message;
 using CommonTypes.tuple;
 using CommonTypes.tuple.tupleobjects;
 using NUnit.Framework;
 using ServerNamespace;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace Tests
 {
@@ -24,6 +28,9 @@ namespace Tests
         protected TupleSchema Tuple1Schema;
         protected TupleSchema Tuple2Schema;
         protected TupleSchema Tuple3Schema;
+
+        protected object lockObject = new object();
+        protected Tuple sharedTuple = null;
 
         protected ServerTest(int nServers)
         {
@@ -96,6 +103,36 @@ namespace Tests
             Assert.AreEqual(tuple, result);
             result = Client1.Read(tuple);
             Assert.AreEqual(tuple, result);
+        }
+        
+        /*
+         * test a read of something tha t doesnt exist yet, then write, and read should finish once written in the server
+         */
+        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        public void ReadWrite(Tuple tuple){
+            // start a client to read a tuple that doesnt exist yet , and it will block until it gets something
+            Thread readThread = new Thread(() => readAndSetVar(tuple));
+            readThread.Start();
+           
+            Client2.Write(tuple);
+            lock (lockObject){
+                Monitor.Wait(lockObject, new TimeSpan(0, 0, 2));
+                Assert.AreEqual(tuple, sharedTuple);
+            }
+
+        }
+
+        /**
+         * Helper method to run with another thread, for example for ReadWrite test, we want a client to start reading before
+         * there is any tuple in the space, and then write with another client, to test if the reading client gets the result
+         */
+        private void readAndSetVar(Tuple tuple){
+            Tuple temp = Client1.Read(tuple);
+
+            lock (lockObject){
+                sharedTuple = temp;
+                Monitor.Pulse(lockObject);
+            }
         }
         
       

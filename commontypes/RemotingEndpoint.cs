@@ -299,10 +299,7 @@ namespace CommonTypes {
             return url.Substring(6).Split(new char[]{':', '/'});
         }
 
-
         public abstract Message OnReceiveMessage(Message message);
-
-        
         
         
         private void DoPing(string remotingEndpointUrl)
@@ -331,7 +328,6 @@ namespace CommonTypes {
             var asyncResult = getViewDelegate.BeginInvoke(null, null);
             return getViewDelegate.EndInvoke(asyncResult);
         }
-
         
         
         public void Ping()
@@ -489,7 +485,7 @@ namespace CommonTypes {
         }
         
         // Wait and Pulse
-        private void PulseMessage(Message originalMessage)
+        protected void PulseMessage(Message originalMessage)
         {
             _waitLocks.TryGetValue(originalMessage, out var messageLock);
             if (messageLock != null)
@@ -512,7 +508,7 @@ namespace CommonTypes {
                 // this lock is necessary to do the wait
                 lock (messageLock)
                 {
-                    Monitor.Wait(messageLock, timeout);
+                    Monitor.Wait(messageLock, timeout);    
                 }
             }
         }
