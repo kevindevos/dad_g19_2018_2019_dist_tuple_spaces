@@ -16,8 +16,6 @@ namespace CommonTypes
             _replies = new ConcurrentDictionary<string, Message>();
             _waitingForReply = new List<string>();
         }
-
-        
         
         // called just after BeginInvoke to signal we are waiting for that remoteUrl
         public void AddRemoteUrl(string remoteUrl)

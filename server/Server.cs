@@ -12,6 +12,9 @@ namespace ServerNamespace {
         // A list of requests the server receives, defines the order 
         // for a FIFO order process requests from index 0 and do RemoveAt(0)
         public List<Request> RequestList { get; }
+        
+        // a list of pending requests for some reason
+        public List<Request> PendingRequestList { get; }
 
         protected Server() : this(DefaultServerHost, DefaultServerPort){
         }
@@ -25,6 +28,7 @@ namespace ServerNamespace {
 
         public Server(string remoteUrl) : base(remoteUrl){
             RequestList = new List<Request>();
+            PendingRequestList = new List<Request>();
         }
 
         public void SaveRequest(Request request) {
@@ -43,6 +47,7 @@ namespace ServerNamespace {
             Console.WriteLine("[SERVER:"+EndpointURL +"]   " + text);
         }
 
+        
     }
 
 }
