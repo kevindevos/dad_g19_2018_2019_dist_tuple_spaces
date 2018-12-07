@@ -108,7 +108,7 @@ namespace Tests
         /*
          * test a read of something tha t doesnt exist yet, then write, and read should finish once written in the server
          */
-        [Test, TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
+        [Test, Ignore(""), TestCaseSource(typeof(TupleDataClass), nameof(TupleDataClass.Tuples))]
         public void ReadWrite(Tuple tuple){
             // start a client to read a tuple that doesnt exist yet , and it will block until it gets something
             Thread readThread = new Thread(() => readAndSetVar(tuple));

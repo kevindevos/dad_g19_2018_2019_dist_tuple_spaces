@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using CommonTypes;
 using CommonTypes.message;
 
@@ -29,6 +30,13 @@ namespace ServerNamespace {
         public Server(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
             RequestList = new List<Request>();
             PendingRequestList = new List<Request>();
+            
+            HeartbeatCheckerThread = new Thread(CheckBeats);
+            HeartbeatCheckerThread.Start();
+            
+            BeatThread = new Thread(DoBeat);
+            BeatThread.Start();
+            
         }
 
         public void SaveRequest(Request request) {

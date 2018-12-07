@@ -43,9 +43,9 @@ namespace CommonTypes {
         private readonly ConcurrentDictionary<string, bool> Heartbeats;
         private readonly Dictionary<Message, object> _waitLocks;
         protected readonly SemaphoreSlim FreezeLock = new SemaphoreSlim(1,1);
-        
-        private Thread HeartbeatCheckerThread;
-        private Thread BeatThread;
+
+        protected Thread HeartbeatCheckerThread;
+        protected Thread BeatThread;
         
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
@@ -61,12 +61,6 @@ namespace CommonTypes {
 
             View = new View(knownServerUrls, 0);
             Heartbeats = new ConcurrentDictionary<string, bool>();
-            
-            HeartbeatCheckerThread = new Thread(CheckBeats);
-            HeartbeatCheckerThread.Start();
-            
-            BeatThread = new Thread(DoBeat);
-            BeatThread.Start();
             
             Bootstrap();
         }
@@ -392,7 +386,7 @@ namespace CommonTypes {
         
         // TODO 
         // Heartbeat
-        private void CheckBeats()
+        protected void CheckBeats()
         {
             while (true)
             {
@@ -433,7 +427,7 @@ namespace CommonTypes {
             }
         }
 
-        private void DoBeat()
+        protected void DoBeat()
         {            
             while (true)
             {
