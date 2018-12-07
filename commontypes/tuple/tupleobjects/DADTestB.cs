@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace CommonTypes.tuple.tupleobjects
 {
@@ -28,7 +29,7 @@ namespace CommonTypes.tuple.tupleobjects
             } else
             {
                 DADTestB o = (DADTestB) obj;
-                return ((this.i1 == o.i1) && (this.s1.Equals (o.s1)) && (this.i2 == o.i2));
+                return i1 == o.i1 && s1.Equals(o.s1) && i2 == o.i2;
             }
         }
         
@@ -36,5 +37,6 @@ namespace CommonTypes.tuple.tupleobjects
         {
             return "DADTestB(" + i1 + ", " + s1 + ", " + i2 + ")" ;
         }
+
     }
 }
