@@ -33,9 +33,10 @@ namespace CommonTypes
 
         public HashSet<string> Set(IEnumerable<string> nodes)
         {
+            Nodes.Clear();
             foreach (var node in nodes)
             {
-                Nodes.Remove(node);
+                Nodes.Add(node);
             }
     
             Version += 1;

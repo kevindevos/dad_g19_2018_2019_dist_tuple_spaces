@@ -422,20 +422,6 @@ namespace CommonTypes {
                 {
                     Heartbeats.TryRemove(node, out _);
                 }
-
-                report += "dead: [ ";
-                foreach (var node in dead)
-                {
-                    report += node + " ";
-                }
-                report += " ]\n";
-                
-                report += "alive: [ ";
-                foreach (var node in alive)
-                {
-                    report += node + " ";
-                }
-                report += " ]\n";
                 
                 lock (View)
                 {
@@ -448,7 +434,7 @@ namespace CommonTypes {
         }
 
         private void DoBeat()
-        {
+        {            
             while (true)
             {
                 Thread.Sleep(HEARTBEAT_PERIOD);
@@ -459,12 +445,16 @@ namespace CommonTypes {
                 {
                     try
                     {
-                        Console.WriteLine("TUM TUM to {0}", node);
                         RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(node);
                         BeatDelegate beatDelegate = remotingEndpoint.Beat;
-                    
-                        var asyncResult = beatDelegate.BeginInvoke(EndpointURL, null, null);
-                        beatDelegate.EndInvoke(asyncResult);
+                        
+                        beatDelegate.BeginInvoke(EndpointURL, asyncResult =>
+                        {
+                            AsyncResult ar = (AsyncResult)asyncResult;
+                            BeatDelegate remoteDel = (BeatDelegate)ar.AsyncDelegate;
+                            remoteDel.EndInvoke(asyncResult);
+                        }, null);
+                        
                     } catch(RemotingException)
                     {
                         // do nothing
@@ -477,7 +467,6 @@ namespace CommonTypes {
         {
             Heartbeats[node] = true;
         }
-
 
         public void MulticastMessageWaitAll(IEnumerable<string> view, Message message)
         {
