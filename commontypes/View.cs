@@ -6,7 +6,7 @@ namespace CommonTypes
     [Serializable]
     public class View
     {
-        public HashSet<string> Nodes { get; }
+        public HashSet<string> Nodes { get; private set; }
         public long Version { get; private set;  }
         
         public View(IEnumerable<string> nodes, long version)
@@ -25,6 +25,7 @@ namespace CommonTypes
             var remoteUrls = Nodes;
             remoteUrls.UnionWith(nodes);
 
+            Nodes = remoteUrls;
             Version += 1;
 
             return Nodes;

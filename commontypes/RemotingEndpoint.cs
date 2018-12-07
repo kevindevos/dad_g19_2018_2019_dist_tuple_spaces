@@ -13,6 +13,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization.Formatters;
 using System.Threading;
 using CommonTypes.message;
+using NUnit.Framework.Interfaces;
 
 namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
@@ -22,6 +23,10 @@ namespace CommonTypes {
     public delegate void BeatDelegate(string endpointUrl);
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
+        
+        // verification period is 3x this
+        public static readonly int HEARTBEAT_PERIOD = 1000;
+        
         protected const string DefaultServerHost = "localhost";
         protected const int DefaultServerPort = 8080;
         protected const string DefaultClientHost = "localhost";
@@ -35,7 +40,7 @@ namespace CommonTypes {
         public string EndpointURL { get; }
 
         public readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
-        private readonly Dictionary<string, bool> Heartbeats;
+        private readonly ConcurrentDictionary<string, bool> Heartbeats;
         private readonly Dictionary<Message, object> _waitLocks;
         protected readonly SemaphoreSlim FreezeLock = new SemaphoreSlim(1,1);
         
@@ -55,7 +60,7 @@ namespace CommonTypes {
             }
 
             View = new View(knownServerUrls, 0);
-            Heartbeats = new Dictionary<string, bool>();
+            Heartbeats = new ConcurrentDictionary<string, bool>();
             
             HeartbeatCheckerThread = new Thread(CheckBeats);
             HeartbeatCheckerThread.Start();
@@ -354,13 +359,10 @@ namespace CommonTypes {
                 remoteUrls = View.Set(newEndpointUrl);   
             }
 
-            lock (Heartbeats)
+            foreach (var node in newEndpointUrl)
             {
-                foreach (var node in newEndpointUrl)
-                {
-                    Heartbeats.Add(node, true);    
-                }   
-            }
+                Heartbeats.TryAdd(node, true);    
+            }   
             
             return remoteUrls;
         }
@@ -374,14 +376,11 @@ namespace CommonTypes {
                 remoteUrls = View.Join(newEndpointUrl);   
             }
 
-            lock (Heartbeats)
+            Heartbeats.Clear();
+            foreach (var node in remoteUrls)
             {
-                Heartbeats.Clear();
-                foreach (var node in remoteUrls)
-                {
-                    Heartbeats.Add(node, true);    
-                }   
-            }
+                Heartbeats.TryAdd(node, true);    
+            }   
             
             return remoteUrls;
         }
@@ -398,39 +397,53 @@ namespace CommonTypes {
             while (true)
             {
                 string report = "==========\n";
+                List<string> alive = new List<string>();
                 List<string> dead = new List<string>();
                 
-                // TODO control sleep time
-                Thread.Sleep(4000);
+                Thread.Sleep(HEARTBEAT_PERIOD * 3);
 
-                lock (Heartbeats)
+                foreach (var server in Heartbeats.Keys.ToArray())
                 {
-                    foreach (var server in Heartbeats.Keys.ToArray())
-                    {
-                        report += $"  {server} -> {Heartbeats[server]}\n";
+                    report += $"  {server} -> {Heartbeats[server]}\n";
 
-                        if (!Heartbeats[server])
-                        {
-                            dead.Add(server);
-                        }
-
-                        Heartbeats[server] = false;
-                    }
-                    
-                    foreach (var node in dead)
+                    if (Heartbeats[server])
                     {
-                        Heartbeats.Remove(node);
+                        alive.Add(server);
                     }
+                    else
+                    {
+                        dead.Add(server);
+                    }
+
+                    Heartbeats[server] = false;
                 }
+                
+                foreach (var node in dead)
+                {
+                    Heartbeats.TryRemove(node, out _);
+                }
+
+                report += "dead: [ ";
+                foreach (var node in dead)
+                {
+                    report += node + " ";
+                }
+                report += " ]\n";
+                
+                report += "alive: [ ";
+                foreach (var node in alive)
+                {
+                    report += node + " ";
+                }
+                report += " ]\n";
                 
                 lock (View)
                 {
-                    SetView(dead);
+                    SetView(alive);
                 }
-
-                report += "==========";
+                
+                report += "==========\n";
                 Console.WriteLine(report);
-
             }
         }
 
@@ -438,34 +451,31 @@ namespace CommonTypes {
         {
             while (true)
             {
-                try
+                Thread.Sleep(HEARTBEAT_PERIOD);
+            
+                HashSet<string > nodes = new HashSet<string>(View.Nodes);
+                
+                foreach (var node in nodes)
                 {
-                    // TODO control sleep time
-                    Thread.Sleep(2000);
-                
-                    Console.WriteLine("TUM TUM");
-                
-                    foreach (var node in View.Nodes)
+                    try
                     {
+                        Console.WriteLine("TUM TUM to {0}", node);
                         RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(node);
                         BeatDelegate beatDelegate = remotingEndpoint.Beat;
-            
+                    
                         var asyncResult = beatDelegate.BeginInvoke(EndpointURL, null, null);
                         beatDelegate.EndInvoke(asyncResult);
-                    }   
-                } catch(RemotingException)
-                {
-                    DoBeat();
-                } 
+                    } catch(RemotingException)
+                    {
+                        // do nothing
+                    }
+                }   
             }
         }
 
         public void Beat(string node)
         {
-            lock (Heartbeats)
-            {
-                Heartbeats[node] = true;
-            }
+            Heartbeats[node] = true;
         }
 
 
@@ -546,8 +556,6 @@ namespace CommonTypes {
                 throw;
             }
         }
-        
-        
         
         // Callbacks
         //
