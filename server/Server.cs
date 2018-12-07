@@ -29,6 +29,13 @@ namespace ServerNamespace {
             PendingRequestList = new List<Request>();
             _minDelay = minDelay;
             _maxDelay = maxDelay;
+            
+            HeartbeatCheckerThread = new Thread(CheckBeats);
+            HeartbeatCheckerThread.Start();
+            
+            BeatThread = new Thread(DoBeat);
+            BeatThread.Start();
+            
         }
 
         public void SaveRequest(Request request) {
