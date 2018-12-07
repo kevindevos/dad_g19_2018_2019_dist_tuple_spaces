@@ -43,8 +43,6 @@ namespace PCS
                 response += server.Status();   
             }
 
-            Console.WriteLine("Response...");
-            Console.WriteLine(response);
             return response;
         }
         
