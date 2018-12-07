@@ -1,12 +1,12 @@
-﻿using CommonTypes;
-using PuppetMaster.Exceptions;
-
-using System;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Tcp;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Channels.Tcp;
+using System.Threading;
+using CommonTypes;
 using PCS;
+using PuppetMaster.Exceptions;
 
 namespace PuppetMaster
 {
@@ -107,7 +107,7 @@ namespace PuppetMaster
                         throw new InvalidCommandException(command);
 
                     ms = int.Parse(words[1]);
-                    System.Threading.Thread.Sleep(ms);
+                    Thread.Sleep(ms);
                     break;
 
                 default:

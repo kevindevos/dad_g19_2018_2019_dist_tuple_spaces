@@ -1,6 +1,8 @@
-﻿namespace CommonTypes.message {
+﻿using System;
+
+namespace CommonTypes.message {
     
-    [System.Serializable]
+    [Serializable]
     public abstract class Message {
         
         private string _srcRemoteURL;

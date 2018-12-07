@@ -1,6 +1,6 @@
-﻿using PuppetMaster.Exceptions;
-using System;
+﻿using System;
 using System.IO;
+using PuppetMaster.Exceptions;
 
 namespace PuppetMaster
 {

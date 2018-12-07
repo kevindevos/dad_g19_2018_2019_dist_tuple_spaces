@@ -1,8 +1,9 @@
-using CommonTypes.tuple;
+using System;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes.message {
 
-    [System.Serializable]
+    [Serializable]
     public abstract class Request : Message {
         
         public int SeqNum { get; }

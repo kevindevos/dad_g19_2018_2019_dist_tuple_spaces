@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace CommonTypes
+﻿namespace CommonTypes
 {
     public interface PCSRemotingInterface
     {

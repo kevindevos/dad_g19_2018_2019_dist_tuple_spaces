@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using ClientNamespace;
 using CommonTypes;
-using CommonTypes.tuple;
-using CommonTypes.tuple.tupleobjects;
 using NUnit.Framework;
 using ServerNamespace;
 

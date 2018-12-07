@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using CommonTypes;
 using CommonTypes.message;
 using CommonTypes.tuple;
 using ServerNamespace.SMR.Behaviour;
 using Tuple = CommonTypes.tuple.Tuple;
-using System.Linq;
 
 namespace ServerNamespace
 {

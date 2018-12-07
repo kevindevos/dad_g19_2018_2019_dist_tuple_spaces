@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using CommonTypes;
-using CommonTypes.message;
-using CommonTypes.tuple;
-using Tuple = CommonTypes.tuple.Tuple;
-using System.Linq;
+﻿using CommonTypes.message;
 
 namespace ServerNamespace.SMR.Behaviour {
     public abstract class ServerSMRBehaviour {

@@ -1,7 +1,4 @@
-﻿using ClientNamespace;
-using ServerNamespace;
-
-namespace PCS
+﻿namespace PCS
 {
     class PCSRemotingXL : PCSRemotingAbstract
     {

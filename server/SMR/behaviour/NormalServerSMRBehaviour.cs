@@ -1,7 +1,6 @@
-using CommonTypes;
-using CommonTypes.message;
 using System;
 using System.Linq;
+using CommonTypes.message;
 
 namespace ServerNamespace.SMR.Behaviour {
     public class NormalServerSMRBehaviour : ServerSMRBehaviour

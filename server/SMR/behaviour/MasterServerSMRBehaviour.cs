@@ -1,6 +1,3 @@
-using System.Linq;
-using System.Threading;
-using CommonTypes;
 using CommonTypes.message;
 
 namespace ServerNamespace.SMR.Behaviour

@@ -1,9 +1,8 @@
 ﻿using System;
-using CommonTypes;
-using ClientNamespace;
-using ServerNamespace;
-
 using System.Collections.Generic;
+using ClientNamespace;
+using CommonTypes;
+using ServerNamespace;
 
 namespace PCS
 {

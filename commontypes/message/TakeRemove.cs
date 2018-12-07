@@ -1,11 +1,12 @@
 
+using System;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes.message{
     /**
      * Used for the client to ask servers to remove the tuple to finish a take request in XL
      */
-    [System.Serializable]
+    [Serializable]
     public class TakeRemove : Message{
         // tuple to be removed
         public Tuple SelectedTuple { get; }

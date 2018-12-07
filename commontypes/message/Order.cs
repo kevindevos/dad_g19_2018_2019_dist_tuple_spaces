@@ -1,6 +1,8 @@
-﻿namespace CommonTypes.message {
+﻿using System;
+
+namespace CommonTypes.message {
     // An order is a message sent by a master to other normal servers, to perform a certain action/request
-    [System.Serializable]
+    [Serializable]
     public class Order : Message {
 
         public int SeqNum { get; private set; }

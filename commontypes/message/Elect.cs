@@ -1,9 +1,11 @@
-﻿namespace CommonTypes.message {
+﻿using System;
+
+namespace CommonTypes.message {
 
     public enum ElectType { SET_MASTER, GET_MASTER }
     
     // A message sent to inform of a new master server
-    [System.Serializable]
+    [Serializable]
     public class Elect : Message {
 
         public string NewMasterURL { get; set; }

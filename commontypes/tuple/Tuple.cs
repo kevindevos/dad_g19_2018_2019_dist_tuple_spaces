@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace CommonTypes.tuple{
-    [System.Serializable]
+    [Serializable]
     public class Tuple{
         public readonly List<object> Fields;
 

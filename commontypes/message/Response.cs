@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
-using CommonTypes.tuple;
+﻿using System;
+using System.Collections.Generic;
+using Tuple = CommonTypes.tuple.Tuple;
 
 namespace CommonTypes.message {
-    [System.Serializable]
+    [Serializable]
     public class Response : Message {
         public List<Tuple> Tuples { get; set; }
 

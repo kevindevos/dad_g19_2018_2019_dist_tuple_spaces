@@ -1,9 +1,8 @@
-using CommonTypes;
-using CommonTypes.message;
-using CommonTypes.tuple;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using CommonTypes.message;
+using CommonTypes.tuple;
 using Tuple = CommonTypes.tuple.Tuple;
 
 namespace ServerNamespace.XL
