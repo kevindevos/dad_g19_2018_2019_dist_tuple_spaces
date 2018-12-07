@@ -238,7 +238,6 @@ namespace PuppetMaster
 
         private void AsyncCallStatus(StatusDelegate caller)
         {
-            Console.WriteLine("Beginning invocation of Status");
             caller.BeginInvoke(asyncResult =>
             {
                 AsyncResult ar = (AsyncResult)asyncResult;
