@@ -14,36 +14,27 @@ namespace ServerNamespace
     {
         public int LastOrderSequenceNumber { get; set; }
 
-        public List<RemotingEndpoint> OtherServers { get; private set; }
-
         // A dictionary containing the most recent executed requests of the most recent remoteurls of each client.  <clientRemoteURL, Reques>
         public ConcurrentDictionary<string, Request> LastExecutedRequests { get; }
 
         // A dictionary containing the most recent executed orders of the most recent requests of each client.  <clientRemoteURL, Order>
         public ConcurrentDictionary<string, Order> LastExecutedOrders { get; private set; }
-
         public List<Order> SavedOrders { get; }
-
         protected List<Ack> ReceivedAcks { get; private set; }
-
+        
         public string MasterEndpointURL { get; set; }
 
         // Tuple space
         private TupleSpace TupleSpace { get; }
-
         public ServerSMRBehaviour Behaviour;
 
-        
         public ServerSMR() : this(DefaultServerPort) { }
-        
         public ServerSMR(int serverPort) : this(DefaultServerHost, serverPort) { }
+        private ServerSMR(string host, int port) : this(BuildRemoteUrl(host, port, ServerObjName)) {}
 
-        private ServerSMR(string host, int port) : this(BuildRemoteUrl(host, port, ServerObjName)) 
+        public ServerSMR(string remoteUrl, IEnumerable<string> knownServerUrls = null, int minDelay = 0,
+            int maxDelay = 0) : base(remoteUrl, knownServerUrls, minDelay, maxDelay)
         {
-            
-        }
-
-        public ServerSMR(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
             Behaviour = new NormalServerSMRBehaviour(this);
             LastExecutedRequests = new ConcurrentDictionary<string, Request>();
             LastExecutedOrders = new ConcurrentDictionary<string, Order>();
@@ -51,8 +42,7 @@ namespace ServerNamespace
             LastOrderSequenceNumber = 0;
             TupleSpace = new TupleSpace();
             ReceivedAcks = new List<Ack>();
-            
-            
+
             RecursiveJoinView(View.Nodes);
             GetMaster();
         }
@@ -94,9 +84,10 @@ namespace ServerNamespace
         }
 
 
-        public override Message OnReceiveMessage(Message message) {
-            FreezeLock.Wait();
-            FreezeLock.Release();
+        public override Message OnReceiveMessage(Message message)
+        {
+            FreezeCheck();
+            DelayCheck();
             
             Log("Received message from : " + message.SrcRemoteURL);
             

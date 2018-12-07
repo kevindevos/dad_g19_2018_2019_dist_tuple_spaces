@@ -11,7 +11,7 @@ namespace PCS
         public override void Client(string client_id, string URL, string[] script, IEnumerable<string> serverUrls)
         {
             Client client = null;
-            lock (servers)
+            lock (this)
             {
                 try
                 {
@@ -30,9 +30,9 @@ namespace PCS
 
         public override void Server(string server_id, string URL, int min_delay, int max_delay, IEnumerable<string> serverUrls)
         {
-            lock (servers)
+            lock (this)
             {
-                Server server = new ServerSMR(URL, serverUrls);
+                Server server = new ServerSMR(URL, serverUrls, min_delay, max_delay);
                 servers.Add(server_id, server);                
             }
             

@@ -21,7 +21,7 @@ namespace PCS
         public override void Server(string server_id, string URL, int min_delay, int max_delay,
             IEnumerable<string> serverUrls)
         {
-            Server server = new ServerXL(URL, serverUrls);
+            Server server = new ServerXL(URL, serverUrls, min_delay, max_delay);
             servers.Add(server_id, server);
             
             Console.WriteLine("Added server {0} [{1}] with a delay between [{2},{3}]", server_id, URL, min_delay,
