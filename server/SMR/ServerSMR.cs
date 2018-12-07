@@ -41,7 +41,7 @@ namespace ServerNamespace
             ReceivedAcks = new List<Ack>();
 
             RecursiveJoinView(View.Nodes);
-            GetMaster();
+            CheckMaster();
         }
 
         public void UpgradeToMaster()
@@ -57,29 +57,29 @@ namespace ServerNamespace
             Behaviour = new NormalServerSMRBehaviour(this);
         }
 
-        // ask the view for a master
-        private void GetMaster()
+        private void CheckMaster()
         {
-            String masterUrl = null;
+            List<string> viewCopy;
+            lock (View)
+            {
+                viewCopy = new List<string>(View.Nodes);
+            }
+            viewCopy.Add(EndpointURL);
+            viewCopy = viewCopy.OrderBy(s => s).ToList();
+            var masterUrl = viewCopy.First();
             
-            foreach (var server in View.Nodes)
+            if (masterUrl == EndpointURL && MasterEndpointURL != EndpointURL)
             {
-                var message = new Elect(EndpointURL, ElectType.GET_MASTER);
-                var result = (Elect)SendMessageToRemoteURL(server, message);
-                masterUrl = result.NewMasterURL;
-                if (masterUrl != null)
-                    break;
-            }
-
-            if (masterUrl != null)
-            {
-                MasterEndpointURL = masterUrl;
-                Log("Master is at: " + masterUrl);
-            }
-            else 
                 UpgradeToMaster();
-        }
+            }
+            else if(masterUrl != EndpointURL && MasterEndpointURL == EndpointURL)
+            {
+                Log("Master is at: " + masterUrl);
+                DowngradeToNormal();
+            }
+            MasterEndpointURL = masterUrl;
 
+        }
 
         public override Message OnReceiveMessage(Message message)
         {
@@ -174,6 +174,11 @@ namespace ServerNamespace
             throw new ArgumentOutOfRangeException();
         }
 
+
+        public override void NotifyViewChange()
+        {
+            CheckMaster();
+        }
 
         public override void Log(string text) {
             string serverType = Behaviour.GetType() == typeof(MasterServerSMRBehaviour) ? "MASTER" : "NORMAL";

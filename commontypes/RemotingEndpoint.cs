@@ -99,6 +99,9 @@ namespace CommonTypes {
 
         public void DisposeChannel()
         {
+            HeartbeatCheckerThread?.Abort();
+            BeatThread?.Abort();
+            
             if (TcpChannel == null) return;
             
             TcpChannel.StopListening(null);
@@ -344,19 +347,33 @@ namespace CommonTypes {
         {
         }
         
-        public HashSet<string> SetView(IEnumerable<string> newEndpointUrl)
+        public HashSet<string> SetView(IEnumerable<string> newEndpointUrls)
         {
             HashSet<string> remoteUrls;
 
             lock (View)
             {
-                remoteUrls = View.Set(newEndpointUrl);   
+                remoteUrls = View.Set(newEndpointUrls);   
             }
 
-            foreach (var node in newEndpointUrl)
+            foreach (var node in newEndpointUrls)
             {
                 Heartbeats.TryAdd(node, true);    
-            }   
+            }
+
+            lock (ReplyResultQueue)
+            {
+                foreach (var replyResult in ReplyResultQueue.Values)
+                {
+                    replyResult.Trim(remoteUrls);
+                    if (replyResult.IsDone())
+                    {
+                        replyResult.PulseMessage();
+                    }
+                }
+            }
+
+            NotifyViewChange();
             
             return remoteUrls;
         }
@@ -414,7 +431,8 @@ namespace CommonTypes {
                 
                 lock (View)
                 {
-                    SetView(alive);
+                    if(!View.Nodes.SetEquals(alive))
+                        SetView(alive);
                 }
             }
         }
@@ -456,16 +474,16 @@ namespace CommonTypes {
 
         public void MulticastMessageWaitAll(IEnumerable<string> view, Message message)
         {
-            MulticastMessage(view, message, WaitAllCallback);
+            MulticastMessage(view, message, WaitAllCallback, true);
         }
         public void MulticastMessageWaitAny(IEnumerable<string> view, Message message)
         {
-            MulticastMessage(view, message, WaitAnyCallback);
+            MulticastMessage(view, message, WaitAnyCallback, false);
         }
 
         public void SingleCastMessage(string remoteUrl, Message message)
         {
-            var replyResult = new ReplyResult();
+            var replyResult = new ReplyResult(message, false);
             lock (ReplyResultQueue)
             {
                 ReplyResultQueue.TryAdd(message, replyResult);
@@ -490,9 +508,9 @@ namespace CommonTypes {
             
         }
         
-        private void MulticastMessage(IEnumerable<string> view, Message message, AsyncCallback asyncCallback)
+        private void MulticastMessage(IEnumerable<string> view, Message message, AsyncCallback asyncCallback, bool waitForAll)
         {
-            var replyResult = new ReplyResult();
+            var replyResult = new ReplyResult(message, waitForAll);
             lock (ReplyResultQueue)
             {
                 ReplyResultQueue.TryAdd(message, replyResult);
@@ -553,7 +571,7 @@ namespace CommonTypes {
                 replyResult.AddResult(remoteUrl, responseMessage);
                 
                 // if ZERO waiting replies, notify the caller (the one who initiated the multi-cast)
-                if (replyResult.NWaitingReply() == 0)
+                if (replyResult.IsDone())
                 {
                     PulseMessage(originalMessage);
                 }
@@ -579,7 +597,7 @@ namespace CommonTypes {
                 replyResult.AddResult(remoteUrl, responseMessage);
                 
                 // if ANY result, notify the caller (the one who initiated the multi-cast)
-                if (replyResult.NResults() > 0)
+                if (replyResult.IsDone())
                 {
                     PulseMessage(originalMessage);
                 }
@@ -630,6 +648,8 @@ namespace CommonTypes {
         {
             FreezeLock.Release();
         }
+
+        public abstract void NotifyViewChange();
         
         private void Log(string text) {
             Console.WriteLine("["+ObjIdentifier+"]: " + text);

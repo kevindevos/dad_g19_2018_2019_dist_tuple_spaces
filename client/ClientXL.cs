@@ -116,6 +116,11 @@ namespace ClientNamespace {
             return null;
         }
 
+        public override void NotifyViewChange()
+        {
+            //nothing to do?
+        }
+
         private void UpdateAckCounter(Ack ack){
             if(ack.Message.GetType().IsSubclassOf(typeof(Request))) {
                 Request request = (Request)ack.Message;

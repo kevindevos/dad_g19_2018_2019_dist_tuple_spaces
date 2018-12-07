@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using CommonTypes.message;
 
 namespace CommonTypes
@@ -9,12 +11,16 @@ namespace CommonTypes
     {
         // <calledRemoteUrl, responseMessage>
         private readonly ConcurrentDictionary<string, Message> _replies;
-        private readonly List<string> _waitingForReply;
+        private List<string> _waitingForReply;
+        public readonly Message MessageLock;
+        private readonly bool _waitForAll; //true=All, false=Any
 
-        public ReplyResult()
+        public ReplyResult(Message messageLock, bool waitForAll)
         {
             _replies = new ConcurrentDictionary<string, Message>();
             _waitingForReply = new List<string>();
+            MessageLock = messageLock;
+            _waitForAll = waitForAll;
         }
         
         // called just after BeginInvoke to signal we are waiting for that remoteUrl
@@ -65,6 +71,29 @@ namespace CommonTypes
         public IEnumerable<string> GetWaitingForReply()
         {
             return _waitingForReply;
+        }
+
+        public bool IsDone()
+        {
+            if (_waitForAll)
+            {
+                return NWaitingReply() == 0;
+            }
+
+            return NResults() > 0 || NWaitingReply() == 0;
+        }
+
+        public void Trim(IEnumerable<string> view)
+        {
+            _waitingForReply = _waitingForReply.Except(view).ToList();
+        }
+
+        public void PulseMessage()
+        {
+            lock (MessageLock)
+            {
+                Monitor.PulseAll(MessageLock);
+            }
         }
     }
 }

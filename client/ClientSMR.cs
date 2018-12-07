@@ -43,7 +43,12 @@ namespace ClientNamespace {
             return null;
         }
 
-        
+        public override void NotifyViewChange()
+        {
+            //nothing to do?
+        }
+
+
         public override void Write(Tuple tuple) {
             var request = new WriteRequest(ClientRequestSeqNumber, EndpointURL, tuple);
 
