@@ -27,7 +27,7 @@ namespace ClientNamespace {
         
         public Client(string host, int port) : this(BuildRemoteUrl(host,port,ClientObjName)) {}
 
-        protected Client(string remoteUrl, List<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls)
+        protected Client(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls)
         {
             if (View.Size() == 0)
                 throw new Exception("Bootstrap failed. No servers are alive. Exiting...");

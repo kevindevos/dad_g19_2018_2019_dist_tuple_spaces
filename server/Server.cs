@@ -26,7 +26,7 @@ namespace ServerNamespace {
             
         }
 
-        public Server(string remoteUrl) : base(remoteUrl){
+        public Server(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls){
             RequestList = new List<Request>();
             PendingRequestList = new List<Request>();
         }

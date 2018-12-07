@@ -47,34 +47,6 @@ namespace ClientNamespace
             Console.ReadLine();
             
             //TODO interactive input or read script as in PuppetMaster
-
-            
-            /*var knownServers = new List<string>();
-            for (var i = 0; i < 3; i++)
-            {
-                knownServers.Add(RemotingEndpoint.BuildRemoteUrl(RemotingEndpoint.DefaultServerHost,
-                    RemotingEndpoint.DefaultServerPort + i,
-                    "Server"+(RemotingEndpoint.DefaultServerPort + i)));
-            }
-                
-            ClientSMR client = new ClientSMR(remoteUrl, knownServers);
-            client.runScript();
-            return;*/
-            
-            /*
-            Tuple tuple1 = new Tuple(new List<object>(new object[] { "hello", "world", 2 }));
-            client.Write(tuple1);
-
-            Tuple tuple2 = client.Read(tuple1);
-            client.Log("Output: " + tuple2.ToString());
-
-            Tuple tuple3 = client.Take(tuple1);
-            client.Log("Output: " + tuple3.ToString());
-
-            Tuple tuple4 = client.Read(tuple1);
-            client.Log("Output: " + tuple4);
-            */
-
         }
 
     }

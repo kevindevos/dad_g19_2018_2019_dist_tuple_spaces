@@ -22,7 +22,7 @@ namespace ClientNamespace {
         public ClientXL(string host, int port) : this(BuildRemoteUrl(host, port, ClientObjName)) {
         }
 
-        public ClientXL(string remoteUrl) : base(remoteUrl) {
+        public ClientXL(string remoteUrl, IEnumerable<string> knownServerUrls = null) : base(remoteUrl, knownServerUrls) {
             AcksReceivedPerRequest = new ConcurrentDictionary<int, int>();
             ResponsesReceivedPerRequest = new ConcurrentDictionary<int, List<Response>>();
         }
