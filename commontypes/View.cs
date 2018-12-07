@@ -6,8 +6,8 @@ namespace CommonTypes
     [Serializable]
     public class View
     {
-        public HashSet<string> Nodes { get; }
-        public long Version { get; }
+        public HashSet<string> Nodes { get; private set; }
+        public long Version { get; private set;  }
         
         public View(IEnumerable<string> nodes, long version)
         {
@@ -18,6 +18,30 @@ namespace CommonTypes
         public int Size()
         {
             return Nodes.Count;
+        }
+
+        public HashSet<string> Join(IEnumerable<string> nodes)
+        {
+            var remoteUrls = Nodes;
+            remoteUrls.UnionWith(nodes);
+
+            Nodes = remoteUrls;
+            Version += 1;
+
+            return Nodes;
+        }
+
+        public HashSet<string> Set(IEnumerable<string> nodes)
+        {
+            Nodes.Clear();
+            foreach (var node in nodes)
+            {
+                Nodes.Add(node);
+            }
+    
+            Version += 1;
+            
+            return Nodes;
         }
 
     }

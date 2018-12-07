@@ -13,14 +13,20 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization.Formatters;
 using System.Threading;
 using CommonTypes.message;
+using NUnit.Framework.Interfaces;
 
 namespace CommonTypes {
     public delegate Message RemoteAsyncDelegate(Message message);
     public delegate void PingDelegate();
     public delegate HashSet<string> JoinViewDelegate(HashSet<string> remotingEndpoints);
     public delegate View GetViewDelegate();
+    public delegate void BeatDelegate(string endpointUrl);
 
     public abstract class RemotingEndpoint : MarshalByRefObject  {
+        
+        // verification period is 3x this
+        public static readonly int HEARTBEAT_PERIOD = 1000;
+        
         protected const string DefaultServerHost = "localhost";
         protected const int DefaultServerPort = 8080;
         protected const string DefaultClientHost = "localhost";
@@ -33,11 +39,14 @@ namespace CommonTypes {
         private string ObjIdentifier { get; }
         public string EndpointURL { get; }
 
-        protected readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
+        public readonly ConcurrentDictionary<Message, ReplyResult> ReplyResultQueue;
+        private readonly ConcurrentDictionary<string, bool> Heartbeats;
         private readonly Dictionary<Message, object> _waitLocks;
         protected readonly SemaphoreSlim FreezeLock = new SemaphoreSlim(1,1);
-        
 
+        protected Thread HeartbeatCheckerThread;
+        protected Thread BeatThread;
+        
         protected RemotingEndpoint(string remoteUrl, IEnumerable<string> knownServerUrls=null) : this(remoteUrl)
         {
             if (knownServerUrls is null)
@@ -51,6 +60,7 @@ namespace CommonTypes {
             }
 
             View = new View(knownServerUrls, 0);
+            Heartbeats = new ConcurrentDictionary<string, bool>();
             
             Bootstrap();
         }
@@ -333,14 +343,39 @@ namespace CommonTypes {
         public void Ping()
         {
         }
+        
+        public HashSet<string> SetView(IEnumerable<string> newEndpointUrl)
+        {
+            HashSet<string> remoteUrls;
+
+            lock (View)
+            {
+                remoteUrls = View.Set(newEndpointUrl);   
+            }
+
+            foreach (var node in newEndpointUrl)
+            {
+                Heartbeats.TryAdd(node, true);    
+            }   
+            
+            return remoteUrls;
+        }
 
         public HashSet<string> JoinView(IEnumerable<string> newEndpointUrl)
         {
-            var remoteUrls = View.Nodes;
-            remoteUrls.UnionWith(newEndpointUrl);
-            
-            View = new View(remoteUrls, View.Version+1);
+            HashSet<string> remoteUrls;
 
+            lock (View)
+            {
+                remoteUrls = View.Join(newEndpointUrl);   
+            }
+
+            Heartbeats.Clear();
+            foreach (var node in remoteUrls)
+            {
+                Heartbeats.TryAdd(node, true);    
+            }   
+            
             return remoteUrls;
         }
         
@@ -348,7 +383,84 @@ namespace CommonTypes {
         {
             return View;
         }
+        
+        // TODO 
+        // Heartbeat
+        protected void CheckBeats()
+        {
+            while (true)
+            {
+                string report = "==========\n";
+                List<string> alive = new List<string>();
+                List<string> dead = new List<string>();
+                
+                Thread.Sleep(HEARTBEAT_PERIOD * 3);
 
+                foreach (var server in Heartbeats.Keys.ToArray())
+                {
+                    report += $"  {server} -> {Heartbeats[server]}\n";
+
+                    if (Heartbeats[server])
+                    {
+                        alive.Add(server);
+                    }
+                    else
+                    {
+                        dead.Add(server);
+                    }
+
+                    Heartbeats[server] = false;
+                }
+                
+                foreach (var node in dead)
+                {
+                    Heartbeats.TryRemove(node, out _);
+                }
+                
+                lock (View)
+                {
+                    SetView(alive);
+                }
+                
+                report += "==========\n";
+                Console.WriteLine(report);
+            }
+        }
+
+        protected void DoBeat()
+        {            
+            while (true)
+            {
+                Thread.Sleep(HEARTBEAT_PERIOD);
+            
+                HashSet<string > nodes = new HashSet<string>(View.Nodes);
+                
+                foreach (var node in nodes)
+                {
+                    try
+                    {
+                        RemotingEndpoint remotingEndpoint = GetRemoteEndpoint(node);
+                        BeatDelegate beatDelegate = remotingEndpoint.Beat;
+                        
+                        beatDelegate.BeginInvoke(EndpointURL, asyncResult =>
+                        {
+                            AsyncResult ar = (AsyncResult)asyncResult;
+                            BeatDelegate remoteDel = (BeatDelegate)ar.AsyncDelegate;
+                            remoteDel.EndInvoke(asyncResult);
+                        }, null);
+                        
+                    } catch(RemotingException)
+                    {
+                        // do nothing
+                    }
+                }   
+            }
+        }
+
+        public void Beat(string node)
+        {
+            Heartbeats[node] = true;
+        }
 
         public void MulticastMessageWaitAll(IEnumerable<string> view, Message message)
         {
@@ -427,8 +539,6 @@ namespace CommonTypes {
                 throw;
             }
         }
-        
-        
         
         // Callbacks
         //
