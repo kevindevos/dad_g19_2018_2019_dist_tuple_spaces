@@ -40,7 +40,6 @@ namespace ServerNamespace
             LastOrderSequenceNumber = 0;
             ReceivedAcks = new List<Ack>();
 
-            RecursiveJoinView(View.Nodes);
             CheckMaster();
         }
 
