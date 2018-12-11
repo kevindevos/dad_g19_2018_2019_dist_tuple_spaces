@@ -9,4 +9,3 @@ Server s7 tcp://localhost:8088/S7 0 0
 Server s8 tcp://localhost:8089/S8 0 0
 Server s9 tcp://localhost:8090/S9 0 0
 Client c1 tcp://localhost:60001/C repetitive-write.txt
-Client c2 tcp://localhost:60002/C repetitive-read.txt

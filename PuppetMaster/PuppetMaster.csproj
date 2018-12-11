@@ -56,7 +56,25 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\1-server-1-client-read-write-take.txt" />
+    <Content Include="Resources\1-server-1-client-read.txt" />
+    <Content Include="Resources\1-server-1-client-write.txt" />
+    <Content Include="Resources\5-server-1-client-read.txt" />
+    <Content Include="Resources\10-servers-1-client-read-write-take.txt" />
+    <Content Include="Resources\10-servers-1-client-write.txt" />
+    <Content Include="Resources\5-servers-1-client-read-write-take.txt" />
+    <Content Include="Resources\5-servers-1-client-write.txt" />
     <Content Include="Resources\pcs_addrs.txt" />
+    <Content Include="Resources\repetitive-add-read-take.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\repetitive-read.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\repetitive-write.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\script.old.txt" />
     <Content Include="Resources\script.txt" />
     <Content Include="Resources\client_script_1.txt" />
   </ItemGroup>

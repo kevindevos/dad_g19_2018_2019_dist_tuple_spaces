@@ -1,0 +1,2 @@
+﻿Server s0 tcp://localhost:8081/S0 0 0
+Client c1 tcp://localhost:60001/C repetitive-add-read-take.txt

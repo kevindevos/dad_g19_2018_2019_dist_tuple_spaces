@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Channels;
@@ -25,6 +26,8 @@ namespace PuppetMaster
 
         private readonly int PCS_PORT = 10000;
 
+        private readonly Dictionary<string, Stopwatch> timer;
+
         public Controller(string[] addrs)
         {
             pcs = new Dictionary<string, PCSRemotingAbstract>();
@@ -44,6 +47,8 @@ namespace PuppetMaster
 
                 pcs.Add(addr, obj);
             }
+
+            timer = new Dictionary<string, Stopwatch>();
         }
 
         public void ParseCommand(string command)
@@ -271,8 +276,21 @@ namespace PuppetMaster
         private void AsyncCallClient(ClientDelegate caller, string clientId, string URL, string[] script,
             IEnumerable<string> serverUrls)
         {
+            
+            Stopwatch sw = new Stopwatch();
+            timer.Add(clientId, sw);
+            sw.Start();
+            
             caller.BeginInvoke(clientId, URL, script, serverUrls, asyncResult =>
             {
+                timer[clientId].Stop();
+
+                TimeSpan elapsed = sw.Elapsed;
+                string elapsedTime = String.Format("{0}",
+                    elapsed.Minutes * 60 + elapsed.Seconds + elapsed.Milliseconds / 1000.0);
+                Console.WriteLine("\n[TIMER ALERT] Finished script for client {0}. Elapsed time={1}s\n",
+                    clientId, elapsedTime);
+                
                 AsyncResult ar = (AsyncResult)asyncResult;
                 ClientDelegate remoteDel = (ClientDelegate)ar.AsyncDelegate;
                 remoteDel.EndInvoke(asyncResult);

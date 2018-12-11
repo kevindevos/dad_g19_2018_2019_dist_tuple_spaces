@@ -1,0 +1,6 @@
+﻿Server s0 tcp://localhost:8081/S0 0 0
+Server s1 tcp://localhost:8082/S1 0 0
+Server s2 tcp://localhost:8083/S2 0 0
+Server s3 tcp://localhost:8084/S3 0 0
+Server s4 tcp://localhost:8085/S4 0 0
+Client c1 tcp://localhost:60001/C repetitive-write.txt
