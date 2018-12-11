@@ -36,6 +36,9 @@ namespace ServerNamespace {
             _minDelay = minDelay;
             _maxDelay = maxDelay;
             
+            RecursiveJoinView(View.Nodes);
+
+            
             HeartbeatCheckerThread = new Thread(CheckBeats);
             HeartbeatCheckerThread.Start();
             

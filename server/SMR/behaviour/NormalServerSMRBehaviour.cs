@@ -58,22 +58,18 @@ namespace ServerNamespace.SMR.Behaviour {
         {
             while (true)
             {
-                var masterUrl = "";
-                lock (Server.View)
-                {
-                    masterUrl = Server.View.Nodes.OrderBy(s => s).First();
-                }
-                Server.Log("Sending message to master (" + masterUrl + ")");
+                
+                Server.Log("Sending message to master (" + Server.MasterEndpointURL + ")");
 
                 try
                 {
-                    Server.SingleCastMessage(masterUrl, request);
+                    Server.SingleCastMessage(Server.MasterEndpointURL, request);
                     Server.WaitMessage(request);
                     break;
                 }
                 catch (Exception e)
                 {
-                    Server.Log("Couldn't deliver message to master (" + masterUrl + ")");
+                    Server.Log("Couldn't deliver message to master (" + Server.MasterEndpointURL + ")");
                     // try again, until it receives an ok
                 }
             }

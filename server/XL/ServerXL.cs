@@ -48,6 +48,11 @@ namespace ServerNamespace.XL
             throw new NotImplementedException();
         }
 
+        public override void NotifyViewChange()
+        {
+            //nothing to do?
+        }
+
         /**
          * Move from LockedTuples to the tuplespace the "locked" tuples by the take request
          */

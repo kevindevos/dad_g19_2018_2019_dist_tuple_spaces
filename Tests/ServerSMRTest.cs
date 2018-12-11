@@ -39,9 +39,9 @@ namespace Tests
         }
         
         // Two test
-        // 1. Kill the master
-        // 2. Kill the non-master
-        [Test, Ignore(""), Timeout(5000)]
+        // 1. Kill the non-master
+        // 2. Kill the master
+        [Test,Ignore("")]
         public void FailureTest1([Values(1)] int serverIndex)
         {
             if (_nServers < 2)
@@ -56,7 +56,7 @@ namespace Tests
             Assert.AreEqual(Tuple1, result);
         }
         
-        [Test, Ignore(""), Timeout(5000)]
+        [Test, Ignore("")]
         public void FailureTest2([Values(0)] int serverIndex)
         {
             if (_nServers < 2)
